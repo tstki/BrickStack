@@ -1,0 +1,22 @@
+BrickStack
+====
+Version: 20240523.1837 (0.0.0.4)
+- Search function to find sets
+- Set details screen with parts list
+- Parts display
+- About screen improved
+- Image download and cache
+
+Version: 20240511.1633 (0.0.0.3)
+- Added sqlite.dll
+- Added rebrickable database
+
+Version: 20240504.1549 (0.0.0.2)
+- Basic MDI window
+- Config settings for api key and base url
+- About screen
+- Implemented login window for token acquisition
+- Basic collections window with import ability
+
+Version: 20240421.1907 (0.0.0.1)
+- Initial commit. Not much here

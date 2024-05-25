@@ -1,0 +1,64 @@
+unit UStrings;
+
+interface
+
+// Try to keep all labels in one place, so it'll be easier to add translations later.
+
+const
+  // Constants, links, version info
+  StrAboutProductName = 'BrickStack';
+  StrAboutCopyright = 'Written by: Thomas. H.';
+  StrAboutComment = 'Open source, See: bitbucket.org/tstki/brickstack' + #10 + 'Icons by Fatcow';
+
+  // Configuration
+  StrRebrickableAPIInfo = 'https://rebrickable.com/api/';
+  StrIniFileName = 'BrickStack.ini';
+  StrCollectionsFileName = 'Collections.ini';
+  StrRebrickableIniSection = 'Rebrickable';
+  StrDefaultCachePath = 'Cache\';
+
+  // Dialog and frame labels
+  StrSetListFrameTitle = 'Set lists';
+  StrSearchFrameTitle = 'Search';
+  StrFrmSetTitle = 'Lego set: %s - %s';
+
+  // Search areas
+  StrYourCollections = 'All owned';
+  StrDatabase = 'Database';
+  StrYourSets = 'Sets (Owned)';
+  StrDatabaseSets = 'Sets (Database)';
+  StrYourParts = 'Parts (Owned)';
+  StrDatabaseParts = 'Parts (Database)';
+  StrYourMinifigs = 'Minifigs (Owned)';
+  StrDatabaseMinifigs = 'Minifigs (Database)';
+
+  // Parts sort
+  StrPartSortByColor = 'Color';
+  StrPartSortByHue = 'Hue';
+  StrPartSortByPart = 'Part';
+  StrPartSortByCategory = 'Category';
+  StrPartSortByPrice = 'Price';
+  StrPartSortByQuantity = 'Quantity';
+
+  // Search style
+  StrSearchAll = '%Text%';
+  StrSearchSetDefault = 'Text-%';
+  StrSearchSetLike = '%Text-%';
+
+  // Option labels
+  StrNameRebrickable = 'Rebrickable';
+  StrImportOptionMerge = 'Merge with local by ID';
+  StrImportOptionAppend = 'Keep local and append new';
+  StrImportOptionOverwrite = 'Clear local and add new';
+
+  // Message strings
+  StrMsgSureDelete = 'Are you sure you wish to delete "%s"? This action can''t be undone.';
+
+  // Error strings
+  StrErrNoResult = 'No result';
+  StrErrAPIKeyNotSet = 'API key not set, please see configuration first.';
+  StrErrTokenNotSet = 'Missing authentication token, please login first.';
+
+implementation
+
+end.

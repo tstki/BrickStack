@@ -1,0 +1,102 @@
+More of a todo / idea list than a roadmap, but here goes:
+====
+- Expand about screen
+- Multithreading http calls for smoother user experience (mind error 429)
+- Move duplicate code to it's own unit as needed.
+- Auto load last open windows on start
+- Fix window sizes and anchors
+- Support .gz files for import
+- Automate import / Bulk download:
+-- https://rebrickable.com/downloads/ - option to perform a bulk download, unzip and fill a local database with this data.
+-- Note bulk downloads may be slow and need to be throttled to +- 1 per second.
+- helpfile / tutorial
+- Choose UI elements in search results (several template layouts, with example)
+-- Scale options.
+- Sorting tables
+- Ditch indy and use THTTPClient
+- Implement FastMM5 for memory leak checking.
+- More multithreading - performing the query and convert to internal values, converting internal values to display list.
+- Dont use "select *" but get the exact columns
+- sql thread safety by connection pooling
+- Add configurable behaviour for "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
+- Configure result limitation so the user cant query the whole database with one number.
+- Configure next/prev page results, in case results are a lot. (limit 10 offset 10)
+- Remember checkboxes on sets between sessions.
+- Dark mode
+
+Add config dialog to enter:
+- Default import / export path (just remember last used)
+- Backup path
+- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
+- Option to allow multiple collections windows
+- Option to allow multiple collection windows
+- Database path
+- Page control
+
+Get user's inventory
+- Store inventory locally (ini file? sql db?)
+- ability to export inventory per group to rebrickable csv/xml
+- Get inventory by set
+- Show list of parts by set
+
+Configure desired columns when printing parts - preferably on the dialog itself by showing the config dialog and it's related settings.
+- Also multiple columns
+- Color / grayscale - might not be needed since printer settings can arrange that.
+
+Collection window:
+- Import from CSV/Xml and other sources.
+- Edit (change current selected row) -> show dialog with options such as: icon / name / description / custom fields
+- Drag n drop to change order.
+- Add warning on export type, that not all settings may be supported by the receiving party
+- Support filtering by source
+- Support filtering by custom tag
+- Give custom tags an icon
+- Option to open selected collections in the same window, or a new window for each.
+
+Settings:
+- Change to treeview
+- Add option to display more columns for collection
+- Add ability to add custom fields
+- Option to store backup files on changes / periodically.
+- Slider with delay setting between image downloads.
+
+Windows:
+- Collection
+- Collection details (shows selected collection's details / custom fields / statistics)
+- Collection content (shows selected collection's set content)
+- Multiple collections (vertical and horizontal)
+- Set instructions - link to rebrickable / others.
+- Search dialog, search by partial / search by exact.
+- Right mouse menu options on table
+- Move set to collection
+- Re-ordering / sorting collections
+- View set on rebrickable/other links. from set details page.
+- Set window parts, checkbox mode
+
+Export collection:
+- Choose format
+- Choose overwrite / keep
+
+Import collection:
+- Choose format
+- Choose overwrite / keep
+
+Storage:
+- Move sets to sqlite
+
+Logging:
+- Optional log files for communication and debugging.
+- Make sure passwords are not logged to the _token endpoint
+- Make sure any token is not logged.
+
+Throttling and request slowing:
+- Handle error 429: Add a mandatory delay between requests
+- Request was throttled - you are sending too many requests too fast.
+- Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
+- Example response: { "detail": "Request was throttled. Expected available in 2 seconds." }
+- Parts call: /lego/parts/?part_nums=3001,3002,3003&inc_part_details=1
+
+Search:
+- Show search as image panels or table with text
+- Prevent text overlap (cut off by replacing text with ..."
+- Show category (query join category name)
