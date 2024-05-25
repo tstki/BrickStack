@@ -106,6 +106,15 @@ begin
 end;
 
 procedure TFrmSet.FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
+
+  function EnsureEndsWith(const S: string; const Ch: Char): string;
+  begin
+    if (S <> '') and (S[Length(S)] = Ch) then
+      Result := S
+    else
+      Result := S + Ch;
+  end;
+
 begin
   var OpenType := cOTNONE;
   if (PartOrSet = cTYPESET) and (FConfig.DefaultViewSetOpenType <> cOTNONE) then begin
@@ -136,7 +145,7 @@ begin
   case OpenType of
     cOTREBRICKABLE:
     begin
-      OpenLink := 'https://rebrickable.com/'; // Configure this as base url
+      OpenLink := EnsureEndsWith(FConfig.ViewRebrickableUrl, '/');
       if PartOrSet = cTYPESET then
         OpenLink := OpenLink + 'sets/' + PartOrSetNumber
       else
@@ -144,15 +153,15 @@ begin
     end;
     cOTBRICKLINK:
     begin
-      OpenLink := 'https://www.bricklink.com/v2/'; // Configure this as base url
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickLinkUrl, '/');
       if PartOrSet = cTYPESET then
-        OpenLink := OpenLink + 'search.page?q=' + PartOrSetNumber
+        OpenLink := OpenLink + 'v2/search.page?q=' + PartOrSetNumber
       else
-        OpenLink := OpenLink + 'catalog/catalogitem.page?P=' + PartOrSetNumber;
+        OpenLink := OpenLink + 'v2/catalog/catalogitem.page?P=' + PartOrSetNumber;
     end;
     cOTBRICKOWL:
     begin
-      OpenLink := 'https://www.brickowl.com/'; // Configure this as base url
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickOwlUrl, '/');
       if PartOrSet = cTYPESET then
         OpenLink := OpenLink + 'search/catalog?query=' + PartOrSetNumber
       else
@@ -160,13 +169,11 @@ begin
     end;
     cOTBRICKSET:
     begin
-      OpenLink := 'https://www.brickset.com/'; // Configure this as base url
-      OpenLink := OpenLink + 'sets/' + PartOrSetNumber;
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickSetUrl, '/') + 'sets/' + PartOrSetNumber;
     end;
     cOTLDRAW:
     begin
-      OpenLink := 'https://library.ldraw.org/'; // Configure this as base url
-      OpenLink := OpenLink + 'search/part?s=' + PartOrSetNumber;
+      OpenLink := EnsureEndsWith(FConfig.ViewLDrawUrl, '/') + 'search/part?s=' + PartOrSetNumber;
     end;
     cOTCUSTOM:
     begin

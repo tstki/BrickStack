@@ -6,12 +6,6 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
 
-const
-  //View External types:
-  cTYPESET = 0;
-  cTYPEPART = 1;
-  //cTYPEMINIFIG = 2; //Not used yet
-
 type
   TDlgViewExternal = class(TForm)
     Label1: TLabel;

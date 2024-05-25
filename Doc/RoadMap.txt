@@ -24,6 +24,7 @@ More of a todo / idea list than a roadmap, but here goes:
 - Remember checkboxes on sets between sessions.
 - Dark mode
 - "3001pr004" and other parts with different external references does not allow part lookup at this time.
+-- Should be available in the API
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)

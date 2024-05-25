@@ -14,6 +14,11 @@ type
     FAuthenticationToken: String;           // Only saved if,
     FRememberAuthenticationToken: Boolean;  // is true
     FLocalImageCachePath: String;
+    FViewRebrickableUrl: String;
+    FViewBrickLinkUrl: String;
+    FViewBrickOwlUrl: String;
+    FViewBrickSetUrl: String;
+    FViewLDrawUrl: String;
     FDefaultViewSetOpenType: Integer;
     FDefaultViewPartOpenType: Integer;
   public
@@ -25,6 +30,11 @@ type
     property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
     property RememberAuthenticationToken: Boolean read FRememberAuthenticationToken write FRememberAuthenticationToken;
     property LocalImageCachePath: String read FLocalImageCachePath write FLocalImageCachePath;
+    property ViewRebrickableUrl: String read FViewRebrickableUrl write FViewRebrickableUrl;
+    property ViewBrickLinkUrl: String read FViewBrickLinkUrl write FViewBrickLinkUrl;
+    property ViewBrickOwlUrl: String read FViewBrickOwlUrl write FViewBrickOwlUrl;
+    property ViewBrickSetUrl: String read FViewBrickSetUrl write FViewBrickSetUrl;
+    property ViewLDrawUrl: String read FViewLDrawUrl write FViewLDrawUrl;
     property DefaultViewSetOpenType: Integer read FDefaultViewSetOpenType write FDefaultViewSetOpenType;
     property DefaultViewPartOpenType: Integer read FDefaultViewPartOpenType write FDefaultViewPartOpenType;
   end;
@@ -38,6 +48,11 @@ const
   cOTBRICKSET = 4;    // Sets
   cOTLDRAW = 5;       // Parts
   cOTCUSTOM = 6;      // Parts and sets (probably)
+
+  //View External types:
+  cTYPESET = 0;
+  cTYPEPART = 1;
+  //cTYPEMINIFIG = 2; //Not used yet
 
 implementation
 
@@ -57,6 +72,13 @@ begin
     FLocalImageCachePath := IniFile.ReadString(StrRebrickableIniSection, 'LocalImageCachePath', '');
     if FLocalImageCachePath = '' then
       FLocalImageCachePath := FilePath + StrDefaultCachePath;
+
+    FViewRebrickableUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewRebrickableUrl', 'https://rebrickable.com/');
+    FViewBrickLinkUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickLinkUrl', 'https://www.bricklink.com/');
+    FViewBrickOwlUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickOwlUrl', 'https://www.brickowl.com/');
+    FViewBrickSetUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickSetUrl', 'https://www.brickset.com/');
+    FViewLDrawUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewLDrawUrl', 'https://library.ldraw.org/');
+
     FDefaultViewSetOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', cOTNONE);
     FDefaultViewPartOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', cOTNONE);
   finally
@@ -74,8 +96,15 @@ begin
     IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
     IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
     IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
+
     IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
-    IniFile.WriteInteger(StrRebrickableIniSection, 'FDefaultViewPartOpenType', FDefaultViewPartOpenType);
+    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
   finally
     IniFile.Free;
   end;

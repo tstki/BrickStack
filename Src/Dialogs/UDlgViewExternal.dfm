@@ -1,7 +1,7 @@
 object DlgViewExternal: TDlgViewExternal
   Left = 0
   Top = 0
-  Caption = 'Open external'
+  Caption = 'View external'
   ClientHeight = 153
   ClientWidth = 429
   Color = clBtnFace
