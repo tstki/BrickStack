@@ -63,6 +63,7 @@ implementation
 {$R *.dfm}
 
 uses
+  ShellAPI,
   Math, Diagnostics, Data.DB, StrUtils,
   UDlgViewExternal,
   UStrings;
@@ -106,48 +107,77 @@ end;
 
 procedure TFrmSet.FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
 begin
+  var OpenType := cOTNONE;
   if (PartOrSet = cTYPESET) and (FConfig.DefaultViewSetOpenType <> cOTNONE) then begin
-    //
+    OpenType := FConfig.DefaultViewSetOpenType;
   end else if (PartOrSet = cTYPEPART) and (FConfig.DefaultViewPartOpenType <> cOTNONE) then begin
-    //
-  end else begin // No default, so just open the dialog and ask the user
-    //
-  end;
-  var Dlg := TDlgViewExternal.Create(Self);
-  try
-    Dlg.PartOrSet := PartOrSet;
-    Dlg.PartOrSetNumber := PartOrSetNumber;
-    if Dlg.ShowModal = mrOk then begin
-      // Save setting if checkbox was set
-      //  1 setting for sets
-      //  1 setting for parts
-      // open at the desired website
-
-      //Config.Save(); // Should tell config to save only a specific property
+    OpenType := FConfig.DefaultViewPartOpenType;
+  end else begin // No default, ask the user what to use
+    var Dlg := TDlgViewExternal.Create(Self);
+    try
+      Dlg.PartOrSet := PartOrSet;
+      Dlg.PartOrSetNumber := PartOrSetNumber;
+      if Dlg.ShowModal = mrOk then begin
+        OpenType := Dlg.OpenType;
+        if Dlg.CheckState then begin
+          if PartOrSet = cTYPESET then
+            FConfig.DefaultViewSetOpenType := OpenType
+          else
+            FConfig.DefaultViewPartOpenType := OpenType;
+          FConfig.Save;
+        end;
+      end;
+    finally
+      Dlg.Free;
     end;
-  finally
-    Dlg.Free;
   end;
 
-  //if UseOpenType <> ctNONE then begin
-  //do open
-(*
-  //CbxOpenWhere
-  //Rebrickable: parts/sets
-    https://rebrickable.com/sets/725-2/12v-freight-train-and-track/#bi
-    https://rebrickable.com/parts/3003a/brick-2-x-2-without-inside-ridges/
-  //bricklink: parts/sets
-    https://www.bricklink.com/v2/search.page?q=725-2&utm_source=rebrickable#T=A
-    https://www.bricklink.com/v2/catalog/catalogitem.page?P=3003old&utm_source=rebrickable#T=S&O={%22iconly%22:0}
-  //brickowl: parts/sets
-    https://www.brickowl.com/search/catalog?query=725-2&utm_source=rebrickable
-    https://brickowl.com/catalog/88411?utm_source=rebrickable
-  //brickset: sets
-    https://brickset.com/sets/725-2
-  //ldraw: parts
-    https://library.ldraw.org/search/part?s=3003
-*)
-  //end;
+  var OpenLink := '';
+  case OpenType of
+    cOTREBRICKABLE:
+    begin
+      OpenLink := 'https://rebrickable.com/'; // Configure this as base url
+      if PartOrSet = cTYPESET then
+        OpenLink := OpenLink + 'sets/' + PartOrSetNumber
+      else
+        OpenLink := OpenLink + 'parts/' + PartOrSetNumber;
+    end;
+    cOTBRICKLINK:
+    begin
+      OpenLink := 'https://www.bricklink.com/v2/'; // Configure this as base url
+      if PartOrSet = cTYPESET then
+        OpenLink := OpenLink + 'search.page?q=' + PartOrSetNumber
+      else
+        OpenLink := OpenLink + 'catalog/catalogitem.page?P=' + PartOrSetNumber;
+    end;
+    cOTBRICKOWL:
+    begin
+      OpenLink := 'https://www.brickowl.com/'; // Configure this as base url
+      if PartOrSet = cTYPESET then
+        OpenLink := OpenLink + 'search/catalog?query=' + PartOrSetNumber
+      else
+        OpenLink := OpenLink + 'search/catalog/' + PartOrSetNumber;
+    end;
+    cOTBRICKSET:
+    begin
+      OpenLink := 'https://www.brickset.com/'; // Configure this as base url
+      OpenLink := OpenLink + 'sets/' + PartOrSetNumber;
+    end;
+    cOTLDRAW:
+    begin
+      OpenLink := 'https://library.ldraw.org/'; // Configure this as base url
+      OpenLink := OpenLink + 'search/part?s=' + PartOrSetNumber;
+    end;
+    cOTCUSTOM:
+    begin
+      // Not implemented yet
+    end;
+  end;
+
+  if OpenLink <> '' then begin
+    // Include utm_source?
+    ShellExecute(0, 'open', PChar(OpenLink), nil, nil, SW_SHOWNORMAL);
+  end;
 end;
 
 procedure TFrmSet.ImgViewSetExternalClick(Sender: TObject);
@@ -163,10 +193,8 @@ procedure TFrmSet.ImgTemplateShowPartClick(Sender: TObject);
     Result := '';
     try
       var SplittedString := ComponentName.Split(['_']);
-      if High(SplittedString) > 1 then begin
-        Result := SplittedString[1] + '-' + SplittedString[2];
-        //Add set to collections by setnum
-      end;
+      if High(SplittedString) > 0 then
+        Result := SplittedString[1];
     except
       // Log error.
     end;

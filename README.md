@@ -27,3 +27,8 @@ Make sure you get the latest (1.0.2u+) 32/64 bit version depending on the versio
 #Help it doesn't work
 
 * Throw away your BrickStack.ini to get back default settings.
+
+#Known issues
+
+* Incomplete implementation, not everything works yet.
+* External lookup of parts is broken, because external sites may use different part identifiers than Rebrickable.

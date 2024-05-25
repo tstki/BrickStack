@@ -20,7 +20,7 @@ object FrmSet: TFrmSet
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 241
+    Width = 237
     Height = 233
     Anchors = [akLeft, akTop, akRight]
     Proportional = True
@@ -28,7 +28,7 @@ object FrmSet: TFrmSet
     ExplicitWidth = 243
   end
   object ImgViewSetExternal: TImage
-    Left = 532
+    Left = 528
     Top = 213
     Width = 32
     Height = 32
@@ -109,7 +109,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 573
   end
   object Label1: TLabel
-    Left = 425
+    Left = 421
     Top = 254
     Width = 91
     Height = 15
@@ -127,14 +127,14 @@ object FrmSet: TFrmSet
   object SbSetParts: TScrollBox
     Left = 8
     Top = 280
-    Width = 556
+    Width = 552
     Height = 260
     Anchors = [akLeft, akTop, akRight, akBottom]
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
-    ExplicitWidth = 552
+    ExplicitWidth = 548
     ExplicitHeight = 259
     object PnlTemplateResult: TPanel
       Left = 3
@@ -276,7 +276,7 @@ object FrmSet: TFrmSet
     end
   end
   object LvTagData: TListView
-    Left = 255
+    Left = 251
     Top = 8
     Width = 309
     Height = 199
@@ -290,30 +290,31 @@ object FrmSet: TFrmSet
         Caption = 'Data'
         Width = 180
       end>
+    Items.ItemData = {}
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitLeft = 251
+    ExplicitLeft = 247
   end
   object CbxInventoryVersion: TComboBox
-    Left = 522
+    Left = 518
     Top = 251
     Width = 42
     Height = 23
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
-    ExplicitLeft = 518
+    ExplicitLeft = 514
   end
   object Button1: TButton
-    Left = 255
+    Left = 251
     Top = 213
     Width = 75
     Height = 25
     Anchors = [akTop, akRight]
     Caption = 'Export'
     TabOrder = 3
-    ExplicitLeft = 251
+    ExplicitLeft = 247
   end
   object CheckBox1: TCheckBox
     Left = 160

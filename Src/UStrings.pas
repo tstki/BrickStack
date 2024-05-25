@@ -51,6 +51,14 @@ const
   StrImportOptionAppend = 'Keep local and append new';
   StrImportOptionOverwrite = 'Clear local and add new';
 
+  StrOTNone = 'Request on open'; // Only used by DlgConfig
+  StrOTRebrickable = 'Rebrickable';
+  StrOTBrickLink = 'BrickLink';
+  StrOTBrickOwl = 'BrickOwl';
+  StrOTBrickSet = 'BrickSet';
+  StrOTLDraw = 'LDraw';
+  //StrOTCustom = 'Custom (Link)';
+
   // Message strings
   StrMsgSureDelete = 'Are you sure you wish to delete "%s"? This action can''t be undone.';
 

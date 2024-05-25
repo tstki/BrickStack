@@ -19,32 +19,37 @@ type
     Label3: TLabel;
     BtnOK: TButton;
     BtnCancel: TButton;
-    CbxOpenWhere: TComboBox;
+    CbxOpenType: TComboBox;
     ChkOpenWhereNewDefault: TCheckBox;
     LblSetOfPartNumber: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
-    //Itemtype set/part
-    //set/part_num
-    //FConfig
     FPartOrSet: Integer;
     FPartOrSetNumber: String;
+    FOpenType: Integer;
+    FCheckState: Boolean;
   public
     { Public declarations }
     property PartOrSet: Integer read FPartOrSet write FPartOrSet;
     property PartOrSetNumber: String read FPartOrSetNumber write FPartOrSetNumber;
+    property OpenType: Integer read FOpenType;
+    property CheckState: Boolean read FCheckState;
   end;
 
 implementation
 
 {$R *.dfm}
 
+uses
+  UConfig,
+  UStrings;
+
 procedure TDlgViewExternal.FormCreate(Sender: TObject);
 begin
-  //fill CbxOpenWhere
 //
 end;
 
@@ -53,9 +58,27 @@ begin
 //
 end;
 
+procedure TDlgViewExternal.FormShow(Sender: TObject);
+begin
+  CbxOpenType.Clear;
+  CbxOpenType.AddItem(StrOTRebrickable, TObject(cOTREBRICKABLE));
+  CbxOpenType.AddItem(StrOTBrickLink, TObject(cOTBRICKLINK));
+  CbxOpenType.AddItem(StrOTBrickOwl, TObject(cOTBRICKOWL));
+  if FPartOrSet = cTYPESET then
+    CbxOpenType.AddItem(StrOTBrickSet, TObject(cOTBRICKSET))
+  else
+    CbxOpenType.AddItem(StrOTLDraw, TObject(cOTLDRAW));
+  //CbxOpenType.AddItem(StrOTCustom, TObject(cOTCUSTOM)); // Not implemented yet
+  CbxOpenType.ItemIndex := 0;
+
+  Self.Caption := Self.Caption + ': ' + FPartOrSetNumber;
+  LblSetOfPartNumber.Caption := FPartOrSetNumber;
+end;
+
 procedure TDlgViewExternal.BtnOKClick(Sender: TObject);
 begin
-//
+  FOpenType := Integer(CbxOpenType.Items.Objects[CbxOpenType.ItemIndex]);
+  FCheckState := ChkOpenWhereNewDefault.Checked;
 end;
 
 end.

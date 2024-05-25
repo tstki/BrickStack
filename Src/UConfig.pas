@@ -32,12 +32,12 @@ type
 const
   // Open Types for links to external sites:
   cOTNONE = 0;        // None selected yet
-  cOTREBRICKABLE = 1; // Parts and sets
-  cOTBRICKLINK = 1;   //
-  cOTBRICKOWL = 2;    //
-  cOTBRICKSET = 3;    // Sets
-  cOTLDRAW = 4;       // Parts
-  cOTCUSTOM = 5;      // Parts and sets (probably)
+  cOTREBRICKABLE = 1; // Parts and sets            1
+  cOTBRICKLINK = 2;   //
+  cOTBRICKOWL = 3;    //
+  cOTBRICKSET = 4;    // Sets
+  cOTLDRAW = 5;       // Parts
+  cOTCUSTOM = 6;      // Parts and sets (probably)
 
 implementation
 

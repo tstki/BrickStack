@@ -13,6 +13,7 @@ object DlgViewExternal: TDlgViewExternal
   Position = poOwnerFormCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnShow = FormShow
   DesignSize = (
     429
     153)
@@ -74,11 +75,12 @@ object DlgViewExternal: TDlgViewExternal
     ExplicitLeft = 338
     ExplicitTop = 119
   end
-  object CbxOpenWhere: TComboBox
+  object CbxOpenType: TComboBox
     Left = 72
     Top = 58
-    Width = 145
+    Width = 169
     Height = 23
+    Style = csDropDownList
     TabOrder = 2
   end
   object ChkOpenWhereNewDefault: TCheckBox
