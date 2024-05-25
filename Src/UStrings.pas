@@ -16,6 +16,7 @@ const
   StrCollectionsFileName = 'Collections.ini';
   StrRebrickableIniSection = 'Rebrickable';
   StrDefaultCachePath = 'Cache\';
+  StrDefaultLogPath = 'Logs\';
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Set lists';

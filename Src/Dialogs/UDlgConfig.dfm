@@ -60,7 +60,7 @@ object DlgConfig: TDlgConfig
     Top = 8
     Width = 524
     Height = 255
-    ActivePage = TsExternal
+    ActivePage = TsLocal
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 3
     object TsAuthentication: TTabSheet
@@ -255,6 +255,13 @@ object DlgConfig: TDlgConfig
         Height = 15
         Caption = 'Local storage settings'
       end
+      object LblLocalLogsPath: TLabel
+        Left = 15
+        Top = 64
+        Width = 59
+        Height = 15
+        Caption = 'Logs folder'
+      end
       object EditLocalImageCachePath: TEdit
         Left = 87
         Top = 31
@@ -272,6 +279,24 @@ object DlgConfig: TDlgConfig
         Caption = 'Select'
         TabOrder = 1
         OnClick = BtnSelectLocalImageCachePathClick
+      end
+      object EditLocalLogsPath: TEdit
+        Left = 87
+        Top = 61
+        Width = 345
+        Height = 23
+        Anchors = [akLeft, akTop, akRight]
+        TabOrder = 2
+      end
+      object BtnSelectEditLocalLogsPath: TButton
+        Left = 438
+        Top = 60
+        Width = 75
+        Height = 25
+        Anchors = [akTop, akRight]
+        Caption = 'Select'
+        TabOrder = 3
+        OnClick = BtnSelectEditLocalLogsPathClick
       end
     end
     object TsCustomTags: TTabSheet

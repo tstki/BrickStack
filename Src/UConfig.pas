@@ -14,6 +14,7 @@ type
     FAuthenticationToken: String;           // Only saved if,
     FRememberAuthenticationToken: Boolean;  // is true
     FLocalImageCachePath: String;
+    FLocalLogsPath: String;
     FViewRebrickableUrl: String;
     FViewBrickLinkUrl: String;
     FViewBrickOwlUrl: String;
@@ -30,6 +31,7 @@ type
     property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
     property RememberAuthenticationToken: Boolean read FRememberAuthenticationToken write FRememberAuthenticationToken;
     property LocalImageCachePath: String read FLocalImageCachePath write FLocalImageCachePath;
+    property LocalLogsPath: String read FLocalLogsPath write FLocalLogsPath;
     property ViewRebrickableUrl: String read FViewRebrickableUrl write FViewRebrickableUrl;
     property ViewBrickLinkUrl: String read FViewBrickLinkUrl write FViewBrickLinkUrl;
     property ViewBrickOwlUrl: String read FViewBrickOwlUrl write FViewBrickOwlUrl;
@@ -72,6 +74,9 @@ begin
     FLocalImageCachePath := IniFile.ReadString(StrRebrickableIniSection, 'LocalImageCachePath', '');
     if FLocalImageCachePath = '' then
       FLocalImageCachePath := FilePath + StrDefaultCachePath;
+    FLocalLogsPath := IniFile.ReadString(StrRebrickableIniSection, 'LocalLogsPath', '');
+    if FLocalLogsPath = '' then
+      FLocalLogsPath := FilePath + StrDefaultLogPath;
 
     FViewRebrickableUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewRebrickableUrl', 'https://rebrickable.com/');
     FViewBrickLinkUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickLinkUrl', 'https://www.bricklink.com/');
@@ -96,6 +101,7 @@ begin
     IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
     IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
     IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
 
     IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
     IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);

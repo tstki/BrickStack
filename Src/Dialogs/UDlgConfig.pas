@@ -43,16 +43,21 @@ type
     CbxViewSetDefault: TComboBox;
     Label10: TLabel;
     Label11: TLabel;
+    LblLocalLogsPath: TLabel;
+    EditLocalLogsPath: TEdit;
+    BtnSelectEditLocalLogsPath: TButton;
     procedure BtnOKClick(Sender: TObject);
     procedure BtnRebrickableAPIInfoClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BtnSelectLocalImageCachePathClick(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
+    procedure BtnSelectEditLocalLogsPathClick(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
     procedure FSetConfig(Config: TConfig);
+    procedure FSelectPathAndUpdateEdit(EditField: TEdit);
   public
     { Public declarations }
     property Config: TConfig read FConfig write FSetConfig;
@@ -151,6 +156,7 @@ begin
   EditRebrickableAPIKey.Text := Config.RebrickableAPIKey;
   EditRebrickableBaseUrl.Text := Config.RebrickableBaseUrl;
   EditLocalImageCachePath.Text := Config.LocalImageCachePath;
+  EditLocalLogsPath.Text := Config.LocalLogsPath;
 
   EditViewRebrickableUrl.Text := Config.ViewRebrickableUrl;
   EditViewBrickLinkUrl.Text := Config.ViewBrickLinkUrl;
@@ -176,6 +182,7 @@ begin
   Config.RebrickableAPIKey := EditRebrickableAPIKey.Text;
   Config.RebrickableBaseUrl := EditRebrickableBaseUrl.Text;
   Config.LocalImageCachePath := EditLocalImageCachePath.Text;
+  Config.LocalLogsPath := EditLocalLogsPath.Text;
 
   Config.ViewRebrickableUrl := EditViewRebrickableUrl.Text;
   Config.ViewBrickLinkUrl := EditViewBrickLinkUrl.Text;
@@ -194,20 +201,30 @@ begin
   ShellExecute(0, 'open', PChar(StrRebrickableAPIInfo), nil, nil, SW_SHOWNORMAL);
 end;
 
-procedure TDlgConfig.BtnSelectLocalImageCachePathClick(Sender: TObject);
+procedure TDlgConfig.FSelectPathAndUpdateEdit(EditField: TEdit);
 begin
   var FileOpenDialog := TFileOpenDialog.Create(nil);
   try
     FileOpenDialog.Options := [fdoPickFolders];
-    if EditLocalImageCachePath.Text <> '' then
-      FileOpenDialog.DefaultFolder := EditLocalImageCachePath.Text
+    if EditField.Text <> '' then
+      FileOpenDialog.DefaultFolder := EditField.Text
     else
       FileOpenDialog.DefaultFolder := 'C:\';
     if FileOpenDialog.Execute then
-      EditLocalImageCachePath.Text := FileOpenDialog.FileName;
+      EditField.Text := FileOpenDialog.FileName;
   finally
     FileOpenDialog.Free;
   end;
+end;
+
+procedure TDlgConfig.BtnSelectLocalImageCachePathClick(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditLocalImageCachePath);
+end;
+
+procedure TDlgConfig.BtnSelectEditLocalLogsPathClick(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditLocalLogsPath);
 end;
 
 end.
