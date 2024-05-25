@@ -10,6 +10,7 @@ object DlgLogin: TDlgLogin
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poOwnerFormCenter
   OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
@@ -33,18 +34,19 @@ object DlgLogin: TDlgLogin
   object LblHeader: TLabel
     Left = 8
     Top = 10
-    Width = 452
+    Width = 446
     Height = 30
     Anchors = [akLeft, akTop, akRight]
     Caption = 
       'Authentication is required for advanced functions such as import' +
       ', export and syncing with your private collection.'
     WordWrap = True
+    ExplicitWidth = 450
   end
   object StoreAuthenticationTokenWarning: TLabel
     Left = 8
     Top = 131
-    Width = 452
+    Width = 441
     Height = 60
     Anchors = [akLeft, akTop, akRight]
     Caption = 
@@ -54,28 +56,31 @@ object DlgLogin: TDlgLogin
       'oken is saved as plain text. We'#39're not responsible for any accou' +
       'nt changes if you lose the token.'
     WordWrap = True
+    ExplicitWidth = 445
   end
   object EditUsername: TEdit
     Left = 121
     Top = 47
-    Width = 339
+    Width = 335
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
     OnChange = EditChange
+    ExplicitWidth = 331
   end
   object EditPassword: TEdit
     Left = 121
     Top = 76
-    Width = 339
+    Width = 335
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     PasswordChar = '*'
     TabOrder = 1
     OnChange = EditChange
+    ExplicitWidth = 331
   end
   object BtnOK: TButton
-    Left = 304
+    Left = 300
     Top = 248
     Width = 75
     Height = 25
@@ -84,11 +89,11 @@ object DlgLogin: TDlgLogin
     Default = True
     TabOrder = 3
     OnClick = BtnOKClick
-    ExplicitLeft = 221
-    ExplicitTop = 184
+    ExplicitLeft = 296
+    ExplicitTop = 247
   end
   object BtnCancel: TButton
-    Left = 385
+    Left = 381
     Top = 248
     Width = 75
     Height = 25
@@ -97,8 +102,8 @@ object DlgLogin: TDlgLogin
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 4
-    ExplicitLeft = 546
-    ExplicitTop = 384
+    ExplicitLeft = 377
+    ExplicitTop = 247
   end
   object ChkStoreAuthenticationToken: TCheckBox
     Left = 121

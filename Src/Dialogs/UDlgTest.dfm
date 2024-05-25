@@ -10,6 +10,7 @@ object DlgTest: TDlgTest
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poOwnerFormCenter
   OnCreate = FormCreate
   TextHeight = 15
   object Image1: TImage

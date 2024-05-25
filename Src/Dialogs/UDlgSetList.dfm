@@ -10,6 +10,7 @@ object DlgSetList: TDlgSetList
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poOwnerFormCenter
   TextHeight = 15
   object LblName: TLabel
     Left = 8

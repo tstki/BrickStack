@@ -48,8 +48,8 @@ object DlgConfig: TDlgConfig
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 0
-    ExplicitLeft = 346
-    ExplicitTop = 167
+    ExplicitLeft = 470
+    ExplicitTop = 118
   end
   object BtnOK: TButton
     Left = 393
@@ -62,8 +62,8 @@ object DlgConfig: TDlgConfig
     ModalResult = 1
     TabOrder = 1
     OnClick = BtnOKClick
-    ExplicitLeft = 265
-    ExplicitTop = 166
+    ExplicitLeft = 389
+    ExplicitTop = 117
   end
   object EditRebrickableAPIKey: TEdit
     Left = 80
@@ -72,7 +72,7 @@ object DlgConfig: TDlgConfig
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 2
-    ExplicitWidth = 233
+    ExplicitWidth = 384
   end
   object EditRebrickableBaseUrl: TEdit
     Left = 80
@@ -81,7 +81,7 @@ object DlgConfig: TDlgConfig
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 3
-    ExplicitWidth = 233
+    ExplicitWidth = 384
   end
   object BtnRebrickableAPIInfo: TButton
     Left = 474
@@ -92,7 +92,7 @@ object DlgConfig: TDlgConfig
     Caption = 'Info'
     TabOrder = 4
     OnClick = BtnRebrickableAPIInfoClick
-    ExplicitLeft = 346
+    ExplicitLeft = 470
   end
   object TreeView1: TTreeView
     Left = 8
@@ -109,7 +109,7 @@ object DlgConfig: TDlgConfig
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 6
-    ExplicitWidth = 233
+    ExplicitWidth = 384
   end
   object BtnSelectLocalImageCachePath: TButton
     Left = 474
@@ -120,6 +120,6 @@ object DlgConfig: TDlgConfig
     Caption = 'Select'
     TabOrder = 7
     OnClick = BtnSelectLocalImageCachePathClick
-    ExplicitLeft = 346
+    ExplicitLeft = 470
   end
 end

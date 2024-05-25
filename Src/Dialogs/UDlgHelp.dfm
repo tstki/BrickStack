@@ -10,6 +10,7 @@ object DlgHelp: TDlgHelp
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poOwnerFormCenter
   TextHeight = 15
   object PageControl1: TPageControl
     Left = 288

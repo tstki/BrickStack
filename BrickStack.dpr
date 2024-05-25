@@ -30,7 +30,7 @@ begin
   try
     Application.Initialize;
     Application.CreateForm(TFrmMain, FrmMain);
-  Application.Run;
+    Application.Run;
   finally
     FrmMain.Free;
   end;

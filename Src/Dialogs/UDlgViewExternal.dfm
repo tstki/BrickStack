@@ -10,6 +10,7 @@ object DlgViewExternal: TDlgViewExternal
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poOwnerFormCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   DesignSize = (
@@ -47,7 +48,7 @@ object DlgViewExternal: TDlgViewExternal
     Caption = 'set/partnumber'
   end
   object BtnOK: TButton
-    Left = 265
+    Left = 261
     Top = 120
     Width = 75
     Height = 25
@@ -57,11 +58,11 @@ object DlgViewExternal: TDlgViewExternal
     ModalResult = 1
     TabOrder = 0
     OnClick = BtnOKClick
-    ExplicitLeft = 261
+    ExplicitLeft = 257
     ExplicitTop = 119
   end
   object BtnCancel: TButton
-    Left = 346
+    Left = 342
     Top = 120
     Width = 75
     Height = 25
@@ -70,7 +71,7 @@ object DlgViewExternal: TDlgViewExternal
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 1
-    ExplicitLeft = 342
+    ExplicitLeft = 338
     ExplicitTop = 119
   end
   object CbxOpenWhere: TComboBox
