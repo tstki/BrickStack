@@ -21,13 +21,12 @@ type
     CbxTemplateCheck: TCheckBox;
     ImgViewSetExternal: TImage;
     LvTagData: TListView;
-    LblExtra: TLabel;
     CbxInventoryVersion: TComboBox;
-    Label1: TLabel;
+    LblInventoryVersion: TLabel;
     Button1: TButton;
-    CheckBox1: TCheckBox;
-    CheckBox2: TCheckBox;
-    Label2: TLabel;
+    CbxIncludeSpareParts: TCheckBox;
+    CbxCheckboxMode: TCheckBox;
+    LblSortPartsBy: TLabel;
     CbxSortPartsBy: TComboBox;
     TmrRefresh: TTimer;
     procedure FormCreate(Sender: TObject);
@@ -38,6 +37,8 @@ type
     procedure TmrRefreshTimer(Sender: TObject);
     procedure ImgViewSetExternalClick(Sender: TObject);
     procedure ImgTemplateShowPartClick(Sender: TObject);
+    procedure CbxCheckboxModeClick(Sender: TObject);
+    procedure CbxIncludeSparePartsClick(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -88,7 +89,7 @@ begin
   CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
   CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
   CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
-  //CbxSortPartsBy.Items.Add(StrPartSortByPrice); // See above
+  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
   CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
   CbxSortPartsBy.ItemIndex := 0;
 end;
@@ -141,10 +142,48 @@ begin
     end;
   end;
 
+  //Add soap call to API to get the external_id -> {{baseUrl}}/api/v3/lego/parts/:part_num/
+  // Save it in the database?
+  //Example response:
+  (*
+  {
+    "part_num": "3001pr0043",
+    "name": "Brick 2 x 4 with Smile and Frown Print on Opposite Sides",
+    "part_cat_id": 11,
+    "year_from": 1981,
+    "year_to": 2009,
+    "part_url": "https://rebrickable.com/parts/3001pr0043/brick-2-x-4-with-smile-and-frown-print-on-opposite-sides/",
+    "part_img_url": "https://cdn.rebrickable.com/media/parts/elements/80141.jpg",
+    "prints": [],
+    "molds": [],
+    "alternates": [],
+    "external_ids": {
+        "BrickLink": [
+            "3001pe1"
+        ],
+        "BrickOwl": [
+            "57647"
+        ],
+        "Brickset": [
+            "80141"
+        ],
+        "LDraw": [
+            "3001pe1"
+        ],
+        "LEGO": [
+            "80141"
+        ]
+    },
+    "print_of": "3001"
+}
+  *)
+
   var OpenLink := '';
   case OpenType of
     cOTREBRICKABLE:
     begin
+      if FConfig.ViewRebrickableUrl = '' then
+        Exit;
       OpenLink := EnsureEndsWith(FConfig.ViewRebrickableUrl, '/');
       if PartOrSet = cTYPESET then
         OpenLink := OpenLink + 'sets/' + PartOrSetNumber
@@ -153,6 +192,8 @@ begin
     end;
     cOTBRICKLINK:
     begin
+      if FConfig.ViewBrickLinkUrl = '' then
+        Exit;
       OpenLink := EnsureEndsWith(FConfig.ViewBrickLinkUrl, '/');
       if PartOrSet = cTYPESET then
         OpenLink := OpenLink + 'v2/search.page?q=' + PartOrSetNumber
@@ -161,6 +202,8 @@ begin
     end;
     cOTBRICKOWL:
     begin
+      if FConfig.ViewBrickOwlUrl = '' then
+        Exit;
       OpenLink := EnsureEndsWith(FConfig.ViewBrickOwlUrl, '/');
       if PartOrSet = cTYPESET then
         OpenLink := OpenLink + 'search/catalog?query=' + PartOrSetNumber
@@ -169,10 +212,14 @@ begin
     end;
     cOTBRICKSET:
     begin
+      if FConfig.ViewBrickSetUrl = '' then
+        Exit;
       OpenLink := EnsureEndsWith(FConfig.ViewBrickSetUrl, '/') + 'sets/' + PartOrSetNumber;
     end;
     cOTLDRAW:
     begin
+      if FConfig.ViewLDrawUrl = '' then
+        Exit;
       OpenLink := EnsureEndsWith(FConfig.ViewLDrawUrl, '/') + 'search/part?s=' + PartOrSetNumber;
     end;
     cOTCUSTOM:
@@ -258,8 +305,8 @@ begin
     FAddRow('Released', 'year');
     FAddRow('Parts', 'num_parts');
 
-    FAddRow('Main theme', 'name_1'); // Broken?
-    FAddRow('Sub theme', 'name_2');  // Broken?
+    FAddRow('Main theme', 'name_1'); // name_1/2 because of sql
+    FAddRow('Sub theme', 'name_2');  //
   finally
     LvTagData.Items.EndUpdate;
   end;
@@ -278,7 +325,21 @@ begin
   end;
 end;
 
+procedure TFrmSet.CbxIncludeSparePartsClick(Sender: TObject);
+begin
+// Remove / hide spare parts
+end;
+
 function TFrmSet.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+
+  function FGetLabelOrCheckboxText(): String;
+  begin
+    Result := Query.FieldByName('quantity').AsString +
+              'x' +
+              IfThen(SameText(Query.FieldByName('is_spare').AsString, 't'), '*', '') +
+              Query.FieldByName('part_num').AsString;
+  end;
+
 begin
   Result := TPanel.Create(AOwner);
   Result.Width := PnlTemplateResult.Width;
@@ -289,10 +350,20 @@ begin
   for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
     var Control := PnlTemplateResult.Controls[i].ClassType.Create;
 
-    //TComponent(Control).Name;
-
     // Copy other properties as needed
-    if Control.ClassType = TLabel then begin
+    if Control.ClassType = TCheckbox then begin
+      var TemplateCheckbox := TCheckbox(PnlTemplateResult.Controls[i]);
+      var NewCheckbox := TCheckbox.Create(Result);
+
+      NewCheckbox.Parent := Result;
+      NewCheckbox.Top := TemplateCheckbox.Top;
+      NewCheckbox.Left := TemplateCheckbox.Left;
+      NewCheckbox.Width := TemplateCheckbox.Width;
+      NewCheckbox.Height := TemplateCheckbox.Height;
+
+      NewCheckbox.Caption := FGetLabelOrCheckboxText;
+      NewCheckbox.Visible := CbxCheckboxMode.Checked;
+    end else if Control.ClassType = TLabel then begin
       var TemplateLabel := TLabel(PnlTemplateResult.Controls[i]);
       var NewLabel := TLabel.Create(Result);
 
@@ -302,15 +373,8 @@ begin
       NewLabel.Width := TemplateLabel.Width;
       NewLabel.Height := TemplateLabel.Height;
 
-      if SameText(TemplateLabel.Name, 'LblExtra') then
-        NewLabel.Caption := IfThen(SameText(Query.FieldByName('is_spare').AsString, 't'), 'spare', '')
-      else if SameText(TemplateLabel.Name, 'LblTemplateName') then
-        NewLabel.Caption := Query.FieldByName('quantity').AsString + 'x ' + Query.FieldByName('part_num').AsString
-      //else if SameText(TemplateLabel.Name, 'LblTemplateColor') then
-        //NewLabel.Caption := Query.FieldByName('color').AsString
-      else
-        NewLabel.Caption := TemplateLabel.Caption;
-
+      NewLabel.Caption := FGetLabelOrCheckboxText;
+      NewLabel.Visible := not CbxCheckboxMode.Checked;
     end else if Control.ClassType = TImage then begin
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
       var NewImage := TImage.Create(Result);
@@ -346,8 +410,10 @@ begin
               end;
             end);
         end;
-      end else
+      end else begin
         NewImage.Picture := TemplateImage.Picture;
+        NewImage.Visible := not CbxCheckboxMode.Checked;
+      end;
     end;
     //end else if Control is TButton then begin
       //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
@@ -552,6 +618,28 @@ begin
     end else begin
       // See if we can widen the existing cols a little.
     end;
+  end;
+end;
+
+procedure TFrmSet.CbxCheckboxModeClick(Sender: TObject);
+begin
+  for var ResultPanel:TPanel in FInventoryPanels do begin
+    for var i := 0 to ResultPanel.ControlCount - 1 do begin
+      var Control := ResultPanel.Controls[i];
+      if Control.ClassType = TCheckbox then begin
+        var NewCheckbox := TCheckbox(Control);
+        NewCheckbox.Visible := CbxCheckboxMode.Checked;
+      end else if Control.ClassType = TLabel then begin
+        var NewLabel := TLabel(Control);
+        NewLabel.Visible := not CbxCheckboxMode.Checked;
+      end else if Control.ClassType = TImage then begin
+        var NewImage := TImage(Control);
+        if NewImage.Name <> '' then
+          NewImage.Visible := not CbxCheckboxMode.Checked;
+      end;
+    end;
+
+    ResultPanel.Invalidate;
   end;
 end;
 

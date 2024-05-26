@@ -20,7 +20,7 @@ object FrmSet: TFrmSet
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 237
+    Width = 229
     Height = 233
     Anchors = [akLeft, akTop, akRight]
     Proportional = True
@@ -28,7 +28,7 @@ object FrmSet: TFrmSet
     ExplicitWidth = 243
   end
   object ImgViewSetExternal: TImage
-    Left = 528
+    Left = 520
     Top = 213
     Width = 32
     Height = 32
@@ -108,16 +108,15 @@ object FrmSet: TFrmSet
     OnClick = ImgViewSetExternalClick
     ExplicitLeft = 573
   end
-  object Label1: TLabel
-    Left = 421
+  object LblInventoryVersion: TLabel
+    Left = 413
     Top = 254
     Width = 91
     Height = 15
     Anchors = [akTop, akRight]
     Caption = 'Inventory version'
-    ExplicitLeft = 479
   end
-  object Label2: TLabel
+  object LblSortPartsBy: TLabel
     Left = 8
     Top = 254
     Width = 66
@@ -127,37 +126,36 @@ object FrmSet: TFrmSet
   object SbSetParts: TScrollBox
     Left = 8
     Top = 280
-    Width = 552
+    Width = 544
     Height = 260
     Anchors = [akLeft, akTop, akRight, akBottom]
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
-    ExplicitWidth = 548
+    ExplicitWidth = 540
     ExplicitHeight = 259
     object PnlTemplateResult: TPanel
       Left = 3
       Top = 3
       Width = 102
-      Height = 142
+      Height = 128
       TabOrder = 0
       DesignSize = (
         102
-        142)
+        128)
       object ImgTemplatePartImage: TImage
-        Left = 0
-        Top = 0
-        Width = 102
-        Height = 89
+        Left = 1
+        Top = 1
+        Width = 100
+        Height = 99
         Anchors = [akLeft, akTop, akRight, akBottom]
         Proportional = True
-        ExplicitWidth = 197
-        ExplicitHeight = 145
+        ExplicitHeight = 101
       end
       object ImgTemplateShowPart: TImage
         Left = 74
-        Top = 116
+        Top = 102
         Width = 25
         Height = 25
         Anchors = [akRight, akBottom]
@@ -235,11 +233,12 @@ object FrmSet: TFrmSet
           0C9DB94507378FE75F970D8ADC6BECCE8E0000000049454E44AE426082}
         Stretch = True
         OnClick = ImgTemplateShowPartClick
+        ExplicitTop = 116
       end
       object LblTemplateName: TLabel
-        Left = 5
-        Top = 95
-        Width = 25
+        Left = 2
+        Top = 109
+        Width = 70
         Height = 12
         Alignment = taCenter
         Anchors = [akLeft, akBottom]
@@ -250,25 +249,12 @@ object FrmSet: TFrmSet
         Font.Name = 'Segoe UI'
         Font.Style = []
         ParentFont = False
-      end
-      object LblExtra: TLabel
-        Left = 39
-        Top = 118
-        Width = 23
-        Height = 12
-        Anchors = [akRight, akBottom]
-        Caption = 'Spare'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -9
-        Font.Name = 'Segoe UI'
-        Font.Style = []
-        ParentFont = False
+        ExplicitTop = 123
       end
       object CbxTemplateCheck: TCheckBox
         Left = 5
-        Top = 116
-        Width = 25
+        Top = 107
+        Width = 92
         Height = 17
         Anchors = [akLeft, akBottom]
         TabOrder = 0
@@ -276,7 +262,7 @@ object FrmSet: TFrmSet
     end
   end
   object LvTagData: TListView
-    Left = 251
+    Left = 243
     Top = 8
     Width = 309
     Height = 199
@@ -290,47 +276,48 @@ object FrmSet: TFrmSet
         Caption = 'Data'
         Width = 180
       end>
-    Items.ItemData = {}
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitLeft = 247
+    ExplicitLeft = 239
   end
   object CbxInventoryVersion: TComboBox
-    Left = 518
+    Left = 510
     Top = 251
     Width = 42
     Height = 23
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
-    ExplicitLeft = 514
+    ExplicitLeft = 506
   end
   object Button1: TButton
-    Left = 251
+    Left = 243
     Top = 213
     Width = 75
     Height = 25
     Anchors = [akTop, akRight]
     Caption = 'Export'
     TabOrder = 3
-    ExplicitLeft = 247
+    ExplicitLeft = 239
   end
-  object CheckBox1: TCheckBox
+  object CbxIncludeSpareParts: TCheckBox
     Left = 160
     Top = 254
-    Width = 137
+    Width = 129
     Height = 17
     Caption = 'Include spare parts'
     TabOrder = 4
+    OnClick = CbxIncludeSparePartsClick
   end
-  object CheckBox2: TCheckBox
-    Left = 304
+  object CbxCheckboxMode: TCheckBox
+    Left = 295
     Top = 254
-    Width = 119
+    Width = 116
     Height = 17
     Caption = 'Checkbox mode'
     TabOrder = 5
+    OnClick = CbxCheckboxModeClick
   end
   object CbxSortPartsBy: TComboBox
     Left = 80

@@ -129,6 +129,7 @@ end;
 procedure TFrmSetListCollection.FormShow(Sender: TObject);
 begin
   Width := 450;
+  //read size from config.
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);

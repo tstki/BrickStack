@@ -1,8 +1,6 @@
 More of a todo / idea list than a roadmap, but here goes:
 ====
 - Expand about screen
-- Multithreading http calls for smoother user experience (mind error 429)
-- Move duplicate code to it's own unit as needed.
 - Auto load last open windows on start
 - Fix window sizes and anchors
 - Support .gz files for import
@@ -13,18 +11,21 @@ More of a todo / idea list than a roadmap, but here goes:
 - Choose UI elements in search results (several template layouts, with example)
 -- Scale options.
 - Sorting tables
-- Ditch indy and use THTTPClient
-- Implement FastMM5 for memory leak checking.
-- More multithreading - performing the query and convert to internal values, converting internal values to display list.
 - Dont use "select *" but get the exact columns
-- sql thread safety by connection pooling
 - Add configurable behaviour for "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
-- Configure result limitation so the user cant query the whole database with one number.
 - Configure next/prev page results, in case results are a lot. (limit 10 offset 10)
-- Remember checkboxes on sets between sessions.
 - Dark mode
 - "3001pr004" and other parts with different external references does not allow part lookup at this time.
 -- Should be available in the API
+
+Optimizations:
+- Multithreading http calls for smoother user experience (mind error 429)
+- Ditch indy and use THTTPClient
+- Implement FastMM5 for memory leak checking.
+- More multithreading - performing the query and convert to internal values, converting internal values to display list.
+- sql thread safety by connection pooling
+- Dont load Images in a scrollbox if they are not in the visible viewport
+- Configure result limitation so the user cant query the whole database with one number.
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)
@@ -33,7 +34,6 @@ Add config dialog to enter:
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
 - Database path
-- Page control
 
 Get user's inventory
 - Store inventory locally (ini file? sql db?)
@@ -56,7 +56,6 @@ Collection window:
 - Option to open selected collections in the same window, or a new window for each.
 
 Settings:
-- Change to treeview
 - Add option to display more columns for collection
 - Add ability to add custom fields
 - Option to store backup files on changes / periodically.
@@ -67,13 +66,12 @@ Windows:
 - Collection details (shows selected collection's details / custom fields / statistics)
 - Collection content (shows selected collection's set content)
 - Multiple collections (vertical and horizontal)
-- Set instructions - link to rebrickable / others.
-- Search dialog, search by partial / search by exact.
+- Link to set instructions - link to rebrickable / others.
 - Right mouse menu options on table
 - Move set to collection
 - Re-ordering / sorting collections
 - View set on rebrickable/other links. from set details page.
-- Set window parts, checkbox mode
+- Remember checkbox mode and checks between sessions
 
 Export collection:
 - Choose format

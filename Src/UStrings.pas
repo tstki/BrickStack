@@ -7,7 +7,7 @@ interface
 const
   // Constants, links, version info
   StrAboutProductName = 'BrickStack';
-  StrAboutCopyright = 'MIT license, Copyright 2024. Thomas. H.)';
+  StrAboutCopyright = 'MIT license, Copyright 2024. Thomas. H.';
   StrAboutComment = 'Open source, See: bitbucket.org/tstki/brickstack' + #10 + 'Icons by Fatcow';
 
   // Configuration

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  UConfig;
+  IdHttp, UConfig, System.Actions, Vcl.ActnList;
 
 type
   TDlgConfig = class(TForm)
@@ -46,20 +46,77 @@ type
     LblLocalLogsPath: TLabel;
     EditLocalLogsPath: TEdit;
     BtnSelectEditLocalLogsPath: TButton;
+    TsBackup: TTabSheet;
+    Label12: TLabel;
+    Label13: TLabel;
+    Label14: TLabel;
+    TsWindows: TTabSheet;
+    Label15: TLabel;
+    Label16: TLabel;
+    Label17: TLabel;
+    Label18: TLabel;
+    Label19: TLabel;
+    Label20: TLabel;
+    EditDbasePath: TEdit;
+    Button1: TButton;
+    Label21: TLabel;
+    EditImportPath: TEdit;
+    Button2: TButton;
+    Label22: TLabel;
+    EditExportPath: TEdit;
+    Button3: TButton;
+    LvCollections: TListView;
+    Edit4: TEdit;
+    Label23: TLabel;
+    Button4: TButton;
+    Button5: TButton;
+    Button6: TButton;
+    Label24: TLabel;
+    Button7: TButton;
+    Label25: TLabel;
+    Label26: TLabel;
+    EditAuthenticationToken: TEdit;
+    BtnLogin: TButton;
+    ChkRememberAuthenticationToken: TCheckBox;
+    ActionList1: TActionList;
+    ActLogin: TAction;
+    ActAPIInfo: TAction;
+    ActSelectLocalCacheFolder: TAction;
+    ActClearLocalCache: TAction;
+    ActSelectLogsFolder: TAction;
+    ActDBasePath: TAction;
+    ActSelectImportFolder: TAction;
+    ActSelectExportFolder: TAction;
+    ActCreateTag: TAction;
+    ActEditTag: TAction;
+    ActDeleteTag: TAction;
     procedure BtnOKClick(Sender: TObject);
-    procedure BtnRebrickableAPIInfoClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure BtnSelectLocalImageCachePathClick(Sender: TObject);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
-    procedure BtnSelectEditLocalLogsPathClick(Sender: TObject);
+    procedure ActLoginExecute(Sender: TObject);
+    procedure ActAPIInfoExecute(Sender: TObject);
+    procedure ActSelectLocalCacheFolderExecute(Sender: TObject);
+    procedure ActClearLocalCacheExecute(Sender: TObject);
+    procedure ActSelectLogsFolderExecute(Sender: TObject);
+    procedure ActDBasePathExecute(Sender: TObject);
+    procedure ActSelectImportFolderExecute(Sender: TObject);
+    procedure ActSelectExportFolderExecute(Sender: TObject);
+    procedure ActCreateTagExecute(Sender: TObject);
+    procedure ActEditTagExecute(Sender: TObject);
+    procedure ActDeleteTagExecute(Sender: TObject);
+    procedure EditRebrickableAPIKeyChange(Sender: TObject);
+    procedure EditRebrickableBaseUrlChange(Sender: TObject);
   private
     { Private declarations }
+    FIdHttp: TIdHttp;
     FConfig: TConfig;
     procedure FSetConfig(Config: TConfig);
-    procedure FSelectPathAndUpdateEdit(EditField: TEdit);
+    procedure FSelectPathAndUpdateEdit(EditField: TEdit; Pickfolder: Boolean);
+    procedure FUpdateUI;
   public
     { Public declarations }
+    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FSetConfig;
   end;
 
@@ -69,6 +126,7 @@ implementation
 
 uses
   UStrings,
+  UDlgLogin,
   ShellAPI; // Needed for ShellExecute
 
 procedure TDlgConfig.FormCreate(Sender: TObject);
@@ -120,6 +178,12 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom tags');
     ChildNode.Data := Pointer(TsCustomTags);
 
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Backup');
+    ChildNode.Data := Pointer(TsBackup);
+
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Windows');
+    ChildNode.Data := Pointer(TsWindows);
+
     // Optionally, you can continue adding child nodes to ChildNode if needed
     //TreeView.Items.AddChild(ChildNode, 'Grandchild 1');
     //TreeView.Items.AddChild(ChildNode, 'Grandchild 2');
@@ -133,6 +197,7 @@ procedure TDlgConfig.FormShow(Sender: TObject);
 
 begin
   PopulateTreeView();
+  FUpdateUI;
 end;
 
 procedure TDlgConfig.FSetConfig(Config: TConfig);
@@ -168,6 +233,7 @@ begin
   CbxViewPartDefault.ItemIndex := FGetItemIndexByValue(CbxViewPartDefault, Config.DefaultViewPartOpenType);
 
   PCConfig.ActivePage := TsAuthentication;
+
 end;
 
 procedure TDlgConfig.TreeView1Change(Sender: TObject; Node: TTreeNode);
@@ -196,16 +262,30 @@ begin
   ModalResult := mrOK;
 end;
 
-procedure TDlgConfig.BtnRebrickableAPIInfoClick(Sender: TObject);
+procedure TDlgConfig.FUpdateUI;
 begin
-  ShellExecute(0, 'open', PChar(StrRebrickableAPIInfo), nil, nil, SW_SHOWNORMAL);
+  //BtnOK.Enabled :=
+  ActLogin.Enabled := (EditRebrickableAPIKey.Text <> '') and (EditRebrickableBaseUrl.TExt <> '');
 end;
 
-procedure TDlgConfig.FSelectPathAndUpdateEdit(EditField: TEdit);
+procedure TDlgConfig.EditRebrickableAPIKeyChange(Sender: TObject);
+begin
+  FUpdateUI;
+end;
+
+procedure TDlgConfig.EditRebrickableBaseUrlChange(Sender: TObject);
+begin
+  FUpdateUI;
+end;
+
+procedure TDlgConfig.FSelectPathAndUpdateEdit(EditField: TEdit; Pickfolder: Boolean);
 begin
   var FileOpenDialog := TFileOpenDialog.Create(nil);
   try
-    FileOpenDialog.Options := [fdoPickFolders];
+    if Pickfolder then
+      FileOpenDialog.Options := [fdoPickFolders]
+    else
+      FileOpenDialog.Options := [];
     if EditField.Text <> '' then
       FileOpenDialog.DefaultFolder := EditField.Text
     else
@@ -217,14 +297,70 @@ begin
   end;
 end;
 
-procedure TDlgConfig.BtnSelectLocalImageCachePathClick(Sender: TObject);
+procedure TDlgConfig.ActAPIInfoExecute(Sender: TObject);
 begin
-  FSelectPathAndUpdateEdit(EditLocalImageCachePath);
+  ShellExecute(0, 'open', PChar(StrRebrickableAPIInfo), nil, nil, SW_SHOWNORMAL);
 end;
 
-procedure TDlgConfig.BtnSelectEditLocalLogsPathClick(Sender: TObject);
+procedure TDlgConfig.ActClearLocalCacheExecute(Sender: TObject);
 begin
-  FSelectPathAndUpdateEdit(EditLocalLogsPath);
+//
+end;
+
+procedure TDlgConfig.ActCreateTagExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TDlgConfig.ActDeleteTagExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TDlgConfig.ActEditTagExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TDlgConfig.ActLoginExecute(Sender: TObject);
+begin
+  var DlgLogin := TDlgLogin.Create(Self);
+  try
+    DlgLogin.IdHttp := FIdHttp;
+    DlgLogin.RebrickableAPIKey := EditRebrickableAPIKey.Text;
+    DlgLogin.RebrickableBaseUrl := EditRebrickableBaseUrl.Text;
+    if DlgLogin.ShowModal = mrOk then begin
+      EditAuthenticationToken.Text := DlgLogin.AuthenticationToken;
+      ChkRememberAuthenticationToken.Checked := DlgLogin.RememberAuthenticationToken;
+    end;
+  finally
+    DlgLogin.Free;
+  end;
+end;
+
+procedure TDlgConfig.ActDBasePathExecute(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditDbasePath, False); // Pick file - add filter
+end;
+
+procedure TDlgConfig.ActSelectExportFolderExecute(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditExportPath, True);
+end;
+
+procedure TDlgConfig.ActSelectImportFolderExecute(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditImportPath, True);
+end;
+
+procedure TDlgConfig.ActSelectLocalCacheFolderExecute(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditLocalImageCachePath, True);
+end;
+
+procedure TDlgConfig.ActSelectLogsFolderExecute(Sender: TObject);
+begin
+  FSelectPathAndUpdateEdit(EditLocalLogsPath, True);
 end;
 
 end.

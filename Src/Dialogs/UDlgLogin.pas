@@ -25,12 +25,21 @@ type
   private
     { Private declarations }
     FIdHttp: TIdHttp;
-    FConfig: TConfig;
+//    FConfig: TConfig;
+    FRebrickableAPIKey: String;
+    FRebrickableBaseUrl: String;
+    FAuthenticationToken: String;
+    FRememberAuthenticationToken: Boolean;
     procedure FUpdateUI;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
-    property Config: TConfig read FConfig write FConfig;
+//    property Config: TConfig read FConfig write FConfig;
+    property RebrickableAPIKey: String read FRebrickableAPIKey write FRebrickableAPIKey;
+    property RebrickableBaseUrl: String read FRebrickableBaseUrl write FRebrickableBaseUrl;
+    property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
+    property RememberAuthenticationToken: Boolean read FRememberAuthenticationToken write FRememberAuthenticationToken;
+
   end;
 
 var
@@ -59,7 +68,7 @@ end;
 procedure TDlgLogin.BtnOKClick(Sender: TObject);
 begin
   // Obtain a token for user actions such as import/export
-  var ApiKey := FConfig.RebrickableAPIKey;
+  var ApiKey := FRebrickableAPIKey;
 
   // API key is mandatory
   if ApiKey = '' then begin
@@ -68,7 +77,7 @@ begin
     Exit;
   end;
 
-  var BaseUrl := FConfig.RebrickableBaseUrl;
+  var BaseUrl := FRebrickableBaseUrl;
   var EndPoint := '/api/v3/users/_token/';
 
   FIdHttp.Request.CustomHeaders.Clear;
@@ -91,8 +100,8 @@ begin
         var ResultToken := '';
         JSONObject.TryGetValue<string>('user_token', ResultToken);
         if ResultToken <> '' then begin
-          FConfig.AuthenticationToken := ResultToken;
-          FConfig.RememberAuthenticationToken := ChkStoreAuthenticationToken.Checked;
+          FAuthenticationToken := ResultToken;
+          FRememberAuthenticationToken := ChkStoreAuthenticationToken.Checked;
           ModalResult := mrOk;
         end else begin
           var Detail := '';

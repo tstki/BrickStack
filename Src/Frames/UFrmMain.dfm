@@ -14,8 +14,10 @@ object FrmMain: TFrmMain
   Menu = MainMenu1
   Position = poDefault
   WindowMenu = Window1
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnShow = FormShow
   TextHeight = 13
   object StatusBar: TStatusBar
     Left = 0
@@ -177,9 +179,6 @@ object FrmMain: TFrmMain
       end
       object Search1: TMenuItem
         Action = ActSearch
-      end
-      object ActAuthenticate1: TMenuItem
-        Action = ActAuthenticate
       end
     end
     object Window1: TMenuItem

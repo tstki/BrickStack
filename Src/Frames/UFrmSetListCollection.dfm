@@ -29,6 +29,7 @@ object FrmSetListCollection: TFrmSetListCollection
         Caption = 'Use in build calc'
         Width = 100
       end>
+    ReadOnly = True
     RowSelect = True
     PopupMenu = PopupMenu1
     TabOrder = 1
@@ -53,7 +54,7 @@ object FrmSetListCollection: TFrmSetListCollection
       430
       41)
     object ImgOpen: TImage
-      Left = 188
+      Left = 180
       Top = 5
       Width = 30
       Height = 30
@@ -148,7 +149,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Filter'
     end
     object ImgEdit: TImage
-      Left = 224
+      Left = 216
       Top = 5
       Width = 30
       Height = 30
@@ -243,7 +244,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 252
     end
     object ImgAdd: TImage
-      Left = 260
+      Left = 252
       Top = 5
       Width = 30
       Height = 30
@@ -350,7 +351,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 288
     end
     object ImgDelete: TImage
-      Left = 296
+      Left = 288
       Top = 5
       Width = 30
       Height = 30
@@ -453,7 +454,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 324
     end
     object ImgImport: TImage
-      Left = 332
+      Left = 324
       Top = 5
       Width = 30
       Height = 30
@@ -545,7 +546,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 360
     end
     object ImgExport: TImage
-      Left = 368
+      Left = 360
       Top = 5
       Width = 30
       Height = 30
@@ -630,13 +631,13 @@ object FrmSetListCollection: TFrmSetListCollection
     object CbxFilter: TComboBox
       Left = 40
       Top = 8
-      Width = 142
+      Width = 134
       Height = 23
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
-      ExplicitWidth = 138
+      ExplicitWidth = 130
     end
   end
   object ActionList1: TActionList

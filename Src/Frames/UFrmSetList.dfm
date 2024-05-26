@@ -123,6 +123,7 @@ object FrmSetList: TFrmSetList
           Caption = 'Name'
           Width = 250
         end>
+      ReadOnly = True
       RowSelect = True
       TabOrder = 0
       ViewStyle = vsReport

@@ -78,7 +78,6 @@ type
     YourCollection1: TMenuItem;
     ImageList32: TImageList;
     ActAuthenticate: TAction;
-    ActAuthenticate1: TMenuItem;
     Database1: TMenuItem;
     Search1: TMenuItem;
     ActSearch: TAction;
@@ -95,6 +94,8 @@ type
     procedure ActSearchExecute(Sender: TObject);
     procedure ActHelpExecute(Sender: TObject);
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -151,6 +152,18 @@ begin
   end;
 end;
 
+procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+//Iterate over children
+  //Save type and open type
+  //Save top/left/width/height of each child
+end;
+
+procedure TFrmMain.FormShow(Sender: TObject);
+begin
+  // Restore previously open child windows
+end;
+
 procedure TFrmMain.WMShowSet(var Msg: TMessage);
 var
   MsgData: PShowSetData;
@@ -180,11 +193,14 @@ end;
 
 procedure TFrmMain.ActAuthenticateExecute(Sender: TObject);
 begin
+  //Keep this available when we "need" the authenticationToken for user actions that need the token.
   var DlgLogin := TDlgLogin.Create(Self);
   try
-    DlgLogin.Config := FConfig;
     DlgLogin.IdHttp := FIdHttp;
     if DlgLogin.ShowModal = mrOk then begin
+      FConfig.AuthenticationToken := DlgLogin.AuthenticationToken;
+      FConfig.RememberAuthenticationToken := DlgLogin.RememberAuthenticationToken;
+
       // Store token
       FConfig.Save;
     end;
@@ -253,6 +269,7 @@ end;
 procedure TFrmMain.ActConfigExecute(Sender: TObject);
 begin
   var DlgConfig := TDlgConfig.Create(Self);
+  DlgConfig.IdHttp := FIdHttp;
   DlgConfig.Config := FConfig;
   try
     DlgConfig.ShowModal;
