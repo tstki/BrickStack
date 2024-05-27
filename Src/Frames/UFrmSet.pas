@@ -29,6 +29,7 @@ type
     LblSortPartsBy: TLabel;
     CbxSortPartsBy: TComboBox;
     TmrRefresh: TTimer;
+    BtnPrint: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -39,6 +40,7 @@ type
     procedure ImgTemplateShowPartClick(Sender: TObject);
     procedure CbxCheckboxModeClick(Sender: TObject);
     procedure CbxIncludeSparePartsClick(Sender: TObject);
+    procedure BtnPrintClick(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -64,7 +66,7 @@ implementation
 {$R *.dfm}
 
 uses
-  ShellAPI,
+  ShellAPI, Printers,
   Math, Diagnostics, Data.DB, StrUtils,
   UDlgViewExternal,
   UStrings;
@@ -342,6 +344,7 @@ function TFrmSet.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; Par
 
 begin
   Result := TPanel.Create(AOwner);
+  Result.Parent := ParentControl;
   Result.Width := PnlTemplateResult.Width;
   Result.Height := PnlTemplateResult.Height;
   Result.Top := 0 + PnlTemplateResult.Height * RowIndex;
@@ -500,7 +503,7 @@ procedure TFrmSet.LoadSet(const set_num: String);
 
         while not Query.EOF do begin
           var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
-          ResultPanel.Parent := SbSetParts;
+          ResultPanel.Visible := True;
 
           FInventoryPanels.Add(ResultPanel);
 
@@ -619,6 +622,64 @@ begin
       // See if we can widen the existing cols a little.
     end;
   end;
+end;
+
+procedure TFrmSet.BtnPrintClick(Sender: TObject);
+
+  procedure PrintScrollBoxContents3(ScrollBox: TScrollBox);
+  var
+    PrintDialog: TPrintDialog;
+    Bitmap: TBitmap;
+    ScrollWidth, ScrollHeight: Integer;
+    ScaleFactor: Double;
+  begin
+    PrintDialog := TPrintDialog.Create(nil);
+    try
+      if PrintDialog.Execute then begin
+        Bitmap := TBitmap.Create;
+        try
+          // Get the full size of the scrollbox content
+          ScrollWidth := ScrollBox.ClientWidth;
+          ScrollHeight := ScrollBox.VertScrollBar.Range;
+
+          // Set the bitmap size to the full content size
+          Bitmap.Width := ScrollWidth;
+          Bitmap.Height := ScrollHeight;
+
+          // Paint the entire content to the bitmap
+          ScrollBox.VertScrollBar.Position := 0;
+          ScrollBox.HorzScrollBar.Position := 0;
+          //ScrollBox.PaintTo(Bitmap.Canvas.Handle, 0, 0); // No need to print the scrollbox itself.
+
+          for var I := 0 to ScrollBox.ControlCount - 1 do begin
+            var ChildControl := TPanel(ScrollBox.Controls[I]);
+            if ChildControl.Visible then begin
+              // Adjust the control's position based on the scroll position
+              ChildControl.PaintTo(Bitmap.Canvas.Handle, ChildControl.Left, ChildControl.Top);
+            end;
+          end;
+          // Calculate scale factor to fit the content to the printer page
+          ScaleFactor := Min(Printer.PageWidth / Bitmap.Width, Printer.PageHeight / Bitmap.Height);
+
+          Printer.BeginDoc;
+          try
+            // Scale the content to fit the printer page
+            Printer.Canvas.StretchDraw(Rect(0, 0, Round(Bitmap.Width * ScaleFactor), Round(Bitmap.Height * ScaleFactor)), Bitmap);
+          finally
+            Printer.EndDoc;
+          end;
+        finally
+          Bitmap.Free;
+        end;
+      end;
+    finally
+      PrintDialog.Free;
+    end;
+  end;
+
+begin
+  // get parts view, print
+  PrintScrollBoxContents3(SbSetParts);
 end;
 
 procedure TFrmSet.CbxCheckboxModeClick(Sender: TObject);

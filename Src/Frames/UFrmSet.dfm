@@ -3,7 +3,7 @@ object FrmSet: TFrmSet
   Top = 0
   Caption = 'FrmSet'
   ClientHeight = 548
-  ClientWidth = 579
+  ClientWidth = 577
   Color = clBtnFace
   DoubleBuffered = True
   ParentFont = True
@@ -14,13 +14,13 @@ object FrmSet: TFrmSet
   OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
-    579
+    577
     548)
   TextHeight = 15
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 229
+    Width = 227
     Height = 233
     Anchors = [akLeft, akTop, akRight]
     Proportional = True
@@ -28,7 +28,7 @@ object FrmSet: TFrmSet
     ExplicitWidth = 243
   end
   object ImgViewSetExternal: TImage
-    Left = 520
+    Left = 537
     Top = 213
     Width = 32
     Height = 32
@@ -106,15 +106,16 @@ object FrmSet: TFrmSet
       5FC7922B5C875E31EF76A6FA1604B8E44F2AB7FB57FEB700FFC34F91C35A6976
       0C9DB94507378FE75F970D8ADC6BECCE8E0000000049454E44AE426082}
     OnClick = ImgViewSetExternalClick
-    ExplicitLeft = 573
+    ExplicitLeft = 539
   end
   object LblInventoryVersion: TLabel
-    Left = 413
+    Left = 430
     Top = 254
     Width = 91
     Height = 15
     Anchors = [akTop, akRight]
     Caption = 'Inventory version'
+    ExplicitLeft = 432
   end
   object LblSortPartsBy: TLabel
     Left = 8
@@ -126,21 +127,21 @@ object FrmSet: TFrmSet
   object SbSetParts: TScrollBox
     Left = 8
     Top = 280
-    Width = 544
+    Width = 561
     Height = 260
     Anchors = [akLeft, akTop, akRight, akBottom]
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
-    ExplicitWidth = 540
-    ExplicitHeight = 259
+    ExplicitWidth = 563
     object PnlTemplateResult: TPanel
       Left = 3
       Top = 3
       Width = 102
       Height = 128
       TabOrder = 0
+      Visible = False
       DesignSize = (
         102
         128)
@@ -238,7 +239,7 @@ object FrmSet: TFrmSet
       object LblTemplateName: TLabel
         Left = 2
         Top = 109
-        Width = 70
+        Width = 25
         Height = 12
         Alignment = taCenter
         Anchors = [akLeft, akBottom]
@@ -249,7 +250,6 @@ object FrmSet: TFrmSet
         Font.Name = 'Segoe UI'
         Font.Style = []
         ParentFont = False
-        ExplicitTop = 123
       end
       object CbxTemplateCheck: TCheckBox
         Left = 5
@@ -262,9 +262,9 @@ object FrmSet: TFrmSet
     end
   end
   object LvTagData: TListView
-    Left = 243
+    Left = 241
     Top = 8
-    Width = 309
+    Width = 328
     Height = 199
     Anchors = [akTop, akRight]
     Columns = <
@@ -279,20 +279,20 @@ object FrmSet: TFrmSet
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitLeft = 239
+    ExplicitLeft = 243
   end
   object CbxInventoryVersion: TComboBox
-    Left = 510
+    Left = 527
     Top = 251
     Width = 42
     Height = 23
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
-    ExplicitLeft = 506
+    ExplicitLeft = 529
   end
   object Button1: TButton
-    Left = 243
+    Left = 241
     Top = 213
     Width = 75
     Height = 25
@@ -326,6 +326,16 @@ object FrmSet: TFrmSet
     Height = 23
     Style = csDropDownList
     TabOrder = 6
+  end
+  object BtnPrint: TButton
+    Left = 322
+    Top = 213
+    Width = 75
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'Print'
+    TabOrder = 7
+    OnClick = BtnPrintClick
   end
   object TmrRefresh: TTimer
     Enabled = False

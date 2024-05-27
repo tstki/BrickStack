@@ -332,6 +332,7 @@ object FrmMain: TFrmMain
     object ActCollection: TAction
       Category = 'Lego'
       Caption = '&Collection...'
+      ShortCut = 16463
       OnExecute = ActCollectionExecute
     end
     object ActAuthenticate: TAction
