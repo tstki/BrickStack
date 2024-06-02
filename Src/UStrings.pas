@@ -17,6 +17,9 @@ const
   StrRebrickableIniSection = 'Rebrickable';
   StrDefaultCachePath = 'Cache\';
   StrDefaultLogPath = 'Logs\';
+  StrDefaultdDbasePath = 'DBase\BrickStack.db';
+  StrDefaultImportPath = 'Import\';
+  StrDefaultExportPath = 'Export\';
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Set lists';
@@ -40,6 +43,8 @@ const
   StrPartSortByCategory = 'Category';
   StrPartSortByPrice = 'Price';
   StrPartSortByQuantity = 'Quantity';
+
+  // Setlist Types (External type)
 
   // Search style
   StrSearchAll = '%Text%';

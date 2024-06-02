@@ -2,8 +2,8 @@ object DlgSetList: TDlgSetList
   Left = 0
   Top = 0
   Caption = 'DlgSetList'
-  ClientHeight = 207
-  ClientWidth = 374
+  ClientHeight = 255
+  ClientWidth = 385
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,63 +11,155 @@ object DlgSetList: TDlgSetList
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poOwnerFormCenter
+  OnShow = FormShow
+  DesignSize = (
+    385
+    255)
   TextHeight = 15
   object LblName: TLabel
     Left = 8
-    Top = 11
+    Top = 72
     Width = 32
     Height = 15
     Caption = 'Name'
   end
   object LblDescription: TLabel
     Left = 8
-    Top = 40
+    Top = 101
     Width = 60
     Height = 15
     Caption = 'Description'
   end
+  object Label1: TLabel
+    Left = 8
+    Top = 40
+    Width = 56
+    Height = 15
+    Caption = 'External ID'
+    Enabled = False
+  end
+  object Label2: TLabel
+    Left = 232
+    Top = 40
+    Width = 68
+    Height = 15
+    Caption = 'External type'
+    Enabled = False
+  end
+  object Label3: TLabel
+    Left = 232
+    Top = 11
+    Width = 41
+    Height = 15
+    Caption = 'Sort tag'
+  end
+  object Image1: TImage
+    Left = 80
+    Top = 216
+    Width = 43
+    Height = 31
+  end
+  object Label4: TLabel
+    Left = 8
+    Top = 226
+    Width = 33
+    Height = 15
+    Caption = 'Image'
+  end
+  object LblID: TLabel
+    Left = 8
+    Top = 11
+    Width = 11
+    Height = 15
+    Caption = 'ID'
+    Enabled = False
+  end
   object EditName: TEdit
     Left = 80
-    Top = 8
-    Width = 273
+    Top = 69
+    Width = 297
     Height = 23
-    TabOrder = 0
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 4
+    OnChange = OnChange
   end
   object MemoDescription: TMemo
     Left = 80
-    Top = 37
-    Width = 273
+    Top = 98
+    Width = 297
     Height = 89
-    TabOrder = 1
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 5
   end
   object ChkUseInBuildCalc: TCheckBox
     Left = 80
-    Top = 132
+    Top = 193
     Width = 225
     Height = 17
     Caption = 'Use these Sets in Build calculations?'
-    TabOrder = 2
+    TabOrder = 6
   end
   object BtnCancel: TButton
-    Left = 291
-    Top = 172
+    Left = 302
+    Top = 222
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Cancel = True
     Caption = 'Cancel'
     ModalResult = 2
-    TabOrder = 4
-    OnClick = BtnCancelClick
+    TabOrder = 8
+    ExplicitLeft = 291
+    ExplicitTop = 177
   end
   object BtnOK: TButton
-    Left = 210
-    Top = 172
+    Left = 221
+    Top = 222
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = 'OK'
     Default = True
     ModalResult = 1
-    TabOrder = 3
+    TabOrder = 7
     OnClick = BtnOKClick
+    ExplicitLeft = 210
+    ExplicitTop = 177
+  end
+  object EditExternalID: TEdit
+    Left = 80
+    Top = 37
+    Width = 145
+    Height = 23
+    Anchors = [akLeft, akTop, akRight]
+    ReadOnly = True
+    TabOrder = 2
+  end
+  object EditExternalType: TEdit
+    Left = 306
+    Top = 37
+    Width = 71
+    Height = 23
+    Anchors = [akLeft, akTop, akRight]
+    ReadOnly = True
+    TabOrder = 3
+  end
+  object EditSortIndex: TEdit
+    Left = 306
+    Top = 8
+    Width = 71
+    Height = 23
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 1
+    OnChange = OnChange
+  end
+  object EditID: TEdit
+    Left = 81
+    Top = 8
+    Width = 145
+    Height = 23
+    Anchors = [akLeft, akTop, akRight]
+    ReadOnly = True
+    TabOrder = 0
   end
 end

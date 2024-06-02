@@ -71,7 +71,7 @@ procedure TFrmSetList.FSetSetList(SetList: TSetList);
 begin
   FSetList := SetList;
 
-  if not FSetList.Loaded then begin
+{  if not FSetList.Loaded then begin
     // Attempt to load from disk
     // If that does not exist, it's new and was never fetched.
 
@@ -83,6 +83,7 @@ begin
 
     // Fill scrollbox
   end;
+  }
 end;
 
 end.

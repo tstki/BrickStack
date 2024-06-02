@@ -119,8 +119,6 @@ end;
 
 function TImageCache.FGetFromUrl(const Url: String; var Value: TPicture): Boolean;
 begin
-  Result := False;
-
   var HTTPClient := THTTPClient.Create;
   try
     var Response := HTTPClient.Get(URL);

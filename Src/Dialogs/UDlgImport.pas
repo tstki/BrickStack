@@ -126,7 +126,7 @@ begin
   var EndPoint := '/api/v3/users/' + FConfig.AuthenticationToken + '/setlists/?page=1&page_size=20';
 
   FIdHttp.Request.CustomHeaders.Clear;
-  FIdHttp.Request.CustomHeaders.AddValue('Authorization', 'key 1' + ApiKey);
+  FIdHttp.Request.CustomHeaders.AddValue('Authorization', 'key ' + ApiKey);
 
   try
     var Params := TStringList.Create;
@@ -161,8 +161,8 @@ begin
             if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
               // Lookup by ID
               for var SetList in SetLists do begin
-                if (SetList.RebrickableID > 0) and
-                   (SetList.RebrickableID = StrToIntDef(ResultID, 0)) then begin
+                if (SetList.ExternalID > 0) and
+                   (SetList.ExternalID = StrToIntDef(ResultID, 0)) then begin
                   SetList.Name := ResultName;
                   SetList.UseInCollection := ResultBuildable;
                   Found := True;
@@ -173,10 +173,12 @@ begin
             if not Found then begin
               // Insert new item
               var SetList := TSetList.Create;
+              //SetList.ID;
               SetList.Name := ResultName;
               SetList.Description := ''; // Not supported by API, or needs a separate call.
               SetList.UseInCollection := ResultBuildable;
-              SetList.RebrickableID := StrToIntDef(ResultID, 0);
+              SetList.ExternalID := StrToIntDef(ResultID, 0);
+              SetList.ExternalType := cETREBRICKABLE;
               SetLists.Add(SetList);
             end;
           end;

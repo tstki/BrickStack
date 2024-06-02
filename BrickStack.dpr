@@ -22,16 +22,15 @@ uses
   USetList in 'Src\USetList.pas',
   USet in 'Src\USet.pas',
   UImageCache in 'Src\UImageCache.pas',
-  UPostMessage in 'Src\UPostMessage.pas';
+  UPostMessage in 'Src\UPostMessage.pas',
+  USqLiteConnection in 'Src\USqLiteConnection.pas',
+  UGetImageThread in 'Src\UGetImageThread.pas',
+  USqlThread in 'Src\USqlThread.pas';
 
 {$R *.RES}
 
 begin
-  try
-    Application.Initialize;
-    Application.CreateForm(TFrmMain, FrmMain);
-    Application.Run;
-  finally
-    FrmMain.Free;
-  end;
+  Application.Initialize;
+  Application.CreateForm(TFrmMain, FrmMain);
+  Application.Run;
 end.

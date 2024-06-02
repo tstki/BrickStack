@@ -6,6 +6,7 @@ Version: 20240523.1837 (0.0.0.4)
 - Parts display
 - About screen improved
 - Image download and cache
+- Remember whether setlists/set window was open and restore its open state
 
 Version: 20240511.1633 (0.0.0.3)
 - Added sqlite.dll

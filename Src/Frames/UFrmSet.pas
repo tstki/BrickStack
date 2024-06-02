@@ -59,6 +59,7 @@ type
     property Config: TConfig read FConfig write FConfig;
     property ImageCache: TImageCache read FImageCache write FImageCache;
     procedure LoadSet(const set_num: String);
+    property SetNum: String read FSetNum; // Read only
   end;
 
 implementation
@@ -602,6 +603,10 @@ begin
     var MaxCols := Floor(CurWidth/MinimumPanelWidth);
     //FCurMaxCols should be calculated on formShow, make it -1 for now.
     if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
+      // Scroll to 0,0 first
+      SbSetParts.HorzScrollBar.Position := 0;
+      SbSetParts.VertScrollBar.Position := 0;
+
       // Move stuff around a lot
       var RowIndex := 0;
       var ColIndex := 0;

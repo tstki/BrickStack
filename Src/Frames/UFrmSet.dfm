@@ -20,7 +20,7 @@ object FrmSet: TFrmSet
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 227
+    Width = 223
     Height = 233
     Anchors = [akLeft, akTop, akRight]
     Proportional = True
@@ -28,7 +28,7 @@ object FrmSet: TFrmSet
     ExplicitWidth = 243
   end
   object ImgViewSetExternal: TImage
-    Left = 537
+    Left = 533
     Top = 213
     Width = 32
     Height = 32
@@ -109,7 +109,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 539
   end
   object LblInventoryVersion: TLabel
-    Left = 430
+    Left = 426
     Top = 254
     Width = 91
     Height = 15
@@ -127,14 +127,15 @@ object FrmSet: TFrmSet
   object SbSetParts: TScrollBox
     Left = 8
     Top = 280
-    Width = 561
+    Width = 557
     Height = 260
     Anchors = [akLeft, akTop, akRight, akBottom]
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
-    ExplicitWidth = 563
+    ExplicitWidth = 553
+    ExplicitHeight = 259
     object PnlTemplateResult: TPanel
       Left = 3
       Top = 3
@@ -262,7 +263,7 @@ object FrmSet: TFrmSet
     end
   end
   object LvTagData: TListView
-    Left = 241
+    Left = 237
     Top = 8
     Width = 328
     Height = 199
@@ -279,27 +280,27 @@ object FrmSet: TFrmSet
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitLeft = 243
+    ExplicitLeft = 233
   end
   object CbxInventoryVersion: TComboBox
-    Left = 527
+    Left = 523
     Top = 251
     Width = 42
     Height = 23
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
-    ExplicitLeft = 529
+    ExplicitLeft = 519
   end
   object Button1: TButton
-    Left = 241
+    Left = 237
     Top = 213
     Width = 75
     Height = 25
     Anchors = [akTop, akRight]
     Caption = 'Export'
     TabOrder = 3
-    ExplicitLeft = 239
+    ExplicitLeft = 233
   end
   object CbxIncludeSpareParts: TCheckBox
     Left = 160
@@ -328,7 +329,7 @@ object FrmSet: TFrmSet
     TabOrder = 6
   end
   object BtnPrint: TButton
-    Left = 322
+    Left = 318
     Top = 213
     Width = 75
     Height = 25
@@ -336,6 +337,7 @@ object FrmSet: TFrmSet
     Caption = 'Print'
     TabOrder = 7
     OnClick = BtnPrintClick
+    ExplicitLeft = 314
   end
   object TmrRefresh: TTimer
     Enabled = False

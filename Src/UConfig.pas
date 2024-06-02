@@ -22,6 +22,14 @@ type
     FViewLDrawUrl: String;
     FDefaultViewSetOpenType: Integer;
     FDefaultViewPartOpenType: Integer;
+    FDbasePath: String;
+    FImportPath: String;
+    FExportPath: String;
+
+    // Window states (move to separate class object later) - no need to save this every time after all
+    FFrmSetListCollectionWasOpen: Boolean;
+    FFrmSetWasOpen: String;
+
   public
     { Public declarations }
     procedure Load;
@@ -39,6 +47,12 @@ type
     property ViewLDrawUrl: String read FViewLDrawUrl write FViewLDrawUrl;
     property DefaultViewSetOpenType: Integer read FDefaultViewSetOpenType write FDefaultViewSetOpenType;
     property DefaultViewPartOpenType: Integer read FDefaultViewPartOpenType write FDefaultViewPartOpenType;
+    property DbasePath: String read FDbasePath write FDbasePath;
+    property ImportPath: String read FImportPath write FImportPath;
+    property ExportPath: String read FExportPath write FExportPath;
+
+    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
+    property FrmSetWasOpen: String read FFrmSetWasOpen write FFrmSetWasOpen;
   end;
 
 const
@@ -63,6 +77,14 @@ uses
   UStrings;
 
 procedure TConfig.Load;
+
+  function ReadStringWithDefaultPath(const Section, Ident, FilePath, Default: String; IniFile: TIniFile): String;
+  begin
+    Result := IniFile.ReadString(Section, Ident, '');
+    if Result = '' then
+      Result := FilePath + Default;
+  end;
+
 begin
   var FilePath := ExtractFilePath(ParamStr(0));
   var IniFile := TIniFile.Create(FilePath + StrIniFileName);
@@ -71,12 +93,6 @@ begin
     FRebrickableBaseUrl := IniFile.ReadString(StrRebrickableIniSection, 'RebrickableBaseUrl', 'https://rebrickable.com/');
     FAuthenticationToken := IniFile.ReadString(StrRebrickableIniSection, 'AuthenticationToken', '');
     FRememberAuthenticationToken := IniFile.ReadBool(StrRebrickableIniSection, 'RememberAuthenticationToken', False);
-    FLocalImageCachePath := IniFile.ReadString(StrRebrickableIniSection, 'LocalImageCachePath', '');
-    if FLocalImageCachePath = '' then
-      FLocalImageCachePath := FilePath + StrDefaultCachePath;
-    FLocalLogsPath := IniFile.ReadString(StrRebrickableIniSection, 'LocalLogsPath', '');
-    if FLocalLogsPath = '' then
-      FLocalLogsPath := FilePath + StrDefaultLogPath;
 
     FViewRebrickableUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewRebrickableUrl', 'https://rebrickable.com/');
     FViewBrickLinkUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickLinkUrl', 'https://www.bricklink.com/');
@@ -86,6 +102,15 @@ begin
 
     FDefaultViewSetOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', cOTNONE);
     FDefaultViewPartOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', cOTNONE);
+
+    FLocalImageCachePath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'LocalImageCachePath', FilePath, StrDefaultCachePath, IniFile);
+    FLocalLogsPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'LocalLogsPath', FilePath, StrDefaultLogPath, IniFile);
+    FDbasePath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'DbasePath', FilePath, StrDefaultdDbasePath, IniFile);
+    FImportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
+    FExportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
+
+    FFrmSetListCollectionWasOpen := IniFile.ReadBool(StrRebrickableIniSection, 'FrmSetListCollectionWasOpen', False);
+    FFrmSetWasOpen := IniFile.ReadString(StrRebrickableIniSection, 'FrmSetWasOpen', '');
   finally
     IniFile.Free;
   end;
@@ -100,8 +125,6 @@ begin
     IniFile.WriteString(StrRebrickableIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
     IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
     IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
 
     IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
     IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
@@ -111,6 +134,15 @@ begin
 
     IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
     IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
+
+    IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
+    IniFile.WriteString(StrRebrickableIniSection, 'DbasePath', FDbasePath);
+    IniFile.WriteString(StrRebrickableIniSection, 'ImportPath', FImportPath);
+    IniFile.WriteString(StrRebrickableIniSection, 'ExportPath', FExportPath);
+
+    IniFile.WriteBool(StrRebrickableIniSection, 'FrmSetListCollectionWasOpen', FFrmSetListCollectionWasOpen);
+    IniFile.WriteString(StrRebrickableIniSection, 'FrmSetWasOpen', FFrmSetWasOpen);
   finally
     IniFile.Free;
   end;

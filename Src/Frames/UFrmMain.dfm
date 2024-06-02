@@ -232,7 +232,6 @@ object FrmMain: TFrmMain
       Caption = '&Open'
       Hint = 'Open|Open a file'
       ImageIndex = 7
-      ShortCut = 16463
       OnExecute = FileOpen1Execute
     end
     object FileClose1: TWindowClose
@@ -1023,10 +1022,6 @@ object FrmMain: TFrmMain
       FEBF80030003DCF7FC9F80070003FF0FFDDF807F0003FFFFFDDF80FF8007FFFF
       FDDF81FFF87FFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000
       000000000000}
-  end
-  object PrintDialog1: TPrintDialog
-    Left = 32
-    Top = 168
   end
   object ImageList32: TImageList
     ColorDepth = cd32Bit

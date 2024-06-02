@@ -190,9 +190,10 @@
         <DCCReference Include="Src\USetList.pas"/>
         <DCCReference Include="Src\USet.pas"/>
         <DCCReference Include="Src\UImageCache.pas"/>
-        <DCCReference Include="Src\UPostMessage.pas">
-            <Form>$R *.RES</Form>
-        </DCCReference>
+        <DCCReference Include="Src\UPostMessage.pas"/>
+        <DCCReference Include="Src\USqLiteConnection.pas"/>
+        <DCCReference Include="Src\UGetImageThread.pas"/>
+        <DCCReference Include="Src\USqlThread.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

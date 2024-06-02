@@ -3,10 +3,11 @@ CREATE TABLE MySetLists (
 	Name TEXT(128),
 	Description TEXT(1024),
 	UseInCollection INTEGER,
+	SortIndex INTEGER,
 	ExternalID INTEGER, -- external site's unique ID of your imported set list
-	ExternalType INTEGER, -- rebrickable / bricklink / other
-	CONSTRAINT MySetLists_PK PRIMARY KEY (ID)
+	ExternalType INTEGER -- rebrickable / bricklink / other
 );
+CONSTRAINT MySetLists_PK PRIMARY KEY (ID);
 CREATE INDEX MySetLists_ID_IDX ON MySetLists (ID);
 CREATE INDEX MySetLists_EXTERNALID_IDX ON MySetLists (EXTERNALID);
 
@@ -18,12 +19,23 @@ CREATE TABLE MySets (
 	Built INTEGER,
 	Quantity INTEGER,
 	HaveSpareParts INTEGER,
-	Notes TEXT(1024),
-	CONSTRAINT MySets_PK PRIMARY KEY (ID)
+	Notes TEXT(1024)
 );
+CONSTRAINT MySets_PK PRIMARY KEY (ID);
 CREATE INDEX MySets_ID_IDX ON MySets (ID);
 CREATE INDEX MySets_set_num_IDX ON MySets (set_num);
 CREATE INDEX MySets_MySetListID_IDX ON MySetLists (MySetListID);
+
+
+CREATE TABLE MyCustomTags (
+	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	LinkedID INTEGER, -- ID of the setlist/set
+	CustomType INTEGER, -- 1/2 = setlist/sets
+	Value TEXT(128)
+);
+CONSTRAINT MySets_PK PRIMARY KEY (ID);
+CREATE INDEX CustomTags_ID_IDX ON MyCustomTags (ID);
+CREATE INDEX CustomTags_LinkedID_IDX ON MyCustomTags (LinkedID);
 
 
 ---- Rebrickable imports:

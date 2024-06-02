@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  IdHttp, UConfig, System.Actions, Vcl.ActnList;
+  IdHttp, UConfig, System.Actions, Vcl.ActnList, Vcl.ExtCtrls;
 
 type
   TDlgConfig = class(TForm)
@@ -37,7 +37,7 @@ type
     Label7: TLabel;
     Label8: TLabel;
     EditViewLDrawUrl: TEdit;
-    TsCustomTags: TTabSheet;
+    TsCustomSetTags: TTabSheet;
     Label9: TLabel;
     CbxViewPartDefault: TComboBox;
     CbxViewSetDefault: TComboBox;
@@ -73,7 +73,7 @@ type
     Button6: TButton;
     Label24: TLabel;
     Button7: TButton;
-    Label25: TLabel;
+    LblCacheFolderSize: TLabel;
     Label26: TLabel;
     EditAuthenticationToken: TEdit;
     BtnLogin: TButton;
@@ -90,6 +90,14 @@ type
     ActCreateTag: TAction;
     ActEditTag: TAction;
     ActDeleteTag: TAction;
+    TsCustomSetListTags: TTabSheet;
+    Label27: TLabel;
+    Label28: TLabel;
+    Edit1: TEdit;
+    Button8: TButton;
+    ListView1: TListView;
+    Button9: TButton;
+    Button10: TButton;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -107,6 +115,7 @@ type
     procedure ActDeleteTagExecute(Sender: TObject);
     procedure EditRebrickableAPIKeyChange(Sender: TObject);
     procedure EditRebrickableBaseUrlChange(Sender: TObject);
+    procedure EditLocalImageCachePathChange(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -114,6 +123,7 @@ type
     procedure FSetConfig(Config: TConfig);
     procedure FSelectPathAndUpdateEdit(EditField: TEdit; Pickfolder: Boolean);
     procedure FUpdateUI;
+    procedure FUpdateCacheFolderSize;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
@@ -125,9 +135,10 @@ implementation
 {$R *.dfm}
 
 uses
+  IOUtils,  // Used for cache dir size
+  ShellAPI, // Needed for ShellExecute
   UStrings,
-  UDlgLogin,
-  ShellAPI; // Needed for ShellExecute
+  UDlgLogin;
 
 procedure TDlgConfig.FormCreate(Sender: TObject);
 
@@ -175,8 +186,11 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Local');
     ChildNode.Data := Pointer(TsLocal);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom tags');
-    ChildNode.Data := Pointer(TsCustomTags);
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom set list tags');
+    ChildNode.Data := Pointer(TsCustomSetListTags);
+
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom set tags');
+    ChildNode.Data := Pointer(TsCustomSetTags);
 
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Backup');
     ChildNode.Data := Pointer(TsBackup);
@@ -197,7 +211,30 @@ procedure TDlgConfig.FormShow(Sender: TObject);
 
 begin
   PopulateTreeView();
+  FUpdateCacheFolderSize;
+
   FUpdateUI;
+end;
+
+procedure TDlgConfig.FUpdateCacheFolderSize;
+
+  function GetFolderSize(const Folder: String): Int64;
+  begin
+    Result := 0;
+    var FileList := TDirectory.GetFiles(Folder, '*.*', TSearchOption.soAllDirectories);
+
+    for var FileName in FileList do
+      Result := Result + TFile.GetSize(FileName);
+  end;
+
+begin
+  if DirectoryExists(FConfig.LocalImageCachePath) then begin
+    var FolderSize := GetFolderSize(FConfig.LocalImageCachePath);
+    var FolderSizeMB := FolderSize / (1024 * 1024);  // Convert bytes to MB
+    LblCacheFolderSize.Caption := Format('%.2f MB', [FolderSizeMB]);
+  end else begin
+    LblCacheFolderSize.Caption := '...';
+  end;
 end;
 
 procedure TDlgConfig.FSetConfig(Config: TConfig);
@@ -218,22 +255,29 @@ procedure TDlgConfig.FSetConfig(Config: TConfig);
 begin
   FConfig := Config;
 
+  // Authentication
   EditRebrickableAPIKey.Text := Config.RebrickableAPIKey;
   EditRebrickableBaseUrl.Text := Config.RebrickableBaseUrl;
-  EditLocalImageCachePath.Text := Config.LocalImageCachePath;
-  EditLocalLogsPath.Text := Config.LocalLogsPath;
+  EditAuthenticationToken.Text := Config.AuthenticationToken;
+  ChkRememberAuthenticationToken.Checked := Config.RememberAuthenticationToken;
 
+  // External
   EditViewRebrickableUrl.Text := Config.ViewRebrickableUrl;
   EditViewBrickLinkUrl.Text := Config.ViewBrickLinkUrl;
   EditViewBrickOwlUrl.Text := Config.ViewBrickOwlUrl;
   EditViewBrickSetUrl.Text := Config.ViewBrickSetUrl;
   EditViewLDrawUrl.Text := Config.ViewLDrawUrl;
-
   CbxViewSetDefault.ItemIndex := FGetItemIndexByValue(CbxViewSetDefault, Config.DefaultViewSetOpenType);
   CbxViewPartDefault.ItemIndex := FGetItemIndexByValue(CbxViewPartDefault, Config.DefaultViewPartOpenType);
 
-  PCConfig.ActivePage := TsAuthentication;
+  // Local
+  EditLocalImageCachePath.Text := Config.LocalImageCachePath;
+  EditLocalLogsPath.Text := Config.LocalLogsPath;
+  EditDbasePath.Text := Config.DbasePath;
+  EditImportPath.Text := Config.ImportPath;
+  EditExportPath.Text := Config.ExportPath;
 
+  PCConfig.ActivePage := TsAuthentication;
 end;
 
 procedure TDlgConfig.TreeView1Change(Sender: TObject; Node: TTreeNode);
@@ -245,19 +289,27 @@ end;
 
 procedure TDlgConfig.BtnOKClick(Sender: TObject);
 begin
+  // Authentication
   Config.RebrickableAPIKey := EditRebrickableAPIKey.Text;
   Config.RebrickableBaseUrl := EditRebrickableBaseUrl.Text;
-  Config.LocalImageCachePath := EditLocalImageCachePath.Text;
-  Config.LocalLogsPath := EditLocalLogsPath.Text;
+  Config.AuthenticationToken := EditAuthenticationToken.Text;
+  Config.RememberAuthenticationToken := ChkRememberAuthenticationToken.Checked;
 
+  // External
   Config.ViewRebrickableUrl := EditViewRebrickableUrl.Text;
   Config.ViewBrickLinkUrl := EditViewBrickLinkUrl.Text;
   Config.ViewBrickOwlUrl := EditViewBrickOwlUrl.Text;
   Config.ViewBrickSetUrl := EditViewBrickSetUrl.Text;
   Config.ViewLDrawUrl := EditViewLDrawUrl.Text;
-
   Config.DefaultViewSetOpenType := Integer(CbxViewSetDefault.Items.Objects[CbxViewSetDefault.ItemIndex]);
   Config.DefaultViewPartOpenType := Integer(CbxViewPartDefault.Items.Objects[CbxViewPartDefault.ItemIndex]);
+
+  // Local
+  Config.LocalImageCachePath := EditLocalImageCachePath.Text;
+  Config.LocalLogsPath := EditLocalLogsPath.Text;
+  Config.DbasePath := EditDbasePath.Text;
+  Config.ImportPath := EditImportPath.Text;
+  Config.ExportPath := EditExportPath.Text;
 
   ModalResult := mrOK;
 end;
@@ -265,7 +317,14 @@ end;
 procedure TDlgConfig.FUpdateUI;
 begin
   //BtnOK.Enabled :=
+  //Check to make sure all folders are subfolders of the application's base path, if not, show a warning.
+
   ActLogin.Enabled := (EditRebrickableAPIKey.Text <> '') and (EditRebrickableBaseUrl.TExt <> '');
+end;
+
+procedure TDlgConfig.EditLocalImageCachePathChange(Sender: TObject);
+begin
+//
 end;
 
 procedure TDlgConfig.EditRebrickableAPIKeyChange(Sender: TObject);
@@ -304,7 +363,15 @@ end;
 
 procedure TDlgConfig.ActClearLocalCacheExecute(Sender: TObject);
 begin
-//
+  //DANGER
+  //if ShowMessage('This will delete all local imagae files, this can not be undone. Are you sure?') then
+  //if DirectoryExists(FConfig.LocalImageCachePath) then begin
+    // make SURE it's only files in a folder below brickstat - we dont want the user accidentally selecting c:\ or such.
+    //find "cache" folder
+    //find "media" folder under there
+    //find "parts" and "sets" folder under there.
+    //delete all .jpg files in subdirs
+  //end;
 end;
 
 procedure TDlgConfig.ActCreateTagExecute(Sender: TObject);
@@ -356,6 +423,7 @@ end;
 procedure TDlgConfig.ActSelectLocalCacheFolderExecute(Sender: TObject);
 begin
   FSelectPathAndUpdateEdit(EditLocalImageCachePath, True);
+  FUpdateCacheFolderSize;
 end;
 
 procedure TDlgConfig.ActSelectLogsFolderExecute(Sender: TObject);

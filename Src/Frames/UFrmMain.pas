@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Menus, Vcl.StdCtrls, Vcl.Dialogs, Vcl.Buttons,
   Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.StdActns, Vcl.ActnList, Vcl.ToolWin, Vcl.ImgList,
   System.SysUtils, System.Classes, System.ImageList, System.Actions,
-  IdHttp,
+  IdHttp, USqLiteConnection,
+  FireDAC.Comp.Client,
   UConfig, UImageCache, UPostMessage;
 
 type
@@ -64,7 +65,6 @@ type
     ToolButton10: TToolButton;
     ToolButton11: TToolButton;
     ImageList16: TImageList;
-    PrintDialog1: TPrintDialog;
     ActConfig1: TMenuItem;
     ActConfig: TAction;
     N2: TMenuItem;
@@ -101,12 +101,15 @@ type
     FConfig: TConfig;
     FIdHttp: TIdHttp;
     FImageCache: TImageCache;
+    FConnectionPool: TFDConnectionPool;
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
 //    procedure CreateMDIChild(const Name: string);
   public
     { Public declarations }
     //class procedure ShowSetList();
     //class procedure AddToSet();
+    function AcquireConnection: TFDConnection;
+    procedure ReleaseConnection(Conn: TFDConnection);
     class procedure ShowSetWindow(const set_num: String);
   end;
 
@@ -118,7 +121,7 @@ implementation
 {$R *.dfm}
 
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
+  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,     DBXSQLite,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp,
   UStrings;
@@ -128,8 +131,8 @@ begin
   FConfig := TConfig.Create;
   FConfig.Load;
 
-  var fp := ExtractFilePath(ParamStr(0));
-  IdOpenSSLSetLibPath(fp);
+  var FilePath := ExtractFilePath(ParamStr(0));
+  IdOpenSSLSetLibPath(FilePath);
 
   FIdHttp := TIdHttp.Create(nil);
 
@@ -139,6 +142,17 @@ begin
 
   FImageCache := TImageCache.Create;
   FImageCache.Config := FConfig;
+
+  //      var FilePath := ExtractFilePath(ParamStr(0));
+//      var SQLConnection1 := TSqlConnection.Create(self);
+//      SQLConnection1.DriverName := 'SQLite';
+//      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
+//      SQLConnection1.Open;
+
+  if FConfig.DBasePath <> '' then
+    FConnectionPool := TFDConnectionPool.Create(FConfig.DBasePath)
+  else
+    FConnectionPool := TFDConnectionPool.Create(ExtractFilePath(ParamStr(0)) + '\Dbase\Brickstack.db');
 end;
 
 procedure TFrmMain.FormDestroy(Sender: TObject);
@@ -154,14 +168,28 @@ end;
 
 procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-//Iterate over children
-  //Save type and open type
-  //Save top/left/width/height of each child
+  // Remember open windows
+  FConfig.FrmSetListCollectionWasOpen := False;
+  FConfig.FrmSetWasOpen := '';
+  for var I := 0 to MDIChildCount-1 do begin
+    var Child := MDIChildren[I];
+    if Child.ClassType = TFrmSetListCollection then begin
+      FConfig.FrmSetListCollectionWasOpen := True;
+    end else if Child.ClassType = TFrmSet then begin
+      FConfig.FrmSetWasOpen := TFrmSet(Child).SetNum;
+    end;
+    //Also save top/left/width/height of each child
+  end;
 end;
 
 procedure TFrmMain.FormShow(Sender: TObject);
 begin
   // Restore previously open child windows
+
+  if FConfig.FrmSetListCollectionWasOpen then
+    ActCollectionExecute(Self);
+  if FConfig.FrmSetWasOpen <> '' then
+    ShowSetWindow(FConfig.FrmSetWasOpen);
 end;
 
 procedure TFrmMain.WMShowSet(var Msg: TMessage);
@@ -180,6 +208,16 @@ begin
   finally
     Dispose(MsgData); // Don't forget to free the allocated memory
   end;
+end;
+
+function TFrmMain.AcquireConnection: TFDConnection;
+begin
+  Result := FConnectionPool.AcquireConnection;
+end;
+
+procedure TFrmMain.ReleaseConnection(Conn: TFDConnection);
+begin
+  FConnectionPool.ReleaseConnection(Conn);
 end;
 
 class procedure TFrmMain.ShowSetWindow(const set_num: String);
@@ -211,11 +249,9 @@ end;
 
 procedure TFrmMain.ActCollectionExecute(Sender: TObject);
 begin
+//  FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False);
   FCreateMDIChild(TFrmSetListCollection, StrSetListFrameTitle, False);
 end;
-
-//
-//  FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False);
 
 function TFrmMain.FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
 begin
