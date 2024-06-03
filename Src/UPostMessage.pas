@@ -12,7 +12,7 @@ type
   PShowSetData = ^TShowSetData;
 
   TShowSetListData = record
-    SetList: Integer;
+    SetListID: Integer;
   end;
   PShowSetListData = ^TShowSetListData;
 

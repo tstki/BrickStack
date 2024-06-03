@@ -220,23 +220,9 @@ end;
 
 procedure TFrmSetListCollection.ActOpenCollectionExecute(Sender: TObject);
 begin
-//Open the set dialog and show sets
-//UFrmSetList
-  //TFrmMain.ShowXWindow();
-//get selection, get collection ID. open collection and show sets.
-
-//query. get Set IDS
-//if no results, call aPI to see if there are anysets - it might be the first time this collection is loaded.
-//collections are not loaded by default for performance sake.
-
-{
-var
-  MsgData: PCustomMessageData;
-begin
-  New(MsgData);
-  MsgData^.MessageText := 'Hello from SubDialog';
-  PostMessage(MainForm.Handle, WM_MY_CUSTOM_MESSAGE, WPARAM(MsgData), 0);
-}
+  var SetList := FGetSelectedObject;
+  if (SetList <> nil) and (SetList.ID <> 0) then
+    TFrmMain.ShowSetListWindow(SetList.ID);
 end;
 
 procedure TFrmSetListCollection.ActAddSetListExecute(Sender: TObject);
@@ -254,7 +240,6 @@ begin
       try
         FDTransaction1.StartTransaction;
         try
-
           // Set up the query
           FDQuery.Connection := FSqlConnection;
           FDQuery.SQL.Text := 'INSERT INTO mysetlists (NAME, DESCRIPTION, USEINCOLLECTION, EXTERNALTYPE, SORTINDEX)' +
@@ -333,7 +318,6 @@ begin
 
         SetList.Dirty := False;
 
-        // update list
         RebuildListView;
       end;
     finally
@@ -345,10 +329,32 @@ end;
 procedure TFrmSetListCollection.ActDeleteSetListExecute(Sender: TObject);
 begin
   var SetList := FGetSelectedObject;
-  if (SetList <> nil) and (MessageDlg(Format(StrMsgSureDelete, [SetList.Name]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
-    //delete from list
-    //save
-    //call SQL
+  if (SetList <> nil) and (SetList.ID <> 0) and (MessageDlg(Format(StrMsgSureDelete, [SetList.Name, SetList.ID]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
+    var FDQuery := TFDQuery.Create(nil);
+    try
+      // Set up the query
+      FDQuery.Connection := FSqlConnection;
+      FDQuery.SQL.Text := 'DELETE FROM MySetLists where id=:id';
+
+      var Params := FDQuery.Params;
+      Params.ParamByName('id').asInteger := SetList.ID;
+
+      FDQuery.ExecSQL;
+      SetList.DoDelete := True;
+    finally
+      FDQuery.Free;
+    end;
+
+    // Also delete it from memory
+    for var I:=0 to FSetLists.Count-1 do begin
+      var IDxSetList := FSetLists[I];
+      if SetList.ID = IdxSetList.ID then begin
+        FSetLists.Delete(I);
+        break;
+      end;
+    end;
+
+    RebuildListView;
   end;
 end;
 

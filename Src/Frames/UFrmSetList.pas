@@ -55,6 +55,18 @@ end;
 procedure TFrmSetList.FormShow(Sender: TObject);
 begin
 //  Self.Caption := Self.Caption + '';
+
+  //Open the set dialog and show sets
+//UFrmSetList
+  //TFrmMain.ShowXWindow();
+
+
+//get selection, get collection ID. open collection and show sets.
+
+//query. get Set IDS
+//if no results, call API to see if there are anysets - it might be the first time this collection is loaded.
+//collections are not loaded by default for performance sake.
+
 end;
 
 procedure TFrmSetList.FormClose(Sender: TObject; var Action: TCloseAction);

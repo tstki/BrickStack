@@ -66,7 +66,7 @@ const
   //StrOTCustom = 'Custom (Link)';
 
   // Message strings
-  StrMsgSureDelete = 'Are you sure you wish to delete "%s"? This action can''t be undone.';
+  StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';
 
   // Error strings
   StrErrNoResult = 'No result';

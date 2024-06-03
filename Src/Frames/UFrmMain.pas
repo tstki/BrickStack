@@ -94,6 +94,7 @@ type
     procedure ActSearchExecute(Sender: TObject);
     procedure ActHelpExecute(Sender: TObject);
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
+    procedure WMShowSetList(var Msg: TMessage); message WM_SHOW_SETLIST;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
   private
@@ -111,6 +112,7 @@ type
     function AcquireConnection: TFDConnection;
     procedure ReleaseConnection(Conn: TFDConnection);
     class procedure ShowSetWindow(const set_num: String);
+    class procedure ShowSetListWindow(const SetListID: Integer);
   end;
 
 var
@@ -122,7 +124,7 @@ implementation
 
 uses
   IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,     DBXSQLite,
-  UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet,
+  UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp,
   UStrings;
 
@@ -193,16 +195,30 @@ begin
 end;
 
 procedure TFrmMain.WMShowSet(var Msg: TMessage);
-var
-  MsgData: PShowSetData;
 begin
-  MsgData := PShowSetData(Msg.WParam);
+  var MsgData := PShowSetData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
       var Form := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Form) then begin
         var FrmSet := TFrmSet(Form);
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
+      end;
+    end;
+  finally
+    Dispose(MsgData); // Don't forget to free the allocated memory
+  end;
+end;
+
+procedure TFrmMain.WMShowSetList(var Msg: TMessage);
+begin
+  var MsgData := PShowSetListData(Msg.WParam);
+  try
+    if Assigned(MsgData) then begin
+      var Form := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      if Assigned(Form) then begin
+        var FrmSetList := TFrmSetList(Form);
+//todo:        FrmSetList.LoadSetList(MsgData.SetListID); // - multithreaded load
       end;
     end;
   finally
@@ -227,6 +243,15 @@ begin
   New(PostData);
   PostData^.Set_num := set_num;
   PostMessage(FrmMain.Handle, WM_SHOW_SET, WPARAM(PostData), 0);
+end;
+
+class procedure TFrmMain.ShowSetListWindow(const SetListID: Integer);
+var
+  PostData: PShowSetListData;
+begin
+  New(PostData);
+  PostData^.SetListID := SetListID;
+  PostMessage(FrmMain.Handle, WM_SHOW_SETLIST, WPARAM(PostData), 0);
 end;
 
 procedure TFrmMain.ActAuthenticateExecute(Sender: TObject);
@@ -275,6 +300,8 @@ begin
       var FrmSetListCollection := TFrmSetListCollection(Child);
       FrmSetListCollection.IdHttp := FIdHttp;
       FrmSetListCollection.Config := FConfig;
+    end else if AFormClass = TFrmSetList then begin
+    // do stuff
     end else if AFormClass = TFrmSet then begin
       var FrmSet := TFrmSet(Child);
       FrmSet.IdHttp := FIdHttp;

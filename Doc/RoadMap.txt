@@ -13,10 +13,12 @@ More of a todo / idea list than a roadmap, but here goes:
 - Sorting tables
 - Dont use "select *" but get the exact columns
 - Add configurable behaviour for "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
-- Configure next/prev page results, in case results are a lot. (limit 10 offset 10)
+- Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
 - Dark mode
 - "3001pr004" and other parts with different external references does not allow part lookup at this time.
 -- Should be available in the API
+- Dont keep the sql connection open while the dialog is open - open it when needed.
+- Caps lock is active warning in login dialog
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
