@@ -17,8 +17,8 @@ More of a todo / idea list than a roadmap, but here goes:
 - Dark mode
 - "3001pr004" and other parts with different external references does not allow part lookup at this time.
 -- Should be available in the API
-- Dont keep the sql connection open while the dialog is open - open it when needed.
 - Caps lock is active warning in login dialog
+- Convert the older sql connections to firedac
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)

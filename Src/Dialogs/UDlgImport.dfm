@@ -2,8 +2,8 @@ object DlgImport: TDlgImport
   Left = 0
   Top = 0
   Caption = 'DlgImport'
-  ClientHeight = 117
-  ClientWidth = 321
+  ClientHeight = 116
+  ClientWidth = 317
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,8 +13,8 @@ object DlgImport: TDlgImport
   Position = poOwnerFormCenter
   OnCreate = FormCreate
   DesignSize = (
-    321
-    117)
+    317
+    116)
   TextHeight = 15
   object Label1: TLabel
     Left = 8
@@ -33,26 +33,24 @@ object DlgImport: TDlgImport
   object CbxImportOptions: TComboBox
     Left = 112
     Top = 8
-    Width = 201
+    Width = 193
     Height = 23
     Style = csDropDownList
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
-    ExplicitWidth = 209
   end
   object CbxImportLocalOptions: TComboBox
     Left = 112
     Top = 37
-    Width = 201
+    Width = 193
     Height = 23
     Style = csDropDownList
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
-    ExplicitWidth = 209
   end
   object BtnCancel: TButton
-    Left = 238
-    Top = 84
+    Left = 230
+    Top = 83
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -61,10 +59,11 @@ object DlgImport: TDlgImport
     ModalResult = 2
     TabOrder = 3
     ExplicitLeft = 246
+    ExplicitTop = 84
   end
   object BtnOK: TButton
-    Left = 157
-    Top = 84
+    Left = 149
+    Top = 83
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -74,5 +73,6 @@ object DlgImport: TDlgImport
     TabOrder = 2
     OnClick = BtnOKClick
     ExplicitLeft = 165
+    ExplicitTop = 84
   end
 end

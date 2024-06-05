@@ -7,7 +7,7 @@ uses
 
 type
   // Filled with: {{baseUrl}}/api/v3/users/:user_token/setlists/:list_id/sets/?page_size=20
-  TSetList = class(TObject)
+  TSetObject = class(TObject)
   private
     { Private declarations }
 //    FListID: Integer; // We know the listID, so this one is kinda pointless
@@ -36,6 +36,8 @@ type
 //    property RebrickableID: Integer read FRebrickableID write FRebrickableID;
 //    property Loaded: Boolean read FLoaded write FLoaded;
   end;
+
+
 
 implementation
 

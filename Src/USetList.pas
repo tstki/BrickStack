@@ -14,7 +14,7 @@ const
 type
   // Can be filled with: {{baseUrl}}/api/v3/users/:user_token/setlists/?page=1&page_size=20
   // Or through SQL
-  TSetList = class(TObject)
+  TSetListObject = class(TObject)
   private
     { Private declarations }
     FID: Integer;
@@ -29,6 +29,8 @@ type
     FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
   public
     { Public declarations }
+    procedure LoadByID(ID: Integer);
+    procedure LoadFromQuery(FDQuery: TFDQuery);
     property ID: Integer read FID write FID;
     property Name: String read FName write FName;
     property Description: String read FDescription write FDescription;
@@ -41,9 +43,9 @@ type
   end;
 
   // Move this to a separate unit later:
-  TSetLists = class(TObjectList<TSetList>)
+  TSetListObjectList = class(TObjectList<TSetListObject>)
   public
-    procedure LoadFromSql(FDQuery: TFDQuery);
+    procedure LoadFromQuery(FDQuery: TFDQuery);
     procedure LoadFromExternal;
     //procedure LoadFromFile;
     //procedure SaveToFile(ReWrite: Boolean);
@@ -53,26 +55,53 @@ type
 implementation
 
 uses
-  SysUtils, IniFiles,
+  FireDAC.Stan.Param,
+  SysUtils, IniFiles, UFrmMain,
   UStrings;
 
-procedure TSetLists.LoadFromSql(FDQuery: TFDQuery);
+procedure TSetListObject.LoadByID(ID: Integer);
+begin
+  var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
+  var FDQuery := TFDQuery.Create(nil);
+  try
+    // Set up the query
+    FDQuery.Connection := SqlConnection;
+
+    FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex FROM mysetlists WHERE ID=:ID';
+
+    var Params := FDQuery.Params;
+    Params.ParamByName('id').asInteger := ID;
+
+    FDQuery.Open;
+
+    Self.LoadFromQuery(FDQuery);
+  finally
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
+end;
+
+procedure TSetListObject.LoadFromQuery(FDQuery: TFDQuery);
+begin
+  Self.ID := FDQuery.FieldByName('id').AsInteger;
+  Self.Name := FDQuery.FieldByName('name').AsString;
+  Self.Description := FDQuery.FieldByName('description').AsString;
+  Self.UseInCollection := FDQuery.FieldByName('useincollection').AsInteger > 0;
+  Self.ExternalID := FDQuery.FieldByName('externalid').AsInteger;
+  Self.ExternalType := FDQuery.FieldByName('externaltype').AsInteger;
+  Self.SortIndex := FDQuery.FieldByName('sortindex').AsInteger;
+  //Self.IconIndex := FDQuery.FieldByName('iconindex').AsInteger;
+  Self.FDirty := False;
+  Self.DoDelete := False;
+end;
+
+procedure TSetListObjectList.LoadFromQuery(FDQuery: TFDQuery);
 begin
   FDQuery.Open;
 
   while not FDQuery.Eof do begin
-    var LegoCollection := TSetList.Create;
-    
-    LegoCollection.ID := FDQuery.FieldByName('id').AsInteger;
-    LegoCollection.Name := FDQuery.FieldByName('name').AsString;
-    LegoCollection.Description := FDQuery.FieldByName('description').AsString;
-    LegoCollection.UseInCollection := FDQuery.FieldByName('useincollection').AsInteger > 0;
-    LegoCollection.ExternalID := FDQuery.FieldByName('externalid').AsInteger;
-    LegoCollection.ExternalType := FDQuery.FieldByName('externaltype').AsInteger;
-    LegoCollection.SortIndex := FDQuery.FieldByName('sortindex').AsInteger;
-    //LegoCollection.IconIndex := FDQuery.FieldByName('iconindex').AsInteger;
-    LegoCollection.FDirty := False;
-    LegoCollection.DoDelete := False;
+    var LegoCollection := TSetListObject.Create;
+    LegoCollection.LoadFromQuery(FDQuery);
 
     Self.Add(LegoCollection);
 
@@ -80,21 +109,23 @@ begin
   end;
 end;
 
-procedure TSetLists.LoadFromExternal();//FIdHttp
+procedure TSetListObjectList.LoadFromExternal();//FIdHttp
 begin
 //
 end;
 
-procedure TSetLists.SaveToSQL(SqlConnection: TFDConnection);
+procedure TSetListObjectList.SaveToSQL(SqlConnection: TFDConnection);
 begin
+//Intended for a batch save after import
+
 //start transaction?
 
-  for var SetList in Self do begin
-    if not SetList.Dirty then
+  for var SetListObject in Self do begin
+    if not SetListObject.Dirty then
       Continue;
     
-    if Setlist.ID <> 0 then begin
-      if SetList.DoDelete then begin
+    if SetListObject.ID <> 0 then begin
+      if SetListObject.DoDelete then begin
       //delete
       end else begin
       //update

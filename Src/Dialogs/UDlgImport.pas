@@ -21,12 +21,12 @@ type
     { Private declarations }
     FIdHttp: TIdHttp;
     FConfig: TConfig;
-    FSetLists: TSetLists;
+    FSetListObjectList: TSetListObjectList;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
-    property SetLists: TSetLists read FSetLists write FSetLists;
+    property SetListObjectList: TSetListObjectList read FSetListObjectList write FSetListObjectList;
   end;
 
 var
@@ -143,7 +143,7 @@ begin
 
           if CbxImportLocalOptions.ItemIndex = cIMPORTOVERWRITE then begin
             // clear the current collection list
-            SetLists.Clear;
+            SetListObjectList.Clear;
           end;
 
           var ResultsArray: TJSONArray;
@@ -160,11 +160,11 @@ begin
 
             if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
               // Lookup by ID
-              for var SetList in SetLists do begin
-                if (SetList.ExternalID > 0) and
-                   (SetList.ExternalID = StrToIntDef(ResultID, 0)) then begin
-                  SetList.Name := ResultName;
-                  SetList.UseInCollection := ResultBuildable;
+              for var SetListObject in SetListObjectList do begin
+                if (SetListObject.ExternalID > 0) and
+                   (SetListObject.ExternalID = StrToIntDef(ResultID, 0)) then begin
+                  SetListObject.Name := ResultName;
+                  SetListObject.UseInCollection := ResultBuildable;
                   Found := True;
                 end;
               end;
@@ -172,14 +172,14 @@ begin
 
             if not Found then begin
               // Insert new item
-              var SetList := TSetList.Create;
+              var SetListObject := TSetListObject.Create;
               //SetList.ID;
-              SetList.Name := ResultName;
-              SetList.Description := ''; // Not supported by API, or needs a separate call.
-              SetList.UseInCollection := ResultBuildable;
-              SetList.ExternalID := StrToIntDef(ResultID, 0);
-              SetList.ExternalType := cETREBRICKABLE;
-              SetLists.Add(SetList);
+              SetListObject.Name := ResultName;
+              SetListObject.Description := ''; // Not supported by API, or needs a separate call.
+              SetListObject.UseInCollection := ResultBuildable;
+              SetListObject.ExternalID := StrToIntDef(ResultID, 0);
+              SetListObject.ExternalType := cETREBRICKABLE;
+              SetListObjectList.Add(SetListObject);
             end;
           end;
 

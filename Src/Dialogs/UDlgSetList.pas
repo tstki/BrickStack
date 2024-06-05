@@ -31,11 +31,11 @@ type
     procedure OnChange(Sender: TObject);
   private
     { Private declarations }
-    FSetList: TSetList;
+    FSetListObject: TSetListObject;
     procedure FUpdateUI;
   public
     { Public declarations }
-    property SetList: TSetList read FSetList write FSetList;
+    property SetListObject: TSetListObject read FSetListObject write FSetListObject;
   end;
 
 implementation
@@ -44,11 +44,11 @@ implementation
 
 procedure TDlgSetList.BtnOKClick(Sender: TObject);
 begin
-  FSetList.Name := EditName.Text;
-  FSetList.Description := MemoDescription.Text;
-  FSetList.UseInCollection := ChkUseInBuildCalc.Checked;
-  FSetList.SortIndex := StrToIntDef(EditSortIndex.Text, 0);
-  FSetList.Dirty := True;
+  FSetListObject.Name := EditName.Text;
+  FSetListObject.Description := MemoDescription.Text;
+  FSetListObject.UseInCollection := ChkUseInBuildCalc.Checked;
+  FSetListObject.SortIndex := StrToIntDef(EditSortIndex.Text, 0);
+  FSetListObject.Dirty := True;
 end;
 
 procedure TDlgSetList.OnChange(Sender: TObject);
@@ -74,13 +74,13 @@ procedure TDlgSetList.FormShow(Sender: TObject);
 begin
   EditName.SetFocus;
 
-  EditID.Text := FIntToStrNoZero(FSetList.ID);
-  EditName.Text := FSetList.Name;
-  EditExternalID.Text := FIntToStrNoZero(FSetList.ExternalID);
+  EditID.Text := FIntToStrNoZero(FSetListObject.ID);
+  EditName.Text := FSetListObject.Name;
+  EditExternalID.Text := FIntToStrNoZero(FSetListObject.ExternalID);
   EditExternalType.Text := '';
-  MemoDescription.Text := FSetList.Description;
-  ChkUseInBuildCalc.Checked := FSetList.UseInCollection;
-  EditSortIndex.Text := IntToStr(FSetList.SortIndex);
+  MemoDescription.Text := FSetListObject.Description;
+  ChkUseInBuildCalc.Checked := FSetListObject.UseInCollection;
+  EditSortIndex.Text := IntToStr(FSetListObject.SortIndex);
   //Image1: TImage; show the image by index has to match the UFrmSetListCollection, or we should figure out a different way to do this
 
   FUpdateUI;

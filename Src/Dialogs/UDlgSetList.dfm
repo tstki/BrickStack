@@ -2,8 +2,8 @@ object DlgSetList: TDlgSetList
   Left = 0
   Top = 0
   Caption = 'DlgSetList'
-  ClientHeight = 255
-  ClientWidth = 385
+  ClientHeight = 254
+  ClientWidth = 381
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,8 +13,8 @@ object DlgSetList: TDlgSetList
   Position = poOwnerFormCenter
   OnShow = FormShow
   DesignSize = (
-    385
-    255)
+    381
+    254)
   TextHeight = 15
   object LblName: TLabel
     Left = 8
@@ -77,19 +77,21 @@ object DlgSetList: TDlgSetList
   object EditName: TEdit
     Left = 80
     Top = 69
-    Width = 297
+    Width = 289
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 4
     OnChange = OnChange
+    ExplicitWidth = 297
   end
   object MemoDescription: TMemo
     Left = 80
     Top = 98
-    Width = 297
+    Width = 289
     Height = 89
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 5
+    ExplicitWidth = 297
   end
   object ChkUseInBuildCalc: TCheckBox
     Left = 80
@@ -100,8 +102,8 @@ object DlgSetList: TDlgSetList
     TabOrder = 6
   end
   object BtnCancel: TButton
-    Left = 302
-    Top = 222
+    Left = 294
+    Top = 221
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -113,8 +115,8 @@ object DlgSetList: TDlgSetList
     ExplicitTop = 177
   end
   object BtnOK: TButton
-    Left = 221
-    Top = 222
+    Left = 213
+    Top = 221
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -129,37 +131,41 @@ object DlgSetList: TDlgSetList
   object EditExternalID: TEdit
     Left = 80
     Top = 37
-    Width = 145
+    Width = 137
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     ReadOnly = True
     TabOrder = 2
+    ExplicitWidth = 145
   end
   object EditExternalType: TEdit
     Left = 306
     Top = 37
-    Width = 71
+    Width = 63
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     ReadOnly = True
     TabOrder = 3
+    ExplicitWidth = 71
   end
   object EditSortIndex: TEdit
     Left = 306
     Top = 8
-    Width = 71
+    Width = 63
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
     OnChange = OnChange
+    ExplicitWidth = 71
   end
   object EditID: TEdit
     Left = 81
     Top = 8
-    Width = 145
+    Width = 137
     Height = 23
     Anchors = [akLeft, akTop, akRight]
     ReadOnly = True
     TabOrder = 0
+    ExplicitWidth = 145
   end
 end

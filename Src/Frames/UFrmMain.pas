@@ -202,6 +202,7 @@ begin
       var Form := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Form) then begin
         var FrmSet := TFrmSet(Form);
+
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
       end;
     end;
@@ -218,7 +219,7 @@ begin
       var Form := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Form) then begin
         var FrmSetList := TFrmSetList(Form);
-//todo:        FrmSetList.LoadSetList(MsgData.SetListID); // - multithreaded load
+        FrmSetList.SetListID := MsgData.SetListID; // - multithreaded load
       end;
     end;
   finally
@@ -300,16 +301,21 @@ begin
       var FrmSetListCollection := TFrmSetListCollection(Child);
       FrmSetListCollection.IdHttp := FIdHttp;
       FrmSetListCollection.Config := FConfig;
+      Child.Caption := Title;
     end else if AFormClass = TFrmSetList then begin
-    // do stuff
+      var FrmSetList := TFrmSetList(Child);
+      FrmSetList.IdHttp := FIdHttp;
+      // do stuff
+      //Child.Caption := Title;
+      //FrmSetList.FSetSetList();
     end else if AFormClass = TFrmSet then begin
       var FrmSet := TFrmSet(Child);
       FrmSet.IdHttp := FIdHttp;
       FrmSet.Config := FConfig;
       FrmSet.ImageCache := FImageCache;
+      Child.Caption := Title;
     end;
 
-    Child.Caption := Title;
     Result := Child;
   finally
     //

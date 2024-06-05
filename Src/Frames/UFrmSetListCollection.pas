@@ -50,7 +50,6 @@ type
     procedure ActImportExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
     procedure CbxFilterChange(Sender: TObject);
-    procedure LvCollectionsDblClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ActOpenCollectionExecute(Sender: TObject);
     procedure ActDeleteSetListExecute(Sender: TObject);
@@ -62,10 +61,10 @@ type
     //FIdHttp: TIdHttp;
     FIdHttp: TIdHttp;
     FConfig: TConfig;
-    FSetLists: TSetLists;
-    FSqlConnection: TFDConnection;
+    FSetListObjectList: TSetListObjectList;
+//    FSqlConnection: TFDConnection;
     procedure RebuildListView;
-    function FGetSelectedObject: TSetList;
+    function FGetSelectedObject: TSetListObject;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
@@ -97,13 +96,24 @@ begin
     LvSetLists.Items.Clear;
     LvSetLists.SmallImages := ImageList16;
 
-    for var SetList in FSetLists do begin
+    for var SetListObject in FSetListObjectList do begin
+
+      // Check filter.
+      if CbxFilter.ItemIndex = cETFLOCAL then begin
+        if SetListObject.ExternalID <> 0 then
+          Continue;
+      end else if CbxFilter.ItemIndex = cETFREBRICKABLE then begin
+        if SetListObject.ExternalID = 0 then
+          Continue;
+      end; // Else, no filter.
+
+
       // Add items to the list view
       var Item := LvSetLists.Items.Add;
-      Item.Caption := SetList.Name;
-      Item.SubItems.Add(IfThen(SetList.UseInCollection, 'Yes', 'No'));
+      Item.Caption := SetListObject.Name;
+      Item.SubItems.Add(IfThen(SetListObject.UseInCollection, 'Yes', 'No'));
       Item.ImageIndex := 0;
-      Item.Data := SetList;
+      Item.Data := SetListObject;
     end;
   finally
     LvSetLists.items.EndUpdate;
@@ -125,7 +135,7 @@ begin
   Width := 450;
   //read size from config as well
 
-  FSetLists := TSetLists.Create;  // Do not load from file, get from database.
+  FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
 
   CbxFilter.Items.Clear;
   CbxFilter.Items.Add('All');
@@ -142,18 +152,19 @@ begin
   //CbxFilter.Items.Add('Custom tag 3');
   CbxFilter.ItemIndex := 0;
 
-  FSqlConnection := FrmMain.AcquireConnection; // Kept until end of form
+  var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
   var FDQuery := TFDQuery.Create(nil);
   try
     // Set up the query
-    FDQuery.Connection := FSqlConnection;
+    FDQuery.Connection := SqlConnection;
     FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex FROM mysetlists';
-    FSetLists.LoadFromSql(FDQuery);
+    FSetListObjectList.LoadFromQuery(FDQuery);
   finally
     FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
   end;
 
-  if FSetLists.Count > 0 then
+  if FSetListObjectList.Count > 0 then
     RebuildListView;
 end;
 
@@ -167,14 +178,8 @@ begin
 // Show context menu to show/hide columns
 end;
 
-procedure TFrmSetListCollection.LvCollectionsDblClick(Sender: TObject);
-begin
-//Double click - open
-end;
-
 procedure TFrmSetListCollection.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  FrmMain.ReleaseConnection(FSqlConnection);
   Action := caFree;
 end;
 
@@ -189,11 +194,16 @@ begin
   var DlgImport := TDlgImport.Create(Self);
   try
     DlgImport.Config := FConfig;
-    DlgImport.SetLists := FSetLists;
+    DlgImport.SetListObjectList := FSetListObjectList;
     DlgImport.IdHttp := FIdHttp;
     if DlgImport.ShowModal = mrOK then begin
       //FSetLists.SaveToFile(True);
-      FSetLists.SaveToSQL(FSqlConnection);
+      var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
+      try
+        FSetListObjectList.SaveToSQL(SqlConnection);
+      finally
+        FrmMain.ReleaseConnection(SqlConnection);
+      end;
       RebuildListView;
     end;
   finally
@@ -201,7 +211,7 @@ begin
   end;
 end;
 
-function TFrmSetListCollection.FGetSelectedObject: TSetList;
+function TFrmSetListCollection.FGetSelectedObject: TSetListObject;
 begin
   Result := nil;
 
@@ -215,7 +225,7 @@ end;
 
 procedure TFrmSetListCollection.CbxFilterChange(Sender: TObject);
 begin
-//apply new filter
+  RebuildListView;
 end;
 
 procedure TFrmSetListCollection.ActOpenCollectionExecute(Sender: TObject);
@@ -227,30 +237,31 @@ end;
 
 procedure TFrmSetListCollection.ActAddSetListExecute(Sender: TObject);
 begin
-  var SetList := TSetList.Create;
+  var SetListObject := TSetListObject.Create;
   var DlgEdit := TDlgSetList.Create(Self);
-  DlgEdit.SetList := SetList;
+  DlgEdit.SetListObject := SetListObject;
   try
     if DlgEdit.ShowModal = mrOK then begin
-      FSetLists.Add(SetList);
+      FSetListObjectList.Add(SetListObject);
 
       var FDQuery := TFDQuery.Create(nil);
       var FDTransaction1 := TFDTransaction.Create(nil);
-      FDTransaction1.Connection := FSqlConnection;
+      var SqlConnection := FrmMain.AcquireConnection;
       try
+        FDTransaction1.Connection := SqlConnection;
         FDTransaction1.StartTransaction;
         try
           // Set up the query
-          FDQuery.Connection := FSqlConnection;
+          FDQuery.Connection := SqlConnection;
           FDQuery.SQL.Text := 'INSERT INTO mysetlists (NAME, DESCRIPTION, USEINCOLLECTION, EXTERNALTYPE, SORTINDEX)' +
                               'VALUES (:NAME, :DESCRIPTION, :USEINCOLLECTION, :EXTERNALTYPE, :SORTINDEX);';
 
           var Params := FDQuery.Params;
-          Params.ParamByName('name').AsString := SetList.Name;
-          Params.ParamByName('description').AsString := SetList.Description;
-          Params.ParamByName('useincollection').asInteger := IfThen(SetList.UseInCollection, 1, 0);
-          Params.ParamByName('externaltype').asInteger := SetList.ExternalType;
-          Params.ParamByName('sortindex').asInteger := SetList.SortIndex;
+          Params.ParamByName('name').AsString := SetListObject.Name;
+          Params.ParamByName('description').AsString := SetListObject.Description;
+          Params.ParamByName('useincollection').asInteger := IfThen(SetListObject.UseInCollection, 1, 0);
+          Params.ParamByName('externaltype').asInteger := SetListObject.ExternalType;
+          Params.ParamByName('sortindex').asInteger := SetListObject.SortIndex;
           // id/externalid/externaltype can't be changed by the user.
           // add imageindex later
           FDQuery.ExecSQL;
@@ -263,7 +274,7 @@ begin
           try
             FDQuery.First;
             if not FDQuery.EOF then
-              SetList.ID := FDQuery.Fields[0].AsInteger;
+              SetListObject.ID := FDQuery.Fields[0].AsInteger;
           finally
             FDQuery.Close;
           end;
@@ -275,13 +286,14 @@ begin
       finally
         FDQuery.Free;
         FDTransaction1.Free;
+        FrmMain.ReleaseConnection(SqlConnection);
       end;
 
-      SetList.Dirty := False;
+      SetListObject.Dirty := False;
 
       RebuildListView;
     end else
-      SetList.Free;
+      SetListObject.Free;
   finally
     DlgEdit.Free;
   end;
@@ -289,34 +301,36 @@ end;
 
 procedure TFrmSetListCollection.ActEditSetListExecute(Sender: TObject);
 begin
-  var SetList := FGetSelectedObject;
-  if (SetList <> nil) and (SetList.ID <> 0) then begin
+  var SetListObject := FGetSelectedObject;
+  if (SetListObject <> nil) and (SetListObject.ID <> 0) then begin
     var DlgEdit := TDlgSetList.Create(Self);
-    DlgEdit.SetList := SetList;
+    DlgEdit.SetListObject := SetListObject;
     try
       if DlgEdit.ShowModal = mrOK then begin
         var FDQuery := TFDQuery.Create(nil);
+        var SqlConnection := FrmMain.AcquireConnection;
         try
           // Set up the query
-          FDQuery.Connection := FSqlConnection;
+          FDQuery.Connection := SqlConnection;
           FDQuery.SQL.Text := 'UPDATE MySetLists set name=:name, description=:description, useincollection=:useincollection, sortindex=:sortindex where id=:id';
 
           var Params := FDQuery.Params;
-          Params.ParamByName('name').AsString := SetList.Name;
-          Params.ParamByName('description').AsString := SetList.Description;
-          Params.ParamByName('useincollection').asInteger := IfThen(SetList.UseInCollection, 1, 0);
-          Params.ParamByName('sortindex').asInteger := SetList.SortIndex;
-          Params.ParamByName('id').asInteger := SetList.ID;
+          Params.ParamByName('name').AsString := SetListObject.Name;
+          Params.ParamByName('description').AsString := SetListObject.Description;
+          Params.ParamByName('useincollection').asInteger := IfThen(SetListObject.UseInCollection, 1, 0);
+          Params.ParamByName('sortindex').asInteger := SetListObject.SortIndex;
+          Params.ParamByName('id').asInteger := SetListObject.ID;
 
           // id/externalid/externaltype can't be changed by the user.
           // add imageindex later
 
           FDQuery.ExecSQL;
         finally
+          FrmMain.ReleaseConnection(SqlConnection);
           FDQuery.Free;
         end;
 
-        SetList.Dirty := False;
+        SetListObject.Dirty := False;
 
         RebuildListView;
       end;
@@ -333,24 +347,29 @@ begin
     var FDQuery := TFDQuery.Create(nil);
     try
       // Set up the query
-      FDQuery.Connection := FSqlConnection;
-      FDQuery.SQL.Text := 'DELETE FROM MySetLists where id=:id';
+      var SqlConnection := FrmMain.AcquireConnection;
+      try
+        FDQuery.Connection := SqlConnection;
+        FDQuery.SQL.Text := 'DELETE FROM MySetLists where id=:id';
 
-      var Params := FDQuery.Params;
-      Params.ParamByName('id').asInteger := SetList.ID;
+        var Params := FDQuery.Params;
+        Params.ParamByName('id').asInteger := SetList.ID;
 
-      FDQuery.ExecSQL;
-      SetList.DoDelete := True;
+        FDQuery.ExecSQL;
+        SetList.DoDelete := True;
+      finally
+        FrmMain.ReleaseConnection(SqlConnection);
+      end;
     finally
       FDQuery.Free;
     end;
 
     // Also delete it from memory
-    for var I:=0 to FSetLists.Count-1 do begin
-      var IDxSetList := FSetLists[I];
+    for var I:=0 to FSetListObjectList.Count-1 do begin
+      var IDxSetList := FSetListObjectList[I];
       if SetList.ID = IdxSetList.ID then begin
-        FSetLists.Delete(I);
-        break;
+        FSetListObjectList.Delete(I);
+        Break;
       end;
     end;
 

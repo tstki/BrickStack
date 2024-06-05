@@ -2,8 +2,8 @@ object FrmMain: TFrmMain
   Left = 194
   Top = 111
   Caption = 'BrickStack'
-  ClientHeight = 261
-  ClientWidth = 352
+  ClientHeight = 260
+  ClientWidth = 348
   Color = clAppWorkSpace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clBlack
@@ -21,8 +21,8 @@ object FrmMain: TFrmMain
   TextHeight = 13
   object StatusBar: TStatusBar
     Left = 0
-    Top = 242
-    Width = 352
+    Top = 241
+    Width = 348
     Height = 19
     Margins.Left = 2
     Margins.Top = 2
@@ -31,13 +31,11 @@ object FrmMain: TFrmMain
     AutoHint = True
     Panels = <>
     SimplePanel = True
-    ExplicitTop = 241
-    ExplicitWidth = 348
   end
   object ToolBar2: TToolBar
     Left = 0
     Top = 0
-    Width = 352
+    Width = 348
     Height = 24
     Color = clAppWorkSpace
     DrawingStyle = dsGradient
@@ -48,7 +46,6 @@ object FrmMain: TFrmMain
     ShowHint = True
     TabOrder = 1
     Wrapable = False
-    ExplicitWidth = 348
     object ToolButton9: TToolButton
       Left = 5
       Top = 0

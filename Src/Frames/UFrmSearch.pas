@@ -244,6 +244,7 @@ begin
     try
       var FilePath := ExtractFilePath(ParamStr(0));
 
+      //var SQLConnection := FrmMain.AcquireConnection; // Change to this.
       var SQLConnection1 := TSqlConnection.Create(self);
       SQLConnection1.DriverName := 'SQLite';
       SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
