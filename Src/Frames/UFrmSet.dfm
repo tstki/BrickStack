@@ -2,8 +2,8 @@ object FrmSet: TFrmSet
   Left = 0
   Top = 0
   Caption = 'FrmSet'
-  ClientHeight = 548
-  ClientWidth = 577
+  ClientHeight = 547
+  ClientWidth = 573
   Color = clBtnFace
   DoubleBuffered = True
   ParentFont = True
@@ -14,13 +14,13 @@ object FrmSet: TFrmSet
   OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
-    577
-    548)
+    573
+    547)
   TextHeight = 15
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 223
+    Width = 215
     Height = 233
     Anchors = [akLeft, akTop, akRight]
     Proportional = True
@@ -28,7 +28,7 @@ object FrmSet: TFrmSet
     ExplicitWidth = 243
   end
   object ImgViewSetExternal: TImage
-    Left = 533
+    Left = 525
     Top = 213
     Width = 32
     Height = 32
@@ -109,7 +109,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 539
   end
   object LblInventoryVersion: TLabel
-    Left = 426
+    Left = 418
     Top = 254
     Width = 91
     Height = 15
@@ -127,15 +127,14 @@ object FrmSet: TFrmSet
   object SbSetParts: TScrollBox
     Left = 8
     Top = 280
-    Width = 557
-    Height = 260
+    Width = 549
+    Height = 259
     Anchors = [akLeft, akTop, akRight, akBottom]
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
     ExplicitWidth = 553
-    ExplicitHeight = 259
     object PnlTemplateResult: TPanel
       Left = 3
       Top = 3
@@ -263,7 +262,7 @@ object FrmSet: TFrmSet
     end
   end
   object LvTagData: TListView
-    Left = 237
+    Left = 229
     Top = 8
     Width = 328
     Height = 199
@@ -283,17 +282,16 @@ object FrmSet: TFrmSet
     ExplicitLeft = 233
   end
   object CbxInventoryVersion: TComboBox
-    Left = 523
+    Left = 515
     Top = 251
     Width = 42
     Height = 23
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
-    ExplicitLeft = 519
   end
   object Button1: TButton
-    Left = 237
+    Left = 229
     Top = 213
     Width = 75
     Height = 25
@@ -329,7 +327,7 @@ object FrmSet: TFrmSet
     TabOrder = 6
   end
   object BtnPrint: TButton
-    Left = 318
+    Left = 310
     Top = 213
     Width = 75
     Height = 25

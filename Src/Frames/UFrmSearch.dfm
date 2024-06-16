@@ -2,8 +2,8 @@ object FrmSearch: TFrmSearch
   Left = 190
   Top = 150
   Caption = 'Search'
-  ClientHeight = 442
-  ClientWidth = 628
+  ClientHeight = 441
+  ClientWidth = 624
   Color = clBtnFace
   ParentFont = True
   FormStyle = fsMDIChild

@@ -19,6 +19,7 @@ More of a todo / idea list than a roadmap, but here goes:
 -- Should be available in the API
 - Caps lock is active warning in login dialog
 - Convert the older sql connections to firedac
+- Add "force refresh from external" button for sets under a setlist.
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
@@ -57,12 +58,14 @@ Collection window:
 - Support filtering by custom tag
 - Give custom tags an icon
 - Option to open selected collections in the same window, or a new window for each.
+- Drag n drop (+shift) to move / add set to collection.
+- Sub-setlists, in collections screen.
 
 Settings:
 - Add option to display more columns for collection
 - Add ability to add custom fields
 - Option to store backup files on changes / periodically.
-- Slider with delay setting between image downloads.
+- Slider for delay setting between image downloads.
 
 Windows:
 - Collection
@@ -79,6 +82,9 @@ Windows:
 Export collection:
 - Choose format
 - Choose overwrite / keep
+
+Export set parts:
+- CSV
 
 Import collection:
 - Choose format

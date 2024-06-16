@@ -101,35 +101,45 @@ object FrmSetList: TFrmSetList
       Height = 23
       Style = csDropDownList
       TabOrder = 0
+      OnChange = CbxFilterChange
     end
   end
-  object ScrollBox1: TScrollBox
+  object LvSets: TListView
     Left = 0
     Top = 41
     Width = 628
     Height = 401
     Align = alClient
+    Columns = <
+      item
+        Caption = 'Name'
+        Width = 250
+      end
+      item
+        Caption = 'Set_num'
+        Width = 75
+      end
+      item
+        Caption = 'Qty'
+        Width = 40
+      end
+      item
+        Caption = 'Built'
+      end
+      item
+        Caption = 'Spares'
+      end
+      item
+        Caption = 'Note'
+        Width = 150
+      end>
+    ReadOnly = True
+    RowSelect = True
     TabOrder = 1
+    ViewStyle = vsReport
+    OnDblClick = LvSetsDblClick
     ExplicitWidth = 624
     ExplicitHeight = 400
-    object LvCollections: TListView
-      Left = 0
-      Top = 0
-      Width = 624
-      Height = 397
-      Align = alClient
-      Columns = <
-        item
-          Caption = 'Name'
-          Width = 250
-        end>
-      ReadOnly = True
-      RowSelect = True
-      TabOrder = 0
-      ViewStyle = vsReport
-      ExplicitWidth = 620
-      ExplicitHeight = 396
-    end
   end
   object ActionList1: TActionList
     Left = 32

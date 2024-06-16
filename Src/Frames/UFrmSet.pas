@@ -314,7 +314,7 @@ begin
     LvTagData.Items.EndUpdate;
   end;
 
-  // Seems the "fieldname as" does not work. See:
+  // Seems the "fieldname as" does not work. See how to get the fieldnames or FieldDefs example:
   //  for var I := 0 to Query.FieldCount - 1 do
   //    ShowMessage(Query.Fields[I].FieldName);
 end;

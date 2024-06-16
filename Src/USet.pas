@@ -10,34 +10,36 @@ type
   TSetObject = class(TObject)
   private
     { Private declarations }
-//    FListID: Integer; // We know the listID, so this one is kinda pointless
-    FQuantity: String;
-    FIncludeSpares: Boolean;
-
     // Set details
-    FSetNum: String;
-    FSetName: String;
-    FSetYear: Integer;
-    FSetThemeID: Integer;
-    FSetNumParts: Integer;
-    FSetImgUrl: String;
-    FSetUrl: String;
-    FSetLastModified: String;
+    FSetNum: String;              //s.set_num,
+    FSetName: String;             //s.name,
+    FSetYear: Integer;            //s."year",
+//    FSetThemeID: Integer;
+    FSetThemeName: String;        //t.name,
+    FSetNumParts: Integer;        //s.num_parts,
+    FSetImgUrl: String;           //s.img_url,
+    FQuantity: String;            //ms.Quantity,
+    FIncludeSpares: Boolean;      //ms.HaveSpareParts,
+    FBuilt: Boolean;              //ms.Built,
+    FNote: String;                //ms.Notes from MySets ms'+
 
-    //FSortKey: Integer;  // Use later for manual sort order.
-    //FIcon: Integer;     // Make the collection stand out more.
-    FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
-    //
+    //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
   public
     { Public declarations }
-//    property Name: String read FName write FName;
-//    property Description: String read FDescription write FDescription;
-//    property UseInCollection: Boolean read FUseInCollection write FUseInCollection;
-//    property RebrickableID: Integer read FRebrickableID write FRebrickableID;
-//    property Loaded: Boolean read FLoaded write FLoaded;
+    property SetNum: String read FSetNum write FSetNum;
+    property SetName: String read FSetName write FSetName;
+    property SetYear: Integer read FSetYear write FSetYear;
+//    property SetThemeID: Integer read FSetThemeID write FSetThemeID;
+    property SetThemeName: String read FSetThemeName write FSetThemeName;
+    property SetNumParts: Integer read FSetNumParts write FSetNumParts;
+    property SetImgUrl: String read FSetImgUrl write FSetImgUrl;
+    property Quantity: String read FQuantity write FQuantity;
+    property IncludeSpares: Boolean read FIncludeSpares write FIncludeSpares;
+    property Built: Boolean read FBuilt write FBuilt;
+    property Note: String read FNote write FNote;
   end;
 
-
+  TSetObjectList = TObjectList<TSetObject>;
 
 implementation
 
