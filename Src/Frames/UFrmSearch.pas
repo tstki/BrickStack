@@ -82,6 +82,7 @@ implementation
 uses
   Math,
   Diagnostics,
+  UDlgAddToSetList,
   UFrmMain, UStrings;
 
 const
@@ -341,6 +342,17 @@ begin
   var SetNum := GetSetNumByComponentName(TImage(Sender).Name);
   //Open the dialog to add the set to inventory
   //Post message to update the inventory if it's open
+  var DlgAddToSetList := TDlgAddToSetList.Create(Self);
+  try
+    if DlgAddToSetList.ShowModal = mrOK then begin
+    //TODO
+      //perform query insert
+      //Add SetNum
+      //postmessate to frmmain to update ufrmsetlist if it's open and the set got added to the active setlist
+    end;
+  finally
+    DlgAddToSetList.Free;
+  end;
 end;
 
 procedure TFrmSearch.ImgShowSetClick(Sender: TObject);

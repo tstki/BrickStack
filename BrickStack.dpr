@@ -25,7 +25,8 @@ uses
   UPostMessage in 'Src\UPostMessage.pas',
   USqLiteConnection in 'Src\USqLiteConnection.pas',
   UGetImageThread in 'Src\UGetImageThread.pas',
-  USqlThread in 'Src\USqlThread.pas';
+  USqlThread in 'Src\USqlThread.pas',
+  UDlgAddToSetList in 'Src\Dialogs\UDlgAddToSetList.pas' {DlgAddToSetList};
 
 {$R *.RES}
 

@@ -194,6 +194,10 @@
         <DCCReference Include="Src\USqLiteConnection.pas"/>
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\USqlThread.pas"/>
+        <DCCReference Include="Src\Dialogs\UDlgAddToSetList.pas">
+            <Form>DlgAddToSetList</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
