@@ -469,7 +469,6 @@ procedure TFrmSet.LoadSet(const set_num: String);
       Query.Open; // Open the query to retrieve data
       try
         Query.First; // Move to the first row of the dataset
-
         if not Query.EOF then
           FHandleQueryAndHandleSetInventoryVersion(Query);
       finally
@@ -506,25 +505,23 @@ procedure TFrmSet.LoadSet(const set_num: String);
         //var Stopwatch := TStopWatch.Create;
         //Stopwatch.Start;
         // Hide object, and show it when done - so we only draw once.
-        SbSetParts.Visible := False;
-        try
-          while not Query.EOF do begin
-            var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
-            ResultPanel.Visible := True;
+        while not Query.EOF do begin
+          var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
+          ResultPanel.Visible := True;
 
-            FInventoryPanels.Add(ResultPanel);
+          FInventoryPanels.Add(ResultPanel);
 
-            Inc(ColIndex);
-            if ColIndex >= MaxCols then begin
-              Inc(RowIndex);
-              ColIndex := 0;
-            end;
-
-            Query.Next; // Move to the next row
+          Inc(ColIndex);
+          if ColIndex >= MaxCols then begin
+            Inc(RowIndex);
+            ColIndex := 0;
           end;
-        finally
-          SbSetParts.Visible := True; // Only draw once
+
+          Query.Next; // Move to the next row
         end;
+
+//TODO: also, use an imagelist for the icons, instead of a new image in each button.
+
         //Stopwatch.Stop;
         //Enable for performance testing:
         //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
@@ -548,34 +545,38 @@ begin
   CbxInventoryVersion.Items.Add('1');
   CbxInventoryVersion.ItemIndex := 0;
 
-  // Clean up the list before adding new results
-  for var I:=FInventoryPanels.Count-1 downto 0 do
-    FInventoryPanels.Delete(I);
-
-  LvTagData.Clear;
-
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    var FilePath := ExtractFilePath(ParamStr(0));
-
-    var SQLConnection1 := TSqlConnection.Create(self);
-    SQLConnection1.DriverName := 'SQLite';
-    SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-    SQLConnection1.Open;
-
-
-    Query := TSQLQuery.Create(nil);
+    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
     try
-      Query.SQLConnection := SQLConnection1;
+      // Clean up the list before adding new results
+      for var I:=FInventoryPanels.Count-1 downto 0 do
+        FInventoryPanels.Delete(I);
 
-      FQueryAndHandleSetFields(Query);
-      FQueryAndHandleSetInventoryVersion(Query);
-      FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
+      LvTagData.Clear;
+
+      var FilePath := ExtractFilePath(ParamStr(0));
+      var SQLConnection1 := TSqlConnection.Create(self);
+      SQLConnection1.DriverName := 'SQLite';
+      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
+      SQLConnection1.Open;
+
+      Query := TSQLQuery.Create(nil);
+      try
+        Query.SQLConnection := SQLConnection1;
+
+        FQueryAndHandleSetFields(Query);
+        FQueryAndHandleSetInventoryVersion(Query);
+        FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
+      finally
+        Query.Free;
+        SQLConnection1.Close;
+        SQLConnection1.Free;
+      end;
     finally
-      Query.Free;
-      SQLConnection1.Close;
-      SQLConnection1.Free;
+      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
+      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
     end;
   finally
     begin
@@ -584,17 +585,6 @@ begin
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
   end;
-
-  //load parts
-  TThread.Queue(nil,
-    procedure
-    begin
-      try
-        //FLoadPartsBySet();
-      except
-        // Handle exceptions here / delays.
-      end;
-    end);
 end;
 
 procedure TFrmSet.SbSetPartsResize(Sender: TObject);
@@ -609,35 +599,44 @@ begin
   if (GetKeyState(VK_LBUTTON) and $8000) = 0 then begin
     TmrRefresh.Enabled := False;
 
-    // Get the size without scrollbars
-    var CurWidth := SbSetParts.ClientWidth;
+    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
+    try
+      // add controls to scrollbox
+      // set scrollbox height
 
-    var MinimumPanelWidth := PnlTemplateResult.Width;
-    var MaxCols := Floor(CurWidth/MinimumPanelWidth);
-    //FCurMaxCols should be calculated on formShow, make it -1 for now.
-    if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
-      // Scroll to 0,0 first
-      SbSetParts.HorzScrollBar.Position := 0;
-      SbSetParts.VertScrollBar.Position := 0;
+      // Get the size without scrollbars
+      var CurWidth := SbSetParts.ClientWidth;
 
-      // Move stuff around a lot
-      var RowIndex := 0;
-      var ColIndex := 0;
-      for var ResultPanel:TPanel in FInventoryPanels do begin
-        ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
-        ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
+      var MinimumPanelWidth := PnlTemplateResult.Width;
+      var MaxCols := Floor(CurWidth/MinimumPanelWidth);
+      //FCurMaxCols should be calculated on formShow, make it -1 for now.
+      if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
+        // Scroll to 0,0 first
+        SbSetParts.HorzScrollBar.Position := 0;
+        SbSetParts.VertScrollBar.Position := 0;
 
-        Inc(ColIndex);
-        if ColIndex >= MaxCols then begin
-          Inc(RowIndex);
-          ColIndex := 0;
+        // Move stuff around a lot
+        var RowIndex := 0;
+        var ColIndex := 0;
+        for var ResultPanel:TPanel in FInventoryPanels do begin
+          ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
+          ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
+
+          Inc(ColIndex);
+          if ColIndex >= MaxCols then begin
+            Inc(RowIndex);
+            ColIndex := 0;
+          end;
         end;
-      end;
 
-      // Update the current value to reduce unneeded dialog redrawing
-      FCurMaxCols := MaxCols;
-    end else begin
-      // See if we can widen the existing cols a little.
+        // Update the current value to reduce unneeded dialog redrawing
+        FCurMaxCols := MaxCols;
+      end else begin
+        // See if we can widen the existing cols a little.
+      end;
+    finally
+      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
+      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
     end;
   end;
 end;

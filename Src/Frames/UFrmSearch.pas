@@ -397,22 +397,26 @@ begin
     //FCurMaxCols should be calculated on formShow, make it -1 for now.
     if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
 
-      PnlTemplateResult.Visible := False;
-      // Move stuff around a lot
-      var RowIndex := 0;
-      var ColIndex := 0;
-      for var ResultPanel:TPanel in FResultPanels do begin
-        //
-        ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
-        ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
+      SendMessage(SbSearchResults.Handle, WM_SETREDRAW, 0, 0);
+      try
+        // Move stuff around a lot
+        var RowIndex := 0;
+        var ColIndex := 0;
+        for var ResultPanel:TPanel in FResultPanels do begin
+          //
+          ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
+          ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
 
-        Inc(ColIndex);
-        if ColIndex >= MaxCols then begin
-          Inc(RowIndex);
-          ColIndex := 0;
+          Inc(ColIndex);
+          if ColIndex >= MaxCols then begin
+            Inc(RowIndex);
+            ColIndex := 0;
+          end;
         end;
+      finally
+        SendMessage(SbSearchResults.Handle, WM_SETREDRAW, 1, 0);
+        RedrawWindow(SbSearchResults.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
       end;
-      PnlTemplateResult.Visible := True;
 
       // Update the current value to reduce unneeded dialog redrawing
       FCurMaxCols := MaxCols;
