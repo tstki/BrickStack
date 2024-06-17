@@ -502,20 +502,33 @@ procedure TFrmSet.LoadSet(const set_num: String);
         var ColIndex := 0;
         var MaxCols := FCurMaxCols;
 
-        while not Query.EOF do begin
-          var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
-          ResultPanel.Visible := True;
+        // Enable for tickcount performance testing:
+        //var Stopwatch := TStopWatch.Create;
+        //Stopwatch.Start;
+        // Hide object, and show it when done - so we only draw once.
+        SbSetParts.Visible := False;
+        try
+          while not Query.EOF do begin
+            var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
+            ResultPanel.Visible := True;
 
-          FInventoryPanels.Add(ResultPanel);
+            FInventoryPanels.Add(ResultPanel);
 
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
+            Inc(ColIndex);
+            if ColIndex >= MaxCols then begin
+              Inc(RowIndex);
+              ColIndex := 0;
+            end;
+
+            Query.Next; // Move to the next row
           end;
-
-          Query.Next; // Move to the next row
+        finally
+          SbSetParts.Visible := True; // Only draw once
         end;
+        //Stopwatch.Stop;
+        //Enable for performance testing:
+        //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
+
       finally
         Query.Close; // Close the query when done
       end;

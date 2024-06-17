@@ -240,6 +240,7 @@ begin
     for var I:=FResultPanels.Count-1 downto 0 do
       FResultPanels.Delete(I);
 
+    //Get tickcount for performance monitoring.
     //var Stopwatch := TStopWatch.Create;
     //Stopwatch.Start;
     try
@@ -277,19 +278,25 @@ begin
           var RowIndex := 0;
           var ColIndex := 0;
 
-          while not Query.EOF do begin
-            var ResultPanel := FCreateNewResultPanel(Query, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
-            ResultPanel.Parent := SbSearchResults;
+          // Hide object, and show it when done - so we only draw once.
+          SbSearchResults.Visible := False;
+          try
+            while not Query.EOF do begin
+              var ResultPanel := FCreateNewResultPanel(Query, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
+              ResultPanel.Parent := SbSearchResults;
 
-            FResultPanels.Add(ResultPanel);
+              FResultPanels.Add(ResultPanel);
 
-            Inc(ColIndex);
-            if ColIndex >= FCurMaxCols then begin
-              Inc(RowIndex);
-              ColIndex := 0;
+              Inc(ColIndex);
+              if ColIndex >= FCurMaxCols then begin
+                Inc(RowIndex);
+                ColIndex := 0;
+              end;
+
+              Query.Next; // Move to the next row
             end;
-
-            Query.Next; // Move to the next row
+          finally
+            SbSearchResults.Visible := True; // Only draw once
           end;
         finally
           Query.Close; // Close the query when done

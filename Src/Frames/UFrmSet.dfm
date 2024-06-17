@@ -134,7 +134,8 @@ object FrmSet: TFrmSet
     ParentDoubleBuffered = False
     TabOrder = 0
     OnResize = SbSetPartsResize
-    ExplicitWidth = 553
+    ExplicitWidth = 545
+    ExplicitHeight = 258
     object PnlTemplateResult: TPanel
       Left = 3
       Top = 3
@@ -279,7 +280,7 @@ object FrmSet: TFrmSet
     RowSelect = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitLeft = 233
+    ExplicitLeft = 225
   end
   object CbxInventoryVersion: TComboBox
     Left = 515
@@ -289,6 +290,7 @@ object FrmSet: TFrmSet
     Style = csDropDownList
     Anchors = [akTop, akRight]
     TabOrder = 2
+    ExplicitLeft = 511
   end
   object Button1: TButton
     Left = 229
@@ -298,7 +300,7 @@ object FrmSet: TFrmSet
     Anchors = [akTop, akRight]
     Caption = 'Export'
     TabOrder = 3
-    ExplicitLeft = 233
+    ExplicitLeft = 225
   end
   object CbxIncludeSpareParts: TCheckBox
     Left = 160
@@ -335,7 +337,7 @@ object FrmSet: TFrmSet
     Caption = 'Print'
     TabOrder = 7
     OnClick = BtnPrintClick
-    ExplicitLeft = 314
+    ExplicitLeft = 306
   end
   object TmrRefresh: TTimer
     Enabled = False
