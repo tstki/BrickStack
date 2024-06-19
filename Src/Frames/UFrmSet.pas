@@ -10,7 +10,24 @@ uses
   SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
   UConfig, UImageCache;
 
+// Image Load state
+const
+  LSNone = 0;
+  LSLoading = 1;
+  LSDone = 2;
+  LSFailed = 3;
+
 type
+
+  TFrmDelayedLoadImage = class(TImage)
+    protected
+      procedure Paint; override;
+    private
+      FLoadState: Integer;
+      FUrl: String;
+      FImageCache: TImageCache;
+  end;
+
   TFrmSet = class(TForm)
     ImgSetImage: TImage;
     SbSetParts: TScrollBox;
@@ -79,6 +96,46 @@ const
   cPARTSORTBYCATEGORY = 3;
   //cPARTSORTBYPRICE = 3; // No price info yet
   cPARTSORTBYQUANTITY = 4;
+
+procedure TFrmDelayedLoadImage.Paint;
+begin
+  // We only want to start the thread once - we "could" retry later.
+  if (FLoadState = LSNone) and (FUrl <> '') then begin
+    FLoadState := LSLoading;
+
+    // Queue loading the image async
+    TThread.CreateAnonymousThread(
+      procedure
+      begin
+        try
+          var Picture := FImageCache.GetImage(FUrl);
+          if Picture <> nil then begin
+            Self.Picture := Picture;
+            FLoadstate := LSDone;
+            Self.Invalidate;
+
+            TThread.Synchronize(nil,
+            procedure
+            begin
+              // Update the UI in the main thread
+              Self.Invalidate;
+            end);
+          end;
+        except
+          // Handle exceptions here / delays.
+          //Sleep(2000);
+
+          TThread.Synchronize(nil,
+          procedure
+          begin
+            FLoadState := LSFailed;
+          end);
+        end;
+      end).Start;
+  end;
+
+  inherited;
+end;
 
 procedure TFrmSet.FormCreate(Sender: TObject);
 begin
@@ -352,7 +409,12 @@ begin
   Result.Left := 0 + PnlTemplateResult.Width * ColIndex;
 
   for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
-    var Control := PnlTemplateResult.Controls[i].ClassType.Create;
+    var Control: TObject;
+
+    if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplatePartImage') then
+      Control := TFrmDelayedLoadImage.Create(Self)
+    else
+      Control := PnlTemplateResult.Controls[i].ClassType.Create;
 
     // Copy other properties as needed
     if Control.ClassType = TCheckbox then begin
@@ -379,6 +441,31 @@ begin
 
       NewLabel.Caption := FGetLabelOrCheckboxText;
       NewLabel.Visible := not CbxCheckboxMode.Checked;
+    end else if Control.ClassType = TFrmDelayedLoadImage then begin
+      // Special handling for bigger images
+      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
+      var NewImage := TFrmDelayedLoadImage.Create(Result);
+
+      NewImage.Parent := Result;
+      NewImage.Top := TemplateImage.Top;
+      NewImage.Left := TemplateImage.Left;
+      NewImage.Width := TemplateImage.Width;
+      NewImage.Height := TemplateImage.Height;
+
+      // Downloaded images are HUGE, make sure to scale them down so they look better:
+      NewImage.Stretch := True;
+      NewImage.Proportional := True;
+      if Assigned(TemplateImage.OnClick) then begin
+        NewImage.OnClick := TemplateImage.OnClick;
+        //NewImage.Tag := // If we had an ID, this would be a good place to use it
+        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
+      end;
+
+      if SameText(TemplateImage.Name, 'ImgTemplatePartImage') then begin
+        NewImage.FImageCache := FImageCache;
+        NewImage.FUrl := Query.FieldByName('img_url').AsString;
+        NewImage.FLoadState := LSNone;
+      end;
     end else if Control.ClassType = TImage then begin
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
       var NewImage := TImage.Create(Result);
@@ -398,26 +485,8 @@ begin
         NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
       end;
 
-      if SameText(TemplateImage.Name, 'ImgTemplatePartImage') then begin
-        var url := Query.FieldByName('img_url').AsString;
-        if url <> '' then begin
-          // Queue loading the image async
-          TThread.Queue(nil,
-            procedure
-            begin
-              try
-                var Picture := ImageCache.GetImage(URL);
-                if Picture <> nil then
-                  NewImage.Picture := Picture;
-              except
-                // Handle exceptions here / delays.
-              end;
-            end);
-        end;
-      end else begin
-        NewImage.Picture := TemplateImage.Picture;
-        NewImage.Visible := not CbxCheckboxMode.Checked;
-      end;
+      NewImage.Picture := TemplateImage.Picture;
+      NewImage.Visible := not CbxCheckboxMode.Checked;
     end;
     //end else if Control is TButton then begin
       //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
@@ -519,8 +588,6 @@ procedure TFrmSet.LoadSet(const set_num: String);
 
           Query.Next; // Move to the next row
         end;
-
-//TODO: also, use an imagelist for the icons, instead of a new image in each button.
 
         //Stopwatch.Stop;
         //Enable for performance testing:
