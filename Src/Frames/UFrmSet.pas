@@ -331,8 +331,13 @@ procedure TFrmSet.FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
 begin
   var MaxVersion := Query.FieldByName('Column0').AsInteger;
   if MaxVersion > 1 then begin
-    for var I := 2 to MaxVersion do
-      CbxInventoryVersion.Items.Add(I.ToString);
+    CbxInventoryVersion.Items.BeginUpdate;
+    try
+      for var I := 2 to MaxVersion do
+        CbxInventoryVersion.Items.Add(I.ToString);
+    finally
+      CbxInventoryVersion.Items.EndUpdate;
+    end;
   end;
 end;
 
@@ -559,10 +564,15 @@ begin
   FSetNum := set_num;
   Self.Caption := 'Lego set: ' + set_num; // + set name
 
-  // Always assume version 1 is available.
-  CbxInventoryVersion.Clear;
-  CbxInventoryVersion.Items.Add('1');
-  CbxInventoryVersion.ItemIndex := 0;
+  // Always assume version 1 is available. See: FHandleQueryAndHandleSetInventoryVersion
+  CbxInventoryVersion.Items.BeginUpdate;
+  try
+    CbxInventoryVersion.Clear;
+    CbxInventoryVersion.Items.Add('1');
+    CbxInventoryVersion.ItemIndex := 0;
+  finally
+    CbxInventoryVersion.Items.EndUpdate;
+  end;
 
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
