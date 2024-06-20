@@ -10,7 +10,8 @@ const
   LSNone = 0;
   LSLoading = 1;
   LSDone = 2;
-  LSFailed = 3;
+  LSRetrying = 3;
+  LSFailed = 4;
 
 type
   TDelayedImage = class(TImage)
@@ -21,6 +22,7 @@ type
       FUrl: String;
       FImageCache: TImageCache;
     public
+      //class function
       property LoadState: Integer read FLoadState write FLoadState;
       property Url: String read FUrl write FUrl;
       property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -30,7 +32,7 @@ implementation
 
 procedure TDelayedImage.Paint;
 begin
-  // We only want to start the thread once - we "could" retry later.
+  // We only want to start the thread once - we can impl LSRetrying later.
   if (FLoadState = LSNone) and (FUrl <> '') then begin
     FLoadState := LSLoading;
 
@@ -43,7 +45,6 @@ begin
           if Picture <> nil then begin
             Self.Picture := Picture;
             FLoadstate := LSDone;
-            Self.Invalidate;
 
             TThread.Synchronize(nil,
             procedure

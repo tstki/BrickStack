@@ -286,18 +286,26 @@ procedure TFrmSet.FHandleQueryAndHandleSetFields(Query: TSQLQuery);
 begin
   var Url := Query.FieldByName('img_url').AsString;
   if Url <> '' then begin
-    // Queue loading the image async
-    TThread.Queue(nil,
-      procedure
-      begin
-        try
-          var Picture := ImageCache.GetImage(URL);
-          if Picture <> nil then
-            ImgSetImage.Picture := Picture;
-        except
-          // Handle exceptions here / delays.
+    TThread.CreateAnonymousThread(
+    procedure
+    begin
+      try
+        var Picture := FImageCache.GetImage(Url);
+        if Picture <> nil then begin
+          ImgSetImage.Picture := Picture;
+
+          TThread.Synchronize(nil,
+          procedure
+          begin
+            // Update the UI in the main thread
+            ImgSetImage.Invalidate;
+          end);
         end;
-      end);
+      except
+        // Handle exceptions here / delays.
+        //Sleep(2000);
+      end;
+    end).Start;
   end;
 
   LvTagData.Items.BeginUpdate;
@@ -544,6 +552,10 @@ procedure TFrmSet.LoadSet(const set_num: String);
 var
   Query: TSQLQuery;
 begin
+  // No point loading the same set as is already being shown.
+  if set_num = FSetNum then
+    Exit;
+
   FSetNum := set_num;
   Self.Caption := 'Lego set: ' + set_num; // + set name
 
