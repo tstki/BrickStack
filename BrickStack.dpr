@@ -16,6 +16,7 @@ uses
   UDlgHelp in 'Src\Dialogs\UDlgHelp.pas' {DlgHelp},
   UDlgTest in 'Src\Dialogs\UDlgTest.pas' {DlgTest},
   UDlgViewExternal in 'Src\Dialogs\UDlgViewExternal.pas' {DlgViewExternal},
+  UDlgAddToSetList in 'Src\Dialogs\UDlgAddToSetList.pas' {DlgAddToSetList},
   URebrickableJson in 'Src\URebrickableJson.pas',
   UStrings in 'Src\UStrings.pas',
   UConfig in 'Src\UConfig.pas',
@@ -26,7 +27,7 @@ uses
   USqLiteConnection in 'Src\USqLiteConnection.pas',
   UGetImageThread in 'Src\UGetImageThread.pas',
   USqlThread in 'Src\USqlThread.pas',
-  UDlgAddToSetList in 'Src\Dialogs\UDlgAddToSetList.pas' {DlgAddToSetList};
+  UDelayedImage in 'Src\UDelayedImage.pas';
 
 {$R *.RES}
 

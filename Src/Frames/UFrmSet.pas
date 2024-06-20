@@ -6,28 +6,11 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
   IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
-  Contnrs,
+  Contnrs, UDelayedImage,
   SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
   UConfig, UImageCache;
 
-// Image Load state
-const
-  LSNone = 0;
-  LSLoading = 1;
-  LSDone = 2;
-  LSFailed = 3;
-
 type
-
-  TFrmDelayedLoadImage = class(TImage)
-    protected
-      procedure Paint; override;
-    private
-      FLoadState: Integer;
-      FUrl: String;
-      FImageCache: TImageCache;
-  end;
-
   TFrmSet = class(TForm)
     ImgSetImage: TImage;
     SbSetParts: TScrollBox;
@@ -96,46 +79,6 @@ const
   cPARTSORTBYCATEGORY = 3;
   //cPARTSORTBYPRICE = 3; // No price info yet
   cPARTSORTBYQUANTITY = 4;
-
-procedure TFrmDelayedLoadImage.Paint;
-begin
-  // We only want to start the thread once - we "could" retry later.
-  if (FLoadState = LSNone) and (FUrl <> '') then begin
-    FLoadState := LSLoading;
-
-    // Queue loading the image async
-    TThread.CreateAnonymousThread(
-      procedure
-      begin
-        try
-          var Picture := FImageCache.GetImage(FUrl);
-          if Picture <> nil then begin
-            Self.Picture := Picture;
-            FLoadstate := LSDone;
-            Self.Invalidate;
-
-            TThread.Synchronize(nil,
-            procedure
-            begin
-              // Update the UI in the main thread
-              Self.Invalidate;
-            end);
-          end;
-        except
-          // Handle exceptions here / delays.
-          //Sleep(2000);
-
-          TThread.Synchronize(nil,
-          procedure
-          begin
-            FLoadState := LSFailed;
-          end);
-        end;
-      end).Start;
-  end;
-
-  inherited;
-end;
 
 procedure TFrmSet.FormCreate(Sender: TObject);
 begin
@@ -410,9 +353,8 @@ begin
 
   for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
     var Control: TObject;
-
     if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplatePartImage') then
-      Control := TFrmDelayedLoadImage.Create(Self)
+      Control := TDelayedImage.Create(Self)
     else
       Control := PnlTemplateResult.Controls[i].ClassType.Create;
 
@@ -441,10 +383,10 @@ begin
 
       NewLabel.Caption := FGetLabelOrCheckboxText;
       NewLabel.Visible := not CbxCheckboxMode.Checked;
-    end else if Control.ClassType = TFrmDelayedLoadImage then begin
+    end else if Control.ClassType = TDelayedImage then begin
       // Special handling for bigger images
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TFrmDelayedLoadImage.Create(Result);
+      var NewImage := TDelayedImage.Create(Result);
 
       NewImage.Parent := Result;
       NewImage.Top := TemplateImage.Top;
@@ -461,11 +403,9 @@ begin
         NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
       end;
 
-      if SameText(TemplateImage.Name, 'ImgTemplatePartImage') then begin
-        NewImage.FImageCache := FImageCache;
-        NewImage.FUrl := Query.FieldByName('img_url').AsString;
-        NewImage.FLoadState := LSNone;
-      end;
+      NewImage.ImageCache := FImageCache;
+      NewImage.Url := Query.FieldByName('img_url').AsString;
+      NewImage.LoadState := LSNone;
     end else if Control.ClassType = TImage then begin
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
       var NewImage := TImage.Create(Result);

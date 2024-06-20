@@ -82,7 +82,7 @@ implementation
 uses
   Math,
   Diagnostics,
-  UDlgAddToSetList,
+  UDlgAddToSetList, UDelayedImage,
   UFrmMain, UStrings;
 
 const
@@ -151,7 +151,11 @@ begin
   Result.Left := 0 + PnlTemplateResult.Width * ColIndex;
 
   for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
-    var Control := PnlTemplateResult.Controls[i].ClassType.Create;
+    var Control: TObject;
+    if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplateSetImage') then
+      Control := TDelayedImage.Create(Self)
+    else
+      Control := PnlTemplateResult.Controls[i].ClassType.Create;
 
     //TComponent(Control).Name;
 
@@ -179,6 +183,29 @@ begin
       else
         NewLabel.Caption := TemplateLabel.Caption;
 
+    end else if Control.ClassType = TDelayedImage then begin
+      // Special handling for bigger images
+      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
+      var NewImage := TDelayedImage.Create(Result);
+
+      NewImage.Parent := Result;
+      NewImage.Top := TemplateImage.Top;
+      NewImage.Left := TemplateImage.Left;
+      NewImage.Width := TemplateImage.Width;
+      NewImage.Height := TemplateImage.Height;
+
+      // Downloaded images are HUGE, make sure to scale them down so they look better:
+      NewImage.Stretch := True;
+      NewImage.Proportional := True;
+      if Assigned(TemplateImage.OnClick) then begin
+        NewImage.OnClick := TemplateImage.OnClick;
+        //NewImage.Tag := // If we had an ID, this would be a good place to use it
+        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('set_num').AsString, '-', '_', [rfReplaceAll]);
+      end;
+
+      NewImage.ImageCache := FImageCache;
+      NewImage.Url := Query.FieldByName('img_url').AsString;
+      NewImage.LoadState := LSNone;
     end else if Control.ClassType = TImage then begin
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
       var NewImage := TImage.Create(Result);
@@ -198,24 +225,7 @@ begin
         NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('set_num').AsString, '-', '_', [rfReplaceAll]);
       end;
 
-      if SameText(TemplateImage.Name, 'ImgTemplateSetImage') then begin
-        var url := Query.FieldByName('img_url').AsString;
-        if url <> '' then begin
-          // Queue loading the image async
-          TThread.Queue(nil,
-            procedure
-            begin
-              try
-                var Picture := ImageCache.GetImage(URL);
-                if Picture <> nil then
-                  NewImage.Picture := Picture;
-              except
-                // Handle exceptions here / delays.
-              end;
-            end);
-        end;
-      end else
-        NewImage.Picture := TemplateImage.Picture;
+      NewImage.Picture := TemplateImage.Picture;
     end;
     //end else if Control is TButton then begin
       //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers

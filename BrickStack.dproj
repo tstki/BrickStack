@@ -184,6 +184,9 @@
         <DCCReference Include="Src\Dialogs\UDlgViewExternal.pas">
             <Form>DlgViewExternal</Form>
         </DCCReference>
+        <DCCReference Include="Src\Dialogs\UDlgAddToSetList.pas">
+            <Form>DlgAddToSetList</Form>
+        </DCCReference>
         <DCCReference Include="Src\URebrickableJson.pas"/>
         <DCCReference Include="Src\UStrings.pas"/>
         <DCCReference Include="Src\UConfig.pas"/>
@@ -194,10 +197,7 @@
         <DCCReference Include="Src\USqLiteConnection.pas"/>
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\USqlThread.pas"/>
-        <DCCReference Include="Src\Dialogs\UDlgAddToSetList.pas">
-            <Form>DlgAddToSetList</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
+        <DCCReference Include="Src\UDelayedImage.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
