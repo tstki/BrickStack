@@ -8,7 +8,8 @@ uses
   IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   Contnrs, UDelayedImage,
   SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
-  UConfig, UImageCache;
+  UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
+  System.ImageList, Vcl.ImgList;
 
 type
   TFrmSet = class(TForm)
@@ -23,24 +24,63 @@ type
     LvTagData: TListView;
     CbxInventoryVersion: TComboBox;
     LblInventoryVersion: TLabel;
-    Button1: TButton;
-    CbxIncludeSpareParts: TCheckBox;
-    CbxCheckboxMode: TCheckBox;
     LblSortPartsBy: TLabel;
-    CbxSortPartsBy: TComboBox;
     TmrRefresh: TTimer;
-    BtnPrint: TButton;
+    ImgExport: TImage;
+    ImgPrinter: TImage;
+    ImgAdd: TImage;
+    ImgRemove: TImage;
+    CbxBuilt: TCheckBox;
+    PopupMenu1: TPopupMenu;
+    ActionList1: TActionList;
+    ActAddToSetList: TAction;
+    ActRemoveFromSetList: TAction;
+    ActPrintParts: TAction;
+    ActExport: TAction;
+    ActViewSetExternal: TAction;
+    ActToggleCheckboxMode: TAction;
+    ActToggleIncludeSpareParts: TAction;
+    Sort1: TMenuItem;
+    Sort2: TMenuItem;
+    Hue1: TMenuItem;
+    Part1: TMenuItem;
+    Category1: TMenuItem;
+    Quantity1: TMenuItem;
+    Ascending1: TMenuItem;
+    N1: TMenuItem;
+    ogglecheckboxmode1: TMenuItem;
+    Includespareparts1: TMenuItem;
+    Button1: TButton;
+    ImageList1: TImageList;
+    ActToggleAscending: TAction;
+    ActSortByColor: TAction;
+    ActSortByHue: TAction;
+    ActSortByPart: TAction;
+    ActSortByCategory: TAction;
+    ActSortByQuantity: TAction;
+    ActViewPartExternal: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure SbSetPartsResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure TmrRefreshTimer(Sender: TObject);
-    procedure ImgViewSetExternalClick(Sender: TObject);
-    procedure ImgTemplateShowPartClick(Sender: TObject);
-    procedure CbxCheckboxModeClick(Sender: TObject);
-    procedure CbxIncludeSparePartsClick(Sender: TObject);
-    procedure BtnPrintClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure CbxBuiltClick(Sender: TObject);
+    procedure ActAddToSetListExecute(Sender: TObject);
+    procedure ActRemoveFromSetListExecute(Sender: TObject);
+    procedure ActPrintPartsExecute(Sender: TObject);
+    procedure ActExportExecute(Sender: TObject);
+    procedure ActViewSetExternalExecute(Sender: TObject);
+    procedure ActToggleCheckboxModeExecute(Sender: TObject);
+    procedure ActToggleIncludeSparePartsExecute(Sender: TObject);
+    procedure ActToggleAscendingExecute(Sender: TObject);
+    procedure ActSortByColorExecute(Sender: TObject);
+    procedure ActSortByHueExecute(Sender: TObject);
+    procedure ActSortByPartExecute(Sender: TObject);
+    procedure ActSortByCategoryExecute(Sender: TObject);
+    procedure ActSortByQuantityExecute(Sender: TObject);
+    procedure ActViewPartExternalExecute(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -49,6 +89,7 @@ type
     FInventoryPanels: TObjectList;
     FCurMaxCols: Integer;
     FSetNum: String;
+    FCheckboxMode: Boolean;
     procedure FHandleQueryAndHandleSetFields(Query: TSQLQuery);
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
     function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
@@ -69,7 +110,7 @@ implementation
 uses
   ShellAPI, Printers,
   Math, Diagnostics, Data.DB, StrUtils,
-  UDlgViewExternal,
+  UDlgViewExternal, UDlgAddToSetList,
   UStrings;
 
 const
@@ -86,15 +127,6 @@ begin
   FInventoryPanels.OwnsObjects := True;
 
   SbSetParts.UseWheelForScrolling := True;
-
-  CbxSortPartsBy.Clear;
-  CbxSortPartsBy.Items.Add(StrPartSortByColor); //inventory_parts.color_id
-  CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
-  CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
-  CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
-  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
-  CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
-  CbxSortPartsBy.ItemIndex := 0;
 end;
 
 procedure TFrmSet.FormDestroy(Sender: TObject);
@@ -237,31 +269,6 @@ begin
   end;
 end;
 
-procedure TFrmSet.ImgViewSetExternalClick(Sender: TObject);
-begin
-  FOpenExternal(cTYPESET, FSetNum);
-end;
-
-procedure TFrmSet.ImgTemplateShowPartClick(Sender: TObject);
-
-  function FGetPartNumByComponentName(ComponentName: String): String;
-  begin
-    //move this to a utility class / generic function
-    Result := '';
-    try
-      var SplittedString := ComponentName.Split(['_']);
-      if High(SplittedString) > 0 then
-        Result := SplittedString[1];
-    except
-      // Log error.
-    end;
-  end;
-
-begin
-  // get setnumfrom sender
-  FOpenExternal(cTYPEPART, FGetPartNumByComponentName(TImage(Sender).Name));
-end;
-
 procedure TFrmSet.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
@@ -341,11 +348,6 @@ begin
   end;
 end;
 
-procedure TFrmSet.CbxIncludeSparePartsClick(Sender: TObject);
-begin
-// Remove / hide spare parts
-end;
-
 function TFrmSet.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
 
   function FGetLabelOrCheckboxText(): String;
@@ -383,7 +385,7 @@ begin
       NewCheckbox.Height := TemplateCheckbox.Height;
 
       NewCheckbox.Caption := FGetLabelOrCheckboxText;
-      NewCheckbox.Visible := CbxCheckboxMode.Checked;
+      NewCheckbox.Visible := FCheckboxMode;
     end else if Control.ClassType = TLabel then begin
       var TemplateLabel := TLabel(PnlTemplateResult.Controls[i]);
       var NewLabel := TLabel.Create(Result);
@@ -395,7 +397,7 @@ begin
       NewLabel.Height := TemplateLabel.Height;
 
       NewLabel.Caption := FGetLabelOrCheckboxText;
-      NewLabel.Visible := not CbxCheckboxMode.Checked;
+      NewLabel.Visible := not FCheckboxMode;
     end else if Control.ClassType = TDelayedImage then begin
       // Special handling for bigger images
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
@@ -439,7 +441,7 @@ begin
       end;
 
       NewImage.Picture := TemplateImage.Picture;
-      NewImage.Visible := not CbxCheckboxMode.Checked;
+      NewImage.Visible := not FCheckboxMode;
     end;
     //end else if Control is TButton then begin
       //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
@@ -517,15 +519,18 @@ procedure TFrmSet.LoadSet(const set_num: String);
 
       Query.Open; // Open the query to retrieve data
       try
+        //var Stopwatch := TStopWatch.Create;
+        //Stopwatch.Start;
+
         Query.First; // Move to the first row of the dataset
 
         var RowIndex := 0;
         var ColIndex := 0;
         var MaxCols := FCurMaxCols;
 
+        // FInventoryPanels.Capacity := FDetermineQueryRowCount(Query); // Tried, did not have significant impact
+
         // Enable for tickcount performance testing:
-        //var Stopwatch := TStopWatch.Create;
-        //Stopwatch.Start;
         // Hide object, and show it when done - so we only draw once.
         while not Query.EOF do begin
           var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
@@ -545,7 +550,6 @@ procedure TFrmSet.LoadSet(const set_num: String);
         //Stopwatch.Stop;
         //Enable for performance testing:
         //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
-
       finally
         Query.Close; // Close the query when done
       end;
@@ -670,7 +674,25 @@ begin
   end;
 end;
 
-procedure TFrmSet.BtnPrintClick(Sender: TObject);
+procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);
+begin
+  var Dlg := TDlgAddToSetList.Create(Self);
+  //show add to dialog
+  //TDlgAddToSetList.Create;
+  //Do add to MySets
+end;
+
+procedure TFrmSet.ActRemoveFromSetListExecute(Sender: TObject);
+begin
+// Remove from setlist
+end;
+
+procedure TFrmSet.ActExportExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActPrintPartsExecute(Sender: TObject);
 
   procedure PrintScrollBoxContents3(ScrollBox: TScrollBox);
   var
@@ -724,30 +746,123 @@ procedure TFrmSet.BtnPrintClick(Sender: TObject);
   end;
 
 begin
+  // Note: Printing is broken - probably due to the deferred images.
+
   // get parts view, print
   PrintScrollBoxContents3(SbSetParts);
 end;
 
-procedure TFrmSet.CbxCheckboxModeClick(Sender: TObject);
+procedure TFrmSet.ActSortByCategoryExecute(Sender: TObject);
 begin
+//
+end;
+
+procedure TFrmSet.ActSortByColorExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActSortByHueExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActSortByPartExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActSortByQuantityExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActToggleAscendingExecute(Sender: TObject);
+begin
+{
+//  cPARTSORTBYCOLOR = 0;
+  cPARTSORTBYHUE = 1;
+  cPARTSORTBYPART = 2;
+  cPARTSORTBYCATEGORY = 3;
+  //cPARTSORTBYPRICE = 3; // No price info yet
+  cPARTSORTBYQUANTITY = 4; }
+
+{  CbxSortPartsBy.Clear;
+  CbxSortPartsBy.Items.Add(StrPartSortByColor); //inventory_parts.color_id
+  CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
+  CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
+  CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
+  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
+  CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
+  CbxSortPartsBy.ItemIndex := 0; }
+end;
+
+procedure TFrmSet.ActToggleCheckboxModeExecute(Sender: TObject);
+begin
+  FCheckboxMode := not FCheckboxMode;
+  ActToggleCheckboxMode.Checked := FCheckboxMode;
+
   for var ResultPanel:TPanel in FInventoryPanels do begin
     for var i := 0 to ResultPanel.ControlCount - 1 do begin
       var Control := ResultPanel.Controls[i];
       if Control.ClassType = TCheckbox then begin
         var NewCheckbox := TCheckbox(Control);
-        NewCheckbox.Visible := CbxCheckboxMode.Checked;
+        NewCheckbox.Visible := FCheckboxMode;
       end else if Control.ClassType = TLabel then begin
         var NewLabel := TLabel(Control);
-        NewLabel.Visible := not CbxCheckboxMode.Checked;
+        NewLabel.Visible := not FCheckboxMode;
       end else if Control.ClassType = TImage then begin
         var NewImage := TImage(Control);
         if NewImage.Name <> '' then
-          NewImage.Visible := not CbxCheckboxMode.Checked;
+          NewImage.Visible := not FCheckboxMode;
       end;
     end;
 
     ResultPanel.Invalidate;
   end;
+end;
+
+procedure TFrmSet.ActToggleIncludeSparePartsExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSet.ActViewPartExternalExecute(Sender: TObject);
+
+  function FGetPartNumByComponentName(ComponentName: String): String;
+  begin
+    //move this to a utility class / generic function
+    Result := '';
+    try
+      var SplittedString := ComponentName.Split(['_']);
+      if High(SplittedString) > 0 then
+        Result := SplittedString[1];
+    except
+      // Log error.
+    end;
+  end;
+
+begin
+  // get partnum from sender
+  FOpenExternal(cTYPEPART, FGetPartNumByComponentName(TImage(Sender).Name));
+end;
+
+procedure TFrmSet.ActViewSetExternalExecute(Sender: TObject);
+begin
+  FOpenExternal(cTYPESET, FSetNum);
+end;
+
+procedure TFrmSet.Button1Click(Sender: TObject);
+begin
+//  var Combobox := TCombobox(Sender);
+//  Combobox.PopupMenu.Popup(Combobox.Left, Combobox.Top)
+  PopUpMenu1.Popup(Mouse.CursorPos.X, Mouse.CursorPos.Y);
+end;
+
+procedure TFrmSet.CbxBuiltClick(Sender: TObject);
+begin
+// get current set ID for setlist/collection.
+//Toggle build flag
 end;
 
 end.

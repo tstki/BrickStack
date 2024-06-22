@@ -20,15 +20,17 @@ More of a todo / idea list than a roadmap, but here goes:
 - Caps lock is active warning in login dialog
 - Convert the older sql connections to firedac
 - Add "force refresh from external" button for sets under a setlist.
+- Fix printing, again.
+- Slider to control part/image size.
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
 - Ditch indy and use THTTPClient
-- Implement FastMM5 for memory leak checking.
+- Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases
 - More multithreading - performing the query and convert to internal values, converting internal values to display list.
 - sql thread safety by connection pooling
-- Dont load Images in a scrollbox if they are not in the visible viewport
 - Configure result limitation so the user cant query the whole database with one number.
+- progressdialog in case an operation takes long (like import/export)
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)
