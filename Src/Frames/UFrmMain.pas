@@ -109,8 +109,8 @@ type
     { Public declarations }
     //class procedure ShowSetList();
     //class procedure AddToSet();
-    function AcquireConnection: TFDConnection;
-    procedure ReleaseConnection(Conn: TFDConnection);
+    function AcquireConnection: TFDConnection; inline;
+    procedure ReleaseConnection(Conn: TFDConnection); inline;
     class procedure ShowSetWindow(const set_num: String);
     class procedure ShowSetListWindow(const SetListID: Integer);
   end;
@@ -130,6 +130,8 @@ uses
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 begin
+  inherited;
+
   FConfig := TConfig.Create;
   FConfig.Load;
 
@@ -166,6 +168,8 @@ begin
   finally
     FConfig.Free;
   end;
+
+  inherited;
 end;
 
 procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);

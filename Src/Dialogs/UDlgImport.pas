@@ -78,6 +78,8 @@ const
 
 procedure TDlgImport.FormCreate(Sender: TObject);
 begin
+  inherited;
+
   CbxImportOptions.Items.Clear;
   CbxImportOptions.Items.Add(StrNameRebrickable);
   //CbxImportOptions.Items.Add('Other');

@@ -65,6 +65,8 @@ procedure TDlgAbout.FormCreate(Sender: TObject);
   end;
 
 begin
+  inherited;
+
   LblVersion.Caption := LblVersion.Caption + ': ' + FGetAppVersion;
   LblProductName.Caption := StrAboutProductName;
   LblCopyright.Caption := StrAboutCopyright;

@@ -44,7 +44,6 @@ type
     ImgImport: TImage;
     ImgExport: TImage;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormCreate(Sender: TObject);
     procedure LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure ActEditSetListExecute(Sender: TObject);
     procedure ActImportExecute(Sender: TObject);
@@ -118,11 +117,6 @@ begin
   finally
     LvSetLists.items.EndUpdate;
   end;
-end;
-
-procedure TFrmSetListCollection.FormCreate(Sender: TObject);
-begin
-//
 end;
 
 procedure TFrmSetListCollection.FormResize(Sender: TObject);

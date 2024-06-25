@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages,
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  Contnrs, IdHttp,
+  Contnrs, IdHttp, USet,
   SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
   UImageCache;
@@ -56,19 +56,18 @@ type
     procedure ImgShowSetClick(Sender: TObject);
     procedure ImgAddSetClick(Sender: TObject);
     procedure SbSearchResultsResize(Sender: TObject);
-    procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState;
-      MousePos: TPoint; var Handled: Boolean);
-    procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState;
-      MousePos: TPoint; var Handled: Boolean);
+    procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
+    procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure TmrRefreshTimer(Sender: TObject);
   private
     { Private declarations }
+    FSetObjects: TSetObjectList; // Stored locally from query result.
     FResultPanels: TObjectList;
     FIdHttp: TIdHTTP;
     FImageCache: TImageCache;
     FCurMaxCols: Integer;
     procedure FDoSearch;
-    function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+    function FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
@@ -104,6 +103,8 @@ const
 
 procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
+  inherited;
+
   CbxSearchStyle.Clear;
   CbxSearchStyle.Items.Add(StrSearchAll);
   CbxSearchStyle.Items.Add(StrSearchSetDefault);
@@ -117,12 +118,17 @@ begin
   FResultPanels := TObjectList.Create;
   FResultPanels.OwnsObjects := True;
 
+  FSetObjects := TSetObjectList.Create;
+
   SbSearchResults.UseWheelForScrolling := True;
 end;
 
 procedure TFrmSearch.FormDestroy(Sender: TObject);
 begin
   FResultPanels.Free;
+  FSetObjects.Free;
+
+  inherited;
 end;
 
 procedure TFrmSearch.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -142,7 +148,7 @@ begin
   FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
 end;
 
-function TFrmSearch.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+function TFrmSearch.FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
 begin
   Result := TPanel.Create(AOwner);
   Result.Width := PnlTemplateResult.Width;
@@ -171,15 +177,15 @@ begin
       NewLabel.Height := TemplateLabel.Height;
 
       if SameText(TemplateLabel.Name, 'LblTemplateSetNum') then
-        NewLabel.Caption := Query.FieldByName('set_num').AsString
+        NewLabel.Caption := SetObject.SetNum
       //else if SameText(TemplateLabel.Name, 'LblTemplateTheme') then
-        //NewLabel.Caption := Query.FieldByName('theme_id').AsString
+        //NewLabel.Caption := SetObject.ThemeID
       else if SameText(TemplateLabel.Name, 'LblTemplateYear') then
-        NewLabel.Caption := Query.FieldByName('year').AsString
-      //else if SameText(TemplateLabel.Name, 'LblTemplatePart') then
-        //NewLabel.Caption := Query.FieldByName('num_parts').AsString
+        NewLabel.Caption := IntToStr(SetObject.SetYear)
+      else if SameText(TemplateLabel.Name, 'LblTemplatePart') then
+        NewLabel.Caption := 'p: ' + IntToStr(SetObject.SetNumParts)
       else if SameText(TemplateLabel.Name, 'LblTemplateName') then
-        NewLabel.Caption := Query.FieldByName('name').AsString
+        NewLabel.Caption := SetObject.SetName //Query.FieldByName('name').AsString
       else
         NewLabel.Caption := TemplateLabel.Caption;
 
@@ -200,11 +206,11 @@ begin
       if Assigned(TemplateImage.OnClick) then begin
         NewImage.OnClick := TemplateImage.OnClick;
         //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('set_num').AsString, '-', '_', [rfReplaceAll]);
+        NewImage.Name := TemplateImage.Name + '_' + StringReplace(SetObject.SetNum, '-', '_', [rfReplaceAll]);
       end;
 
       NewImage.ImageCache := FImageCache;
-      NewImage.Url := Query.FieldByName('img_url').AsString;
+      NewImage.Url := SetObject.SetImgUrl;
       NewImage.LoadState := LSNone;
     end else if Control.ClassType = TImage then begin
       var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
@@ -222,7 +228,7 @@ begin
       if Assigned(TemplateImage.OnClick) then begin
         NewImage.OnClick := TemplateImage.OnClick;
         //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('set_num').AsString, '-', '_', [rfReplaceAll]);
+        NewImage.Name := TemplateImage.Name + '_' + StringReplace(SetObject.SetNum, '-', '_', [rfReplaceAll]);
       end;
 
       NewImage.Picture := TemplateImage.Picture;
@@ -250,6 +256,8 @@ begin
     for var I:=FResultPanels.Count-1 downto 0 do
       FResultPanels.Delete(I);
 
+    FSetObjects.Clear;
+
     //Get tickcount for performance monitoring.
     //var Stopwatch := TStopWatch.Create;
     //Stopwatch.Start;
@@ -266,8 +274,8 @@ begin
       try
         Query.SQLConnection := SQLConnection1;
 
-        Query.SQL.Text := 'SELECT * FROM Sets';
-        Query.SQL.Text := Query.SQL.Text + ' where set_num like :Param1 LIMIT 30'; // configure result limitation
+        Query.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
+                          ' FROM Sets where set_num like :Param1 LIMIT 30'; // todo: configure result limitation
 
         // Always use params to prevent injection and allow sql to reuse queryplans
         var Params := Query.Params;
@@ -285,31 +293,48 @@ begin
         try
           Query.First; // Move to the first row of the dataset
 
-          var RowIndex := 0;
-          var ColIndex := 0;
+          while not Query.EOF do begin
+            // Fill with TSetObject (not all fields are used) so we can close the query sooner and fill the panels in a thread.
+            var SetObject := TSetObject.Create;
+            SetObject.SetNum := Query.FieldByName('set_num').AsString;
+            SetObject.SetName := Query.FieldByName('name').AsString;
+            SetObject.SetYear := Query.FieldByName('year').AsInteger;
+            //SetObject.SetThemeID := Query.FieldByName('theme_id').AsString;
+            //SetObject.SetThemeName := Query.FieldByName('name_1').AsString;
+            SetObject.SetNumParts := Query.FieldByName('num_parts').AsInteger;
+            SetObject.SetImgUrl := Query.FieldByName('img_url').AsString;
+            //SetObject.Quantity := Query.FieldByName('name_1').AsString;
+            //SetObject.IncludeSpares := Query.FieldByName('includespares').AsString;
+            //SetObject.Built := Query.FieldByName('built').AsString;
+            //SetObject.Note := Query.FieldByName('note').AsString;
+            FSetObjects.Add(SetObject);
 
-          // Hide object, and show it when done - so we only draw once.
-          SbSearchResults.Visible := False;
-          try
-            while not Query.EOF do begin
-              var ResultPanel := FCreateNewResultPanel(Query, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
-              ResultPanel.Parent := SbSearchResults;
-
-              FResultPanels.Add(ResultPanel);
-
-              Inc(ColIndex);
-              if ColIndex >= FCurMaxCols then begin
-                Inc(RowIndex);
-                ColIndex := 0;
-              end;
-
-              Query.Next; // Move to the next row
-            end;
-          finally
-            SbSearchResults.Visible := True; // Only draw once
+            Query.Next; // Move to the next row
           end;
         finally
           Query.Close; // Close the query when done
+        end;
+
+        var RowIndex := 0;
+        var ColIndex := 0;
+
+        // Hide object, and show it when done - so we only draw once.
+        SbSearchResults.Visible := False;
+        try
+          for var SetObject in FSetObjects do begin
+            var ResultPanel := FCreateNewResultPanel(SetObject, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
+            ResultPanel.Parent := SbSearchResults;
+
+            FResultPanels.Add(ResultPanel);
+
+            Inc(ColIndex);
+            if ColIndex >= FCurMaxCols then begin
+              Inc(RowIndex);
+              ColIndex := 0;
+            end;
+          end;
+        finally
+          SbSearchResults.Visible := True; // Only draw once
         end;
       finally
         Query.Free;

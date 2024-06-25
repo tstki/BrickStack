@@ -2,8 +2,8 @@ object DlgAddToSetList: TDlgAddToSetList
   Left = 0
   Top = 0
   Caption = 'Add to set list'
-  ClientHeight = 212
-  ClientWidth = 372
+  ClientHeight = 211
+  ClientWidth = 370
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,8 +14,8 @@ object DlgAddToSetList: TDlgAddToSetList
   OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
-    372
-    212)
+    370
+    211)
   TextHeight = 15
   object Label2: TLabel
     Left = 8
@@ -39,9 +39,9 @@ object DlgAddToSetList: TDlgAddToSetList
     Caption = 'Notes'
   end
   object LblMaxNote: TLabel
-    Left = 312
-    Top = 68
-    Width = 52
+    Left = 113
+    Top = 166
+    Width = 23
     Height = 15
     Alignment = taRightJustify
     Caption = 'Max'
@@ -49,16 +49,15 @@ object DlgAddToSetList: TDlgAddToSetList
   object CbxSetList: TComboBox
     Left = 113
     Top = 8
-    Width = 251
+    Width = 249
     Height = 23
     Style = csDropDownList
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
-    ExplicitWidth = 156
   end
   object BtnCancel: TButton
-    Left = 289
-    Top = 179
+    Left = 287
+    Top = 178
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -66,12 +65,10 @@ object DlgAddToSetList: TDlgAddToSetList
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 6
-    ExplicitLeft = 441
-    ExplicitTop = 263
   end
   object BtnOK: TButton
-    Left = 208
-    Top = 179
+    Left = 206
+    Top = 178
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -79,8 +76,6 @@ object DlgAddToSetList: TDlgAddToSetList
     Default = True
     ModalResult = 1
     TabOrder = 5
-    ExplicitLeft = 360
-    ExplicitTop = 263
   end
   object EditAmount: TEdit
     Left = 113
@@ -99,7 +94,7 @@ object DlgAddToSetList: TDlgAddToSetList
   end
   object ChkSpareParts: TCheckBox
     Left = 194
-    Top = 40
+    Top = 66
     Width = 120
     Height = 17
     Caption = 'Have spare parts'
@@ -110,7 +105,10 @@ object DlgAddToSetList: TDlgAddToSetList
     Top = 89
     Width = 251
     Height = 71
+    Anchors = [akLeft, akTop, akRight]
     MaxLength = 256
     TabOrder = 4
+    OnChange = MemoNoteChange
+    OnKeyPress = MemoNoteKeyPress
   end
 end

@@ -157,6 +157,7 @@ procedure TDlgConfig.FormCreate(Sender: TObject);
   end;
 
 begin
+  inherited;
   //PCConfig.TabHeight := 0; doesnt work - figure out how to hide the tab headers later.
 
   FFillPulldown(CbxViewSetDefault, cTYPESET);

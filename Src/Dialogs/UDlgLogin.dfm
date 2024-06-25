@@ -11,7 +11,6 @@ object DlgLogin: TDlgLogin
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poOwnerFormCenter
-  OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
     468

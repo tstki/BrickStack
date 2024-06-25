@@ -20,7 +20,6 @@ type
     StoreAuthenticationTokenWarning: TLabel;
     procedure BtnOKClick(Sender: TObject);
     procedure EditChange(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
     { Private declarations }
@@ -54,11 +53,6 @@ uses
   UStrings,
   System.JSON,
   StrUtils;
-
-procedure TDlgLogin.FormCreate(Sender: TObject);
-begin
-//
-end;
 
 procedure TDlgLogin.FormShow(Sender: TObject);
 begin

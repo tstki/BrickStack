@@ -16,8 +16,6 @@ type
     CbxOpenType: TComboBox;
     ChkOpenWhereNewDefault: TCheckBox;
     LblSetOfPartNumber: TLabel;
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
@@ -41,16 +39,6 @@ implementation
 uses
   UConfig,
   UStrings;
-
-procedure TDlgViewExternal.FormCreate(Sender: TObject);
-begin
-//
-end;
-
-procedure TDlgViewExternal.FormDestroy(Sender: TObject);
-begin
-//
-end;
 
 procedure TDlgViewExternal.FormShow(Sender: TObject);
 begin

@@ -169,6 +169,7 @@ procedure TDlgTest.FormCreate(Sender: TObject);
   end; }
 
 begin
+  inherited;
 //  InitializeDatabase;
 end;
 

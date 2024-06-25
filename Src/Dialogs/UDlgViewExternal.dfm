@@ -11,8 +11,6 @@ object DlgViewExternal: TDlgViewExternal
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poOwnerFormCenter
-  OnCreate = FormCreate
-  OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
     429

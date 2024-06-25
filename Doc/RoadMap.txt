@@ -27,10 +27,12 @@ Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
 - Ditch indy and use THTTPClient
 - Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases
+- Inline small functions.
 - More multithreading - performing the query and convert to internal values, converting internal values to display list.
 - sql thread safety by connection pooling
 - Configure result limitation so the user cant query the whole database with one number.
 - progressdialog in case an operation takes long (like import/export)
+- Cleanup unused functions to keep the .exe smaller
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)

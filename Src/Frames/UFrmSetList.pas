@@ -56,6 +56,8 @@ uses
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
+  inherited;
+
   FSetObjects := TSetObjectList.Create;
 end;
 
@@ -64,6 +66,8 @@ begin
   if FOwnsSetList then
     FSetListObject.Free;
   FSetObjects.Free;
+
+  inherited;
 end;
 
 procedure TFrmSetList.FormShow(Sender: TObject);

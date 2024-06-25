@@ -30,7 +30,6 @@ type
     ImgPrinter: TImage;
     ImgAdd: TImage;
     ImgRemove: TImage;
-    CbxBuilt: TCheckBox;
     PopupMenu1: TPopupMenu;
     ActionList1: TActionList;
     ActAddToSetList: TAction;
@@ -59,14 +58,14 @@ type
     ActSortByCategory: TAction;
     ActSortByQuantity: TAction;
     ActViewPartExternal: TAction;
+    ImgEdit: TImage;
+    ActEditToSetList: TAction;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure SbSetPartsResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure TmrRefreshTimer(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure CbxBuiltClick(Sender: TObject);
     procedure ActAddToSetListExecute(Sender: TObject);
     procedure ActRemoveFromSetListExecute(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
@@ -81,6 +80,7 @@ type
     procedure ActSortByCategoryExecute(Sender: TObject);
     procedure ActSortByQuantityExecute(Sender: TObject);
     procedure ActViewPartExternalExecute(Sender: TObject);
+    procedure ActEditToSetListExecute(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -123,6 +123,8 @@ const
 
 procedure TFrmSet.FormCreate(Sender: TObject);
 begin
+  inherited;
+
   FInventoryPanels := TObjectList.Create;
   FInventoryPanels.OwnsObjects := True;
 
@@ -132,6 +134,8 @@ end;
 procedure TFrmSet.FormDestroy(Sender: TObject);
 begin
   FInventoryPanels.Free;
+
+  inherited;
 end;
 
 procedure TFrmSet.FormShow(Sender: TObject);
@@ -677,9 +681,13 @@ end;
 procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);
 begin
   var Dlg := TDlgAddToSetList.Create(Self);
-  //show add to dialog
-  //TDlgAddToSetList.Create;
-  //Do add to MySets
+  try
+    if Dlg.ShowModal = mrOK then begin
+      //Do add to MySets
+    end;
+  finally
+    Dlg.Free;
+  end;
 end;
 
 procedure TFrmSet.ActRemoveFromSetListExecute(Sender: TObject);
@@ -687,9 +695,14 @@ begin
 // Remove from setlist
 end;
 
-procedure TFrmSet.ActExportExecute(Sender: TObject);
+procedure TFrmSet.ActEditToSetListExecute(Sender: TObject);
 begin
 //
+end;
+
+procedure TFrmSet.ActExportExecute(Sender: TObject);
+begin
+// choose export format, and output list.
 end;
 
 procedure TFrmSet.ActPrintPartsExecute(Sender: TObject);
@@ -850,19 +863,6 @@ end;
 procedure TFrmSet.ActViewSetExternalExecute(Sender: TObject);
 begin
   FOpenExternal(cTYPESET, FSetNum);
-end;
-
-procedure TFrmSet.Button1Click(Sender: TObject);
-begin
-//  var Combobox := TCombobox(Sender);
-//  Combobox.PopupMenu.Popup(Combobox.Left, Combobox.Top)
-  PopUpMenu1.Popup(Mouse.CursorPos.X, Mouse.CursorPos.Y);
-end;
-
-procedure TFrmSet.CbxBuiltClick(Sender: TObject);
-begin
-// get current set ID for setlist/collection.
-//Toggle build flag
 end;
 
 end.
