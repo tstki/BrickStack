@@ -10,7 +10,6 @@ object FrmSetListCollection: TFrmSetListCollection
   Position = poDefault
   Visible = True
   OnClose = FormClose
-  OnCreate = FormCreate
   OnResize = FormResize
   OnShow = FormShow
   TextHeight = 15

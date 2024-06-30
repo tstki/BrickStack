@@ -23,6 +23,7 @@ const
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Set lists';
+  StrPartListFrameTitle = 'Part list';
   StrSearchFrameTitle = 'Search';
   StrFrmSetTitle = 'Lego set: %s - %s';
 

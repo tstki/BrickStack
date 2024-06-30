@@ -14,61 +14,23 @@ uses
 type
   TFrmSet = class(TForm)
     ImgSetImage: TImage;
-    SbSetParts: TScrollBox;
-    PnlTemplateResult: TPanel;
-    ImgTemplatePartImage: TImage;
-    ImgTemplateShowPart: TImage;
-    LblTemplateName: TLabel;
-    CbxTemplateCheck: TCheckBox;
     ImgViewSetExternal: TImage;
     LvTagData: TListView;
-    CbxInventoryVersion: TComboBox;
-    LblInventoryVersion: TLabel;
-    LblSortPartsBy: TLabel;
-    TmrRefresh: TTimer;
-    ImgExport: TImage;
-    ImgPrinter: TImage;
     ImgAdd: TImage;
     ImgRemove: TImage;
-    PopupMenu1: TPopupMenu;
     ActionList1: TActionList;
     ActAddToSetList: TAction;
     ActRemoveFromSetList: TAction;
-    ActPrintParts: TAction;
-    ActExport: TAction;
     ActViewSetExternal: TAction;
-    ActToggleCheckboxMode: TAction;
-    ActToggleIncludeSpareParts: TAction;
-    Sort1: TMenuItem;
-    Sort2: TMenuItem;
-    Hue1: TMenuItem;
-    Part1: TMenuItem;
-    Category1: TMenuItem;
-    Quantity1: TMenuItem;
-    Ascending1: TMenuItem;
-    N1: TMenuItem;
-    ogglecheckboxmode1: TMenuItem;
-    Includespareparts1: TMenuItem;
-    Button1: TButton;
-    ImageList1: TImageList;
-    ActToggleAscending: TAction;
-    ActSortByColor: TAction;
-    ActSortByHue: TAction;
-    ActSortByPart: TAction;
-    ActSortByCategory: TAction;
-    ActSortByQuantity: TAction;
-    ActViewPartExternal: TAction;
     ImgEdit: TImage;
     ActEditToSetList: TAction;
-    procedure FormCreate(Sender: TObject);
+    ImgParts: TImage;
+    ActViewParts: TAction;
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure SbSetPartsResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure TmrRefreshTimer(Sender: TObject);
     procedure ActAddToSetListExecute(Sender: TObject);
     procedure ActRemoveFromSetListExecute(Sender: TObject);
-    procedure ActPrintPartsExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
     procedure ActViewSetExternalExecute(Sender: TObject);
     procedure ActToggleCheckboxModeExecute(Sender: TObject);
@@ -81,18 +43,20 @@ type
     procedure ActSortByQuantityExecute(Sender: TObject);
     procedure ActViewPartExternalExecute(Sender: TObject);
     procedure ActEditToSetListExecute(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure ActViewPartsExecute(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
     FConfig: TConfig;
     FImageCache: TImageCache;
-    FInventoryPanels: TObjectList;
-    FCurMaxCols: Integer;
+//    FInventoryPanels: TObjectList;
+    //FCurMaxCols: Integer;
     FSetNum: String;
-    FCheckboxMode: Boolean;
+//    FCheckboxMode: Boolean;
     procedure FHandleQueryAndHandleSetFields(Query: TSQLQuery);
-    procedure FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
-    function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+    //procedure FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
+    //function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
     procedure FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
   public
     { Public declarations }
@@ -110,39 +74,22 @@ implementation
 uses
   ShellAPI, Printers,
   Math, Diagnostics, Data.DB, StrUtils,
-  UDlgViewExternal, UDlgAddToSetList,
+  UFrmMain, UDlgViewExternal, UDlgAddToSetList,
   UStrings;
-
-const
-  cPARTSORTBYCOLOR = 0;
-  cPARTSORTBYHUE = 1;
-  cPARTSORTBYPART = 2;
-  cPARTSORTBYCATEGORY = 3;
-  //cPARTSORTBYPRICE = 3; // No price info yet
-  cPARTSORTBYQUANTITY = 4;
-
-procedure TFrmSet.FormCreate(Sender: TObject);
-begin
-  inherited;
-
-  FInventoryPanels := TObjectList.Create;
-  FInventoryPanels.OwnsObjects := True;
-
-  SbSetParts.UseWheelForScrolling := True;
-end;
 
 procedure TFrmSet.FormDestroy(Sender: TObject);
 begin
-  FInventoryPanels.Free;
+//  FInventoryPanels.Free;
 
   inherited;
 end;
 
 procedure TFrmSet.FormShow(Sender: TObject);
 begin
-  var CurWidth := SbSetParts.ClientWidth;
-  var MinimumPanelWidth := PnlTemplateResult.Width;
-  FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
+//  var CurWidth := SbSetParts.ClientWidth;
+//  var MinimumPanelWidth := PnlTemplateResult.Width;
+//  FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
+  inherited;
 end;
 
 procedure TFrmSet.FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
@@ -276,6 +223,7 @@ end;
 procedure TFrmSet.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
+  inherited;
 end;
 
 procedure TFrmSet.FHandleQueryAndHandleSetFields(Query: TSQLQuery);
@@ -338,124 +286,6 @@ begin
   //    ShowMessage(Query.Fields[I].FieldName);
 end;
 
-procedure TFrmSet.FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
-begin
-  var MaxVersion := Query.FieldByName('Column0').AsInteger;
-  if MaxVersion > 1 then begin
-    CbxInventoryVersion.Items.BeginUpdate;
-    try
-      for var I := 2 to MaxVersion do
-        CbxInventoryVersion.Items.Add(I.ToString);
-    finally
-      CbxInventoryVersion.Items.EndUpdate;
-    end;
-  end;
-end;
-
-function TFrmSet.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
-
-  function FGetLabelOrCheckboxText(): String;
-  begin
-    Result := Query.FieldByName('quantity').AsString +
-              'x' +
-              IfThen(SameText(Query.FieldByName('is_spare').AsString, 't'), '*', '') +
-              Query.FieldByName('part_num').AsString;
-  end;
-
-begin
-  Result := TPanel.Create(AOwner);
-  Result.Parent := ParentControl;
-  Result.Width := PnlTemplateResult.Width;
-  Result.Height := PnlTemplateResult.Height;
-  Result.Top := 0 + PnlTemplateResult.Height * RowIndex;
-  Result.Left := 0 + PnlTemplateResult.Width * ColIndex;
-
-  for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
-    var Control: TObject;
-    if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplatePartImage') then
-      Control := TDelayedImage.Create(Self)
-    else
-      Control := PnlTemplateResult.Controls[i].ClassType.Create;
-
-    // Copy other properties as needed
-    if Control.ClassType = TCheckbox then begin
-      var TemplateCheckbox := TCheckbox(PnlTemplateResult.Controls[i]);
-      var NewCheckbox := TCheckbox.Create(Result);
-
-      NewCheckbox.Parent := Result;
-      NewCheckbox.Top := TemplateCheckbox.Top;
-      NewCheckbox.Left := TemplateCheckbox.Left;
-      NewCheckbox.Width := TemplateCheckbox.Width;
-      NewCheckbox.Height := TemplateCheckbox.Height;
-
-      NewCheckbox.Caption := FGetLabelOrCheckboxText;
-      NewCheckbox.Visible := FCheckboxMode;
-    end else if Control.ClassType = TLabel then begin
-      var TemplateLabel := TLabel(PnlTemplateResult.Controls[i]);
-      var NewLabel := TLabel.Create(Result);
-
-      NewLabel.Parent := Result;
-      NewLabel.Top := TemplateLabel.Top;
-      NewLabel.Left := TemplateLabel.Left;
-      NewLabel.Width := TemplateLabel.Width;
-      NewLabel.Height := TemplateLabel.Height;
-
-      NewLabel.Caption := FGetLabelOrCheckboxText;
-      NewLabel.Visible := not FCheckboxMode;
-    end else if Control.ClassType = TDelayedImage then begin
-      // Special handling for bigger images
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TDelayedImage.Create(Result);
-
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
-
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
-      end;
-
-      NewImage.ImageCache := FImageCache;
-      NewImage.Url := Query.FieldByName('img_url').AsString;
-      NewImage.LoadState := LSNone;
-    end else if Control.ClassType = TImage then begin
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TImage.Create(Result);
-
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
-
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
-      end;
-
-      NewImage.Picture := TemplateImage.Picture;
-      NewImage.Visible := not FCheckboxMode;
-    end;
-    //end else if Control is TButton then begin
-      //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
-    //end else if Control is TEdit then begin
-      //TEdit(Control).Text := TEdit(PnlTemplateResult.Controls[i]).Text; // Copy text
-    //end;
-    // Add handling for other control types as needed
-  end;
-end;
-
 procedure TFrmSet.LoadSet(const set_num: String);
 
   procedure FQueryAndHandleSetFields(Query: TSQLQuery);
@@ -485,7 +315,7 @@ procedure TFrmSet.LoadSet(const set_num: String);
       //
     end;
   end;
-
+{
   procedure FQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
   begin
     Query.SQL.Text := 'SELECT max(version) FROM inventories WHERE set_num = :Param1';
@@ -560,7 +390,7 @@ procedure TFrmSet.LoadSet(const set_num: String);
     except
       //
     end;
-  end;
+  end;      }
 
 var
   Query: TSQLQuery;
@@ -573,23 +403,23 @@ begin
   Self.Caption := 'Lego set: ' + set_num; // + set name
 
   // Always assume version 1 is available. See: FHandleQueryAndHandleSetInventoryVersion
-  CbxInventoryVersion.Items.BeginUpdate;
+{  CbxInventoryVersion.Items.BeginUpdate;
   try
     CbxInventoryVersion.Clear;
     CbxInventoryVersion.Items.Add('1');
     CbxInventoryVersion.ItemIndex := 0;
   finally
     CbxInventoryVersion.Items.EndUpdate;
-  end;
+  end;   }
 
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
+    //SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
     try
       // Clean up the list before adding new results
-      for var I:=FInventoryPanels.Count-1 downto 0 do
-        FInventoryPanels.Delete(I);
+//      for var I:=FInventoryPanels.Count-1 downto 0 do
+//        FInventoryPanels.Delete(I);
 
       LvTagData.Clear;
 
@@ -604,16 +434,16 @@ begin
         Query.SQLConnection := SQLConnection1;
 
         FQueryAndHandleSetFields(Query);
-        FQueryAndHandleSetInventoryVersion(Query);
-        FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
+        //FQueryAndHandleSetInventoryVersion(Query);
+        //FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
       finally
         Query.Free;
         SQLConnection1.Close;
         SQLConnection1.Free;
       end;
     finally
-      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
-      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
+      //SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
+      //RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
     end;
   finally
     begin
@@ -621,61 +451,7 @@ begin
       //Enable for performance testing:
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
-  end;
-end;
-
-procedure TFrmSet.SbSetPartsResize(Sender: TObject);
-begin
-  TmrRefresh.Enabled := False;
-  TmrRefresh.Enabled := True;
-end;
-
-procedure TFrmSet.TmrRefreshTimer(Sender: TObject);
-begin
-  // Don't redraw until mouse is up
-  if (GetKeyState(VK_LBUTTON) and $8000) = 0 then begin
-    TmrRefresh.Enabled := False;
-
-    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
-    try
-      // add controls to scrollbox
-      // set scrollbox height
-
-      // Get the size without scrollbars
-      var CurWidth := SbSetParts.ClientWidth;
-
-      var MinimumPanelWidth := PnlTemplateResult.Width;
-      var MaxCols := Floor(CurWidth/MinimumPanelWidth);
-      //FCurMaxCols should be calculated on formShow, make it -1 for now.
-      if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
-        // Scroll to 0,0 first
-        SbSetParts.HorzScrollBar.Position := 0;
-        SbSetParts.VertScrollBar.Position := 0;
-
-        // Move stuff around a lot
-        var RowIndex := 0;
-        var ColIndex := 0;
-        for var ResultPanel:TPanel in FInventoryPanels do begin
-          ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
-          ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
-
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-        end;
-
-        // Update the current value to reduce unneeded dialog redrawing
-        FCurMaxCols := MaxCols;
-      end else begin
-        // See if we can widen the existing cols a little.
-      end;
-    finally
-      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
-      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
-    end;
-  end;
+  end;  //}
 end;
 
 procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);
@@ -703,66 +479,6 @@ end;
 procedure TFrmSet.ActExportExecute(Sender: TObject);
 begin
 // choose export format, and output list.
-end;
-
-procedure TFrmSet.ActPrintPartsExecute(Sender: TObject);
-
-  procedure PrintScrollBoxContents3(ScrollBox: TScrollBox);
-  var
-    PrintDialog: TPrintDialog;
-    Bitmap: TBitmap;
-    ScrollWidth, ScrollHeight: Integer;
-    ScaleFactor: Double;
-  begin
-    PrintDialog := TPrintDialog.Create(nil);
-    try
-      if PrintDialog.Execute then begin
-        Bitmap := TBitmap.Create;
-        try
-          // Get the full size of the scrollbox content
-          ScrollWidth := ScrollBox.ClientWidth;
-          ScrollHeight := ScrollBox.VertScrollBar.Range;
-
-          // Set the bitmap size to the full content size
-          Bitmap.Width := ScrollWidth;
-          Bitmap.Height := ScrollHeight;
-
-          // Paint the entire content to the bitmap
-          ScrollBox.VertScrollBar.Position := 0;
-          ScrollBox.HorzScrollBar.Position := 0;
-          //ScrollBox.PaintTo(Bitmap.Canvas.Handle, 0, 0); // No need to print the scrollbox itself.
-
-          for var I := 0 to ScrollBox.ControlCount - 1 do begin
-            var ChildControl := TPanel(ScrollBox.Controls[I]);
-            if ChildControl.Visible then begin
-              // Adjust the control's position based on the scroll position
-              ChildControl.PaintTo(Bitmap.Canvas.Handle, ChildControl.Left, ChildControl.Top);
-            end;
-          end;
-          // Calculate scale factor to fit the content to the printer page
-          ScaleFactor := Min(Printer.PageWidth / Bitmap.Width, Printer.PageHeight / Bitmap.Height);
-
-          Printer.BeginDoc;
-          try
-            // Scale the content to fit the printer page
-            Printer.Canvas.StretchDraw(Rect(0, 0, Round(Bitmap.Width * ScaleFactor), Round(Bitmap.Height * ScaleFactor)), Bitmap);
-          finally
-            Printer.EndDoc;
-          end;
-        finally
-          Bitmap.Free;
-        end;
-      end;
-    finally
-      PrintDialog.Free;
-    end;
-  end;
-
-begin
-  // Note: Printing is broken - probably due to the deferred images.
-
-  // get parts view, print
-  PrintScrollBoxContents3(SbSetParts);
 end;
 
 procedure TFrmSet.ActSortByCategoryExecute(Sender: TObject);
@@ -812,9 +528,9 @@ end;
 
 procedure TFrmSet.ActToggleCheckboxModeExecute(Sender: TObject);
 begin
-  FCheckboxMode := not FCheckboxMode;
-  ActToggleCheckboxMode.Checked := FCheckboxMode;
-
+//  FCheckboxMode := not FCheckboxMode;
+//  ActToggleCheckboxMode.Checked := FCheckboxMode;
+{
   for var ResultPanel:TPanel in FInventoryPanels do begin
     for var i := 0 to ResultPanel.ControlCount - 1 do begin
       var Control := ResultPanel.Controls[i];
@@ -832,7 +548,7 @@ begin
     end;
 
     ResultPanel.Invalidate;
-  end;
+  end;   }
 end;
 
 procedure TFrmSet.ActToggleIncludeSparePartsExecute(Sender: TObject);
@@ -860,9 +576,20 @@ begin
   FOpenExternal(cTYPEPART, FGetPartNumByComponentName(TImage(Sender).Name));
 end;
 
+procedure TFrmSet.ActViewPartsExecute(Sender: TObject);
+begin
+//Tell UFrmMain to Open UFrmParts
+  TFrmMain.ShowPartsWindow(FSetNum);
+end;
+
 procedure TFrmSet.ActViewSetExternalExecute(Sender: TObject);
 begin
   FOpenExternal(cTYPESET, FSetNum);
+end;
+
+procedure TFrmSet.Button1Click(Sender: TObject);
+begin
+//
 end;
 
 end.

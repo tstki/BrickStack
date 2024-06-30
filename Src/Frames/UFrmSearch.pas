@@ -134,10 +134,12 @@ end;
 procedure TFrmSearch.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
+  inherited;
 end;
 
 procedure TFrmSearch.FormShow(Sender: TObject);
 begin
+  inherited;
   // Research this more later - mdi child anchors are weird.
   Width := 640;
   Height := 480;

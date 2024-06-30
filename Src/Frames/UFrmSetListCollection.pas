@@ -175,6 +175,7 @@ end;
 procedure TFrmSetListCollection.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
+  inherited;
 end;
 
 procedure TFrmSetListCollection.ActExportExecute(Sender: TObject);

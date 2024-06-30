@@ -94,6 +94,7 @@ type
     procedure ActSearchExecute(Sender: TObject);
     procedure ActHelpExecute(Sender: TObject);
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
+    procedure WMShowPartsList(var Msg: TMessage); message WM_SHOW_PARTSLIST;
     procedure WMShowSetList(var Msg: TMessage); message WM_SHOW_SETLIST;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
@@ -112,6 +113,7 @@ type
     function AcquireConnection: TFDConnection; inline;
     procedure ReleaseConnection(Conn: TFDConnection); inline;
     class procedure ShowSetWindow(const set_num: String);
+    class procedure ShowPartsWindow(const set_num: String);
     class procedure ShowSetListWindow(const SetListID: Integer);
   end;
 
@@ -124,7 +126,7 @@ implementation
 
 uses
   IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,     DBXSQLite,
-  UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList,
+  UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp,
   UStrings;
 
@@ -186,10 +188,13 @@ begin
     end;
     //Also save top/left/width/height of each child
   end;
+
+  inherited;
 end;
 
 procedure TFrmMain.FormShow(Sender: TObject);
 begin
+  inherited;
   // Restore previously open child windows
 
   if FConfig.FrmSetListCollectionWasOpen then
@@ -206,8 +211,23 @@ begin
       var Form := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Form) then begin
         var FrmSet := TFrmSet(Form);
-
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
+      end;
+    end;
+  finally
+    Dispose(MsgData); // Don't forget to free the allocated memory
+  end;
+end;
+
+procedure TFrmMain.WMShowPartsList(var Msg: TMessage);
+begin
+  var MsgData := PShowSetData(Msg.WParam);
+  try
+    if Assigned(MsgData) then begin
+      var Form := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      if Assigned(Form) then begin
+        var FrmParts := TFrmParts(Form);
+        FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
       end;
     end;
   finally
@@ -248,6 +268,15 @@ begin
   New(PostData);
   PostData^.Set_num := set_num;
   PostMessage(FrmMain.Handle, WM_SHOW_SET, WPARAM(PostData), 0);
+end;
+
+class procedure TFrmMain.ShowPartsWindow(const set_num: String);
+var
+  PostData: PShowPartsData;
+begin
+  New(PostData);
+  PostData^.Set_num := set_num;
+  PostMessage(FrmMain.Handle, WM_SHOW_PARTSLIST, WPARAM(PostData), 0);
 end;
 
 class procedure TFrmMain.ShowSetListWindow(const SetListID: Integer);
@@ -317,6 +346,12 @@ begin
       FrmSet.IdHttp := FIdHttp;
       FrmSet.Config := FConfig;
       FrmSet.ImageCache := FImageCache;
+      Child.Caption := Title;
+    end else if AFormClass = TFrmParts then begin
+      var FrmParts := TFrmParts(Child);
+      FrmParts.IdHttp := FIdHttp;
+      FrmParts.Config := FConfig;
+      FrmParts.ImageCache := FImageCache;
       Child.Caption := Title;
     end;
 

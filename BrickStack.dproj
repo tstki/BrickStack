@@ -198,6 +198,10 @@
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\USqlThread.pas"/>
         <DCCReference Include="Src\UDelayedImage.pas"/>
+        <DCCReference Include="Src\Frames\UFrmParts.pas">
+            <Form>FrmParts</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

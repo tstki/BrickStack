@@ -27,7 +27,8 @@ uses
   USqLiteConnection in 'Src\USqLiteConnection.pas',
   UGetImageThread in 'Src\UGetImageThread.pas',
   USqlThread in 'Src\USqlThread.pas',
-  UDelayedImage in 'Src\UDelayedImage.pas';
+  UDelayedImage in 'Src\UDelayedImage.pas',
+  UFrmParts in 'Src\Frames\UFrmParts.pas' {FrmParts};
 
 {$R *.RES}
 

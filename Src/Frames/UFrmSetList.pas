@@ -21,7 +21,6 @@ type
     LvSets: TListView;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure LvSetsDblClick(Sender: TObject);
     procedure CbxFilterChange(Sender: TObject);
@@ -70,14 +69,10 @@ begin
   inherited;
 end;
 
-procedure TFrmSetList.FormShow(Sender: TObject);
-begin
-//
-end;
-
 procedure TFrmSetList.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
+  inherited;
 end;
 
 procedure TFrmSetList.FSetConfig(Config: TConfig);
