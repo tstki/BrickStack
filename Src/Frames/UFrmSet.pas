@@ -456,13 +456,14 @@ end;
 
 procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);
 begin
-  var Dlg := TDlgAddToSetList.Create(Self);
+  var DlgAddToSetList := TDlgAddToSetList.Create(Self);
   try
-    if Dlg.ShowModal = mrOK then begin
+    DlgAddToSetList.SetNum := FSetNum;
+    if DlgAddToSetList.ShowModal = mrOK then begin
       //Do add to MySets
     end;
   finally
-    Dlg.Free;
+    DlgAddToSetList.Free;
   end;
 end;
 

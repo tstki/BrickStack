@@ -26,6 +26,7 @@ const
   StrPartListFrameTitle = 'Part list';
   StrSearchFrameTitle = 'Search';
   StrFrmSetTitle = 'Lego set: %s - %s';
+  StrMax = 'Max: %d';
 
   // Search areas
   StrYourCollections = 'All owned';

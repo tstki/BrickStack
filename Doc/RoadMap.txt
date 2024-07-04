@@ -113,3 +113,6 @@ Search:
 - Show search as image panels or table with text
 - Prevent text overlap (cut off by replacing text with ..."
 - Show category (query join category name)
+
+Search parts in:
+- Search for parts in sets, to find sets

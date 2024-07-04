@@ -43,7 +43,6 @@ object DlgAddToSetList: TDlgAddToSetList
     Top = 166
     Width = 23
     Height = 15
-    Alignment = taRightJustify
     Caption = 'Max'
   end
   object CbxSetList: TComboBox
@@ -54,6 +53,8 @@ object DlgAddToSetList: TDlgAddToSetList
     Style = csDropDownList
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
+    OnChange = OnChange
+    ExplicitWidth = 245
   end
   object BtnCancel: TButton
     Left = 287
@@ -65,6 +66,8 @@ object DlgAddToSetList: TDlgAddToSetList
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 6
+    ExplicitLeft = 283
+    ExplicitTop = 177
   end
   object BtnOK: TButton
     Left = 206
@@ -76,6 +79,9 @@ object DlgAddToSetList: TDlgAddToSetList
     Default = True
     ModalResult = 1
     TabOrder = 5
+    OnClick = BtnOKClick
+    ExplicitLeft = 202
+    ExplicitTop = 177
   end
   object EditAmount: TEdit
     Left = 113
@@ -83,6 +89,7 @@ object DlgAddToSetList: TDlgAddToSetList
     Width = 75
     Height = 23
     TabOrder = 1
+    OnChange = OnChange
   end
   object ChkBuilt: TCheckBox
     Left = 113
@@ -109,6 +116,6 @@ object DlgAddToSetList: TDlgAddToSetList
     MaxLength = 256
     TabOrder = 4
     OnChange = MemoNoteChange
-    OnKeyPress = MemoNoteKeyPress
+    ExplicitWidth = 247
   end
 end
