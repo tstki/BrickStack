@@ -125,7 +125,7 @@ implementation
 {$R *.dfm}
 
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,     DBXSQLite,
+  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp,
   UStrings;
@@ -148,12 +148,6 @@ begin
 
   FImageCache := TImageCache.Create;
   FImageCache.Config := FConfig;
-
-  //      var FilePath := ExtractFilePath(ParamStr(0));
-//      var SQLConnection1 := TSqlConnection.Create(self);
-//      SQLConnection1.DriverName := 'SQLite';
-//      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-//      SQLConnection1.Open;
 
   if FConfig.DBasePath <> '' then
     FConnectionPool := TFDConnectionPool.Create(FConfig.DBasePath)

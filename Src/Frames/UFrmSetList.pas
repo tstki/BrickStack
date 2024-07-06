@@ -49,9 +49,9 @@ implementation
 {$R *.dfm}
 
 uses
-  DBXSQLite, //SQLiteTable3, SQLite3;
   StrUtils,
-  SqlExpr, UFrmMain;
+  USqLiteConnection,
+  UFrmMain;
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin

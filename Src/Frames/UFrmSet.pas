@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
   IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   Contnrs, UDelayedImage,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
+  FireDAC.Comp.Client,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
   System.ImageList, Vcl.ImgList;
 
@@ -26,9 +26,7 @@ type
     ActEditToSetList: TAction;
     ImgParts: TImage;
     ActViewParts: TAction;
-    procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormShow(Sender: TObject);
     procedure ActAddToSetListExecute(Sender: TObject);
     procedure ActRemoveFromSetListExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
@@ -50,13 +48,8 @@ type
     FIdHttp: TIdHttp;
     FConfig: TConfig;
     FImageCache: TImageCache;
-//    FInventoryPanels: TObjectList;
-    //FCurMaxCols: Integer;
     FSetNum: String;
-//    FCheckboxMode: Boolean;
-    procedure FHandleQueryAndHandleSetFields(Query: TSQLQuery);
-    //procedure FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
-    //function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+    procedure FHandleQueryAndHandleSetFields(Query: TFDQuery);
     procedure FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
   public
     { Public declarations }
@@ -73,24 +66,11 @@ implementation
 
 uses
   ShellAPI, Printers,
+  USQLiteConnection,
+  FireDAC.Stan.Param,
   Math, Diagnostics, Data.DB, StrUtils,
   UFrmMain, UDlgViewExternal, UDlgAddToSetList,
   UStrings;
-
-procedure TFrmSet.FormDestroy(Sender: TObject);
-begin
-//  FInventoryPanels.Free;
-
-  inherited;
-end;
-
-procedure TFrmSet.FormShow(Sender: TObject);
-begin
-//  var CurWidth := SbSetParts.ClientWidth;
-//  var MinimumPanelWidth := PnlTemplateResult.Width;
-//  FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
-  inherited;
-end;
 
 procedure TFrmSet.FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
 
@@ -226,7 +206,7 @@ begin
   inherited;
 end;
 
-procedure TFrmSet.FHandleQueryAndHandleSetFields(Query: TSQLQuery);
+procedure TFrmSet.FHandleQueryAndHandleSetFields(Query: TFDQuery);
 
   procedure FAddRow(const Caption, FieldName: String);
   begin
@@ -275,8 +255,8 @@ begin
     FAddRow('Released', 'year');
     FAddRow('Parts', 'num_parts');
 
-    FAddRow('Main theme', 'name_1'); // name_1/2 because of sql
-    FAddRow('Sub theme', 'name_2');  //
+    FAddRow('Main theme', 'theme');
+    FAddRow('Sub theme', 'parenttheme');
   finally
     LvTagData.Items.EndUpdate;
   end;
@@ -288,7 +268,7 @@ end;
 
 procedure TFrmSet.LoadSet(const set_num: String);
 
-  procedure FQueryAndHandleSetFields(Query: TSQLQuery);
+  procedure FQueryAndHandleSetFields(Query: TFDQuery);
   begin
     Query.SQL.Text := 'SELECT s.set_num, s.name, s."year", s.num_parts, s.img_url, t.name AS theme, pt.name AS parenttheme' +
                       ' FROM sets s' +
@@ -315,85 +295,7 @@ procedure TFrmSet.LoadSet(const set_num: String);
       //
     end;
   end;
-{
-  procedure FQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
-  begin
-    Query.SQL.Text := 'SELECT max(version) FROM inventories WHERE set_num = :Param1';
-    try
-      // Always use params to prevent injection and allow sql to reuse queryplans
-      var Params := Query.Params;
-      Params.ParamByName('Param1').AsString := set_num;
 
-      Query.Open; // Open the query to retrieve data
-      try
-        Query.First; // Move to the first row of the dataset
-        if not Query.EOF then
-          FHandleQueryAndHandleSetInventoryVersion(Query);
-      finally
-        Query.Close; // Close the query when done
-      end;
-    except
-      //
-    end;
-  end;
-
-  procedure FQueryAndHandleSetPartsByVersion(Query: TSQLQuery; Version: String);
-  begin
-    var InventoryVersion := StrToIntDef(Version, 1);
-    Query.SQL.Text := 'SELECT * FROM inventories' +
-                      ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
-                      ' LEFT JOIN colors c ON c.id = ip.color_id' +
-                      ' WHERE set_num = :Param1' +
-                      ' AND version = :Param2';
-    try
-      // Always use params to prevent injection and allow sql to reuse queryplans
-      var Params := Query.Params;
-      Params.ParamByName('Param1').AsString := set_num;
-      Params.ParamByName('Param2').AsInteger := InventoryVersion;
-
-      Query.Open; // Open the query to retrieve data
-      try
-        //var Stopwatch := TStopWatch.Create;
-        //Stopwatch.Start;
-
-        Query.First; // Move to the first row of the dataset
-
-        var RowIndex := 0;
-        var ColIndex := 0;
-        var MaxCols := FCurMaxCols;
-
-        // FInventoryPanels.Capacity := FDetermineQueryRowCount(Query); // Tried, did not have significant impact
-
-        // Enable for tickcount performance testing:
-        // Hide object, and show it when done - so we only draw once.
-        while not Query.EOF do begin
-          var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
-          ResultPanel.Visible := True;
-
-          FInventoryPanels.Add(ResultPanel);
-
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-
-          Query.Next; // Move to the next row
-        end;
-
-        //Stopwatch.Stop;
-        //Enable for performance testing:
-        //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
-      finally
-        Query.Close; // Close the query when done
-      end;
-    except
-      //
-    end;
-  end;      }
-
-var
-  Query: TSQLQuery;
 begin
   // No point loading the same set as is already being shown.
   if set_num = FSetNum then
@@ -402,48 +304,20 @@ begin
   FSetNum := set_num;
   Self.Caption := 'Lego set: ' + set_num; // + set name
 
-  // Always assume version 1 is available. See: FHandleQueryAndHandleSetInventoryVersion
-{  CbxInventoryVersion.Items.BeginUpdate;
-  try
-    CbxInventoryVersion.Clear;
-    CbxInventoryVersion.Items.Add('1');
-    CbxInventoryVersion.ItemIndex := 0;
-  finally
-    CbxInventoryVersion.Items.EndUpdate;
-  end;   }
-
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    //SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
+    LvTagData.Clear;
+
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
     try
-      // Clean up the list before adding new results
-//      for var I:=FInventoryPanels.Count-1 downto 0 do
-//        FInventoryPanels.Delete(I);
-
-      LvTagData.Clear;
-
-      var FilePath := ExtractFilePath(ParamStr(0));
-      var SQLConnection1 := TSqlConnection.Create(self);
-      SQLConnection1.DriverName := 'SQLite';
-      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-      SQLConnection1.Open;
-
-      Query := TSQLQuery.Create(nil);
-      try
-        Query.SQLConnection := SQLConnection1;
-
-        FQueryAndHandleSetFields(Query);
-        //FQueryAndHandleSetInventoryVersion(Query);
-        //FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
-      finally
-        Query.Free;
-        SQLConnection1.Close;
-        SQLConnection1.Free;
-      end;
+      // Set up the query
+      FDQuery.Connection := SqlConnection;
+      FQueryAndHandleSetFields(FDQuery);
     finally
-      //SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
-      //RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
     end;
   finally
     begin
@@ -451,7 +325,7 @@ begin
       //Enable for performance testing:
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
-  end;  //}
+  end;
 end;
 
 procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);

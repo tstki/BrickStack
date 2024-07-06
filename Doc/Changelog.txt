@@ -1,5 +1,8 @@
 BrickStack
 ====
+Version: 20240706.time (0.0.0.5)
+- Ditched DBXSQLite in favour of FireDAC SQL for SqLite. Less code, more flexibility "select as" actually giving the right name.
+
 Version: 20240523.1837 (0.0.0.4)
 - Search function to find sets
 - Set details screen with parts list

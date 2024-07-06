@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
   IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   Contnrs, UDelayedImage,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
+  FireDAC.Comp.Client, FireDAC.Stan.Param,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
   System.ImageList, Vcl.ImgList;
 
@@ -70,8 +70,8 @@ type
     FCurMaxCols: Integer;
     FSetNum: String;
     FCheckboxMode: Boolean;
-    procedure FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
-    function FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+    procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
+    function FCreateNewResultPanel(Query: TFDQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
@@ -86,6 +86,8 @@ implementation
 {$R *.dfm}
 uses
   ShellAPI, Printers,
+  UFrmMain,
+  USQLiteConnection,
   Math, Diagnostics, Data.DB, StrUtils,
   UDlgViewExternal, UDlgAddToSetList,
   UStrings;
@@ -235,9 +237,9 @@ begin
   end;
 end;
 
-procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
+procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
 begin
-  var MaxVersion := Query.FieldByName('Column0').AsInteger;
+  var MaxVersion := Query.FieldByName('max(version)').AsInteger;
   if MaxVersion > 1 then begin
     CbxInventoryVersion.Items.BeginUpdate;
     try
@@ -256,7 +258,7 @@ begin
   PopPartsFilter.Popup(P.X, P.Y);
 end;
 
-function TFrmParts.FCreateNewResultPanel(Query: TSQLQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+function TFrmParts.FCreateNewResultPanel(Query: TFDQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
 
   function FGetLabelOrCheckboxText(): String;
   begin
@@ -362,7 +364,7 @@ end;
 
 procedure TFrmParts.LoadPartsBySet(const set_num: String);
 
-  procedure FQueryAndHandleSetFields(Query: TSQLQuery);
+  procedure FQueryAndHandleSetFields(Query: TFDQuery);
   begin
     Query.SQL.Text := 'SELECT s.set_num, s.name, s."year", s.num_parts, s.img_url, t.name AS theme, pt.name AS parenttheme' +
                       ' FROM sets s' +
@@ -390,7 +392,7 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
     end;
   end;
 
-  procedure FQueryAndHandleSetInventoryVersion(Query: TSQLQuery);
+  procedure FQueryAndHandleSetInventoryVersion(Query: TFDQuery);
   begin
     Query.SQL.Text := 'SELECT max(version) FROM inventories WHERE set_num = :Param1';
     try
@@ -411,7 +413,7 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
     end;
   end;
 
-  procedure FQueryAndHandleSetPartsByVersion(Query: TSQLQuery; Version: String);
+  procedure FQueryAndHandleSetPartsByVersion(Query: TFDQuery; Version: String);
   begin
     var InventoryVersion := StrToIntDef(Version, 1);
     Query.SQL.Text := 'SELECT * FROM inventories' +
@@ -466,8 +468,6 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
     end;
   end;
 
-var
-  Query: TSQLQuery;
 begin
   // No point loading the same set as is already being shown.
   if set_num = FSetNum then
@@ -496,24 +496,18 @@ begin
         FInventoryPanels.Delete(I);
 
       //LvTagData.Clear;
-
-      var FilePath := ExtractFilePath(ParamStr(0));
-      var SQLConnection1 := TSqlConnection.Create(self);
-      SQLConnection1.DriverName := 'SQLite';
-      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-      SQLConnection1.Open;
-
-      Query := TSQLQuery.Create(nil);
+      var SqlConnection := FrmMain.AcquireConnection;
+      var FDQuery := TFDQuery.Create(nil);
       try
-        Query.SQLConnection := SQLConnection1;
+        // Set up the query
+        FDQuery.Connection := SqlConnection;
 
-        FQueryAndHandleSetFields(Query);
-        FQueryAndHandleSetInventoryVersion(Query);
-        FQueryAndHandleSetPartsByVersion(Query, CbxInventoryVersion.Text);
+        FQueryAndHandleSetFields(FDQuery);
+        FQueryAndHandleSetInventoryVersion(FDQuery);
+        FQueryAndHandleSetPartsByVersion(FDQuery, CbxInventoryVersion.Text);
       finally
-        Query.Free;
-        SQLConnection1.Close;
-        SQLConnection1.Free;
+        FDQuery.Free;
+        FrmMain.ReleaseConnection(SqlConnection);
       end;
     finally
       SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);

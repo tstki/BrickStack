@@ -4,7 +4,6 @@ interface
 
 uses
   System.Generics.Collections, System.SyncObjs,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3, SQLite3Conn, SQLDB;
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
   SysUtils, Classes, Generics.Collections;

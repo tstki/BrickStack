@@ -20,6 +20,7 @@ More of a todo / idea list than a roadmap, but here goes:
 - Caps lock is active warning in login dialog
 - Convert the older sql connections to firedac
 - Add "force refresh from external" button for sets under a setlist.
+- Delayed image has thread issues, fix.
 - Fix printing, again.
 - Slider to control part/image size.
 
@@ -113,6 +114,8 @@ Search:
 - Show search as image panels or table with text
 - Prevent text overlap (cut off by replacing text with ..."
 - Show category (query join category name)
+- search add limit 20/30/50/100, and next button.
+- also to future part search dialogs
 
 Search parts in:
 - Search for parts in sets, to find sets

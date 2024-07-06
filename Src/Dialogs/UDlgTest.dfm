@@ -2,8 +2,8 @@ object DlgTest: TDlgTest
   Left = 0
   Top = 0
   Caption = 'DlgTest'
-  ClientHeight = 183
-  ClientWidth = 403
+  ClientHeight = 133
+  ClientWidth = 324
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,13 +11,12 @@ object DlgTest: TDlgTest
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poOwnerFormCenter
-  OnCreate = FormCreate
   TextHeight = 15
   object Image1: TImage
     Left = 213
-    Top = 79
+    Top = 39
     Width = 105
-    Height = 105
+    Height = 89
     Proportional = True
     Stretch = True
   end
@@ -33,27 +32,27 @@ object DlgTest: TDlgTest
   object Memo1: TMemo
     Left = 8
     Top = 39
-    Width = 185
+    Width = 194
     Height = 89
     Lines.Strings = (
       'Memo1')
     TabOrder = 1
   end
   object Button2: TButton
-    Left = 199
-    Top = 38
+    Left = 127
+    Top = 8
     Width = 75
     Height = 25
-    Caption = 'Button2'
+    Caption = 'DummyText'
     TabOrder = 2
     OnClick = Button2Click
   end
   object Button3: TButton
-    Left = 324
-    Top = 79
+    Left = 243
+    Top = 8
     Width = 75
     Height = 25
-    Caption = 'Button3'
+    Caption = 'Load Image'
     TabOrder = 3
     OnClick = Button3Click
   end

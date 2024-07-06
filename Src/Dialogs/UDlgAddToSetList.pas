@@ -4,7 +4,6 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
   USetList,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
 
@@ -43,6 +42,9 @@ implementation
 {$R *.dfm}
 
 uses
+  UFrmMain,
+  FireDAC.Comp.Client,
+  USQLiteConnection,
   UStrings;
 
 procedure TDlgAddToSetList.FormCreate(Sender: TObject);
@@ -83,8 +85,6 @@ begin
 end;
 
 procedure TDlgAddToSetList.FFillPulldown();
-var
-  Query: TSQLQuery;
 begin
   // Clean up the list before adding new results
 //  for var I:=FResultPanels.Count-1 downto 0 do
@@ -96,40 +96,25 @@ begin
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    var FilePath := ExtractFilePath(ParamStr(0));
-
-    //var SQLConnection := FrmMain.AcquireConnection; // Change to this.
-    var SQLConnection1 := TSqlConnection.Create(self);
-    SQLConnection1.DriverName := 'SQLite';
-    SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-    SQLConnection1.Open;
-
-    Query := TSQLQuery.Create(nil);
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
     try
-      Query.SQLConnection := SQLConnection1;
+      FDQuery.Connection := SqlConnection;
+      FDQuery.SQL.Text := 'SELECT ID, NAME' +
+                          ' FROM MySetLists ORDER BY NAME';
+      FDQuery.Open;
 
-      Query.SQL.Text := 'SELECT ID, NAME' +
-                        ' FROM MySetLists ORDER BY NAME';
+      while not FDQuery.Eof do begin
+        var SetListObject := TSetListObject.Create;
+        SetListObject.id := FDQuery.FieldByName('id').AsInteger;
+        SetListObject.name := FDQuery.FieldByName('name').AsString;
+        FSetListObjectList.Add(SetListObject);
 
-      Query.Open; // Open the query to retrieve data
-      try
-        Query.First; // Move to the first row of the dataset
-
-        while not Query.EOF do begin
-          var SetListObject := TSetListObject.Create;
-          SetListObject.id := Query.FieldByName('id').AsInteger;
-          SetListObject.name := Query.FieldByName('name').AsString;
-          FSetListObjectList.Add(SetListObject);
-
-          Query.Next; // Move to the next row
-        end;
-      finally
-        Query.Close; // Close the query when done
+        FDQuery.Next;
       end;
     finally
-      Query.Free;
-      SQLConnection1.Close;
-      SQLConnection1.Free;
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
     end;
 
     CbxSetList.Items.BeginUpdate;

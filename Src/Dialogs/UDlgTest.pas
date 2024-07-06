@@ -16,7 +16,6 @@ type
     Button3: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
     procedure Button3Click(Sender: TObject);
   private
     { Private declarations }
@@ -34,7 +33,9 @@ implementation
 
 uses
   IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3,
+  UFrmMain,
+  FireDAC.Comp.Client,
+  USQLiteConnection,
   System.Net.HttpClient, System.IOUtils,
   //Vcl.Graphics, // TWICImage
 JPEG,
@@ -62,38 +63,29 @@ begin
 end;
 
 procedure TDlgTest.Button2Click(Sender: TObject);
-var
-  Query: TSQLQuery;
 begin
-  var FilePath := ExtractFilePath(ParamStr(0));
-
-  var SQLConnection1 := TSqlConnection.Create(self);
-  SQLConnection1.DriverName := 'SQLite';
-  SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db'; // Set the path to your SQLite database file
-  SQLConnection1.Open;
-
-  Query := TSQLQuery.Create(nil);
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
   try
-    Query.SQLConnection := SQLConnection1;
-    Query.SQL.Text := 'SELECT * FROM MySetLists';
-    Query.Open;
-    Query.First;
+    // Set up the query
+    FDQuery.Connection := SqlConnection;
+    FDQuery.SQL.Text := 'SELECT * FROM MySetLists';
 
-    Query.Open; // Open the query to retrieve data
-    Query.First; // Move to the first row of the dataset
-    Memo1.Clear;
-    while not Query.EOF do begin
-      Memo1.Lines.Add(Query.FieldByName('Name').AsString); // Retrieve data from a specific field
-      Memo1.Lines.Add(Query.FieldByName('Description').AsString); // Retrieve data from a specific field
-      Query.Next; // Move to the next row
+    FDQuery.Open;
+
+    while not FDQuery.Eof do begin
+      Memo1.Lines.Add(FDQuery.FieldByName('Name').AsString);
+      Memo1.Lines.Add(FDQuery.FieldByName('Description').AsString);
+      FDQuery.Next; // Move to the next row
     end;
-    Query.Close; // Close the query when done
   finally
-    Query.Free;
-
-    SQLConnection1.Close;
-    SQLConnection1.Free;
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
   end;
+
+  // Seems the "fieldname as" does not work. See how to get the fieldnames or FieldDefs example:
+  //  for var I := 0 to FDQuery.FieldCount - 1 do
+  //    ShowMessage(FDQuery.Fields[I].FieldName);
 end;
 
 procedure TDlgTest.Button3Click(Sender: TObject);
@@ -151,26 +143,6 @@ begin
   var Url := 'https://cdn.rebrickable.com/media/sets/42111-1.jpg';
   DownloadImage(url, 'd:\temp\image2.jpg');
 //  loadimage();
-end;
-
-procedure TDlgTest.FormCreate(Sender: TObject);
-{  procedure InitializeDatabase;
-  var
-    DatabaseFile: string;
-  begin
-    DatabaseFile := TPath.Combine(ExtractFilePath(Application.ExeName), 'YourDatabase.db');
-    if not TFile.Exists(DatabaseFile) then
-    begin
-      // Create your database if it doesn't exist
-      // Example: SQLiteDB.ExecSQL('CREATE TABLE YourTable (ID INTEGER PRIMARY KEY, Name TEXT)');
-    end;
-
-    MainForm.SQLiteDB := TSQLiteDatabase.Create(DatabaseFile);
-  end; }
-
-begin
-  inherited;
-//  InitializeDatabase;
 end;
 
 end.

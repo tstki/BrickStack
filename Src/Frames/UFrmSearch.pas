@@ -7,7 +7,7 @@ uses
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
   Contnrs, IdHttp, USet,
-  SqlExpr, DBXSQLite, //SQLiteTable3, SQLite3;
+  FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
   UImageCache;
 
@@ -79,8 +79,9 @@ implementation
 {$R *.dfm}
 
 uses
-  Math,
-  Diagnostics,
+  Math, Diagnostics,
+  FireDAC.Comp.Client,
+  USQLiteConnection,
   UDlgAddToSetList, UDelayedImage,
   UFrmMain, UStrings;
 
@@ -245,8 +246,6 @@ begin
 end;
 
 procedure TFrmSearch.FDoSearch;
-var
-  Query: TSQLQuery;
 begin
   if EditSearchText.Text = '' then
     Exit;
@@ -264,23 +263,15 @@ begin
     //var Stopwatch := TStopWatch.Create;
     //Stopwatch.Start;
     try
-      var FilePath := ExtractFilePath(ParamStr(0));
-
-      //var SQLConnection := FrmMain.AcquireConnection; // Change to this.
-      var SQLConnection1 := TSqlConnection.Create(self);
-      SQLConnection1.DriverName := 'SQLite';
-      SQLConnection1.Params.Values['Database'] := FilePath + '\Dbase\Brickstack.db';
-      SQLConnection1.Open;
-
-      Query := TSQLQuery.Create(nil);
+      var SqlConnection := FrmMain.AcquireConnection;
+      var FDQuery := TFDQuery.Create(nil);
       try
-        Query.SQLConnection := SQLConnection1;
+        // Set up the query
+        FDQuery.Connection := SqlConnection;
+        FDQuery.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
+                            ' FROM Sets where set_num like :Param1 LIMIT 30'; // todo: configure result limitation
 
-        Query.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
-                          ' FROM Sets where set_num like :Param1 LIMIT 30'; // todo: configure result limitation
-
-        // Always use params to prevent injection and allow sql to reuse queryplans
-        var Params := Query.Params;
+        var Params := FDQuery.Params;
         var SearchValue := EditSearchText.Text;
         if CbxSearchStyle.ItemIndex = cSearchSetDefault then
           SearchValue := EditSearchText.Text
@@ -291,57 +282,51 @@ begin
         SearchValue := SearchValue + '%';
         Params.ParamByName('Param1').AsString := SearchValue;
 
-        Query.Open; // Open the query to retrieve data
-        try
-          Query.First; // Move to the first row of the dataset
+        FDQuery.Open;
 
-          while not Query.EOF do begin
-            // Fill with TSetObject (not all fields are used) so we can close the query sooner and fill the panels in a thread.
-            var SetObject := TSetObject.Create;
-            SetObject.SetNum := Query.FieldByName('set_num').AsString;
-            SetObject.SetName := Query.FieldByName('name').AsString;
-            SetObject.SetYear := Query.FieldByName('year').AsInteger;
-            //SetObject.SetThemeID := Query.FieldByName('theme_id').AsString;
-            //SetObject.SetThemeName := Query.FieldByName('name_1').AsString;
-            SetObject.SetNumParts := Query.FieldByName('num_parts').AsInteger;
-            SetObject.SetImgUrl := Query.FieldByName('img_url').AsString;
-            //SetObject.Quantity := Query.FieldByName('name_1').AsString;
-            //SetObject.IncludeSpares := Query.FieldByName('includespares').AsString;
-            //SetObject.Built := Query.FieldByName('built').AsString;
-            //SetObject.Note := Query.FieldByName('note').AsString;
-            FSetObjects.Add(SetObject);
+        while not FDQuery.Eof do begin
+          // Fill with TSetObject (not all fields are used) so we can close the query sooner and fill the panels in a thread.
+          var SetObject := TSetObject.Create;
+          SetObject.SetNum := FDQuery.FieldByName('set_num').AsString;
+          SetObject.SetName := FDQuery.FieldByName('name').AsString;
+          SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
+          //SetObject.SetThemeID := FDQuery.FieldByName('theme_id').AsString;
+          //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
+          SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
+          SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+          //SetObject.Quantity := FDQuery.FieldByName('name_1').AsString;
+          //SetObject.IncludeSpares := FDQuery.FieldByName('includespares').AsString;
+          //SetObject.Built := FDQuery.FieldByName('built').AsString;
+          //SetObject.Note := FDQuery.FieldByName('note').AsString;
+          FSetObjects.Add(SetObject);
 
-            Query.Next; // Move to the next row
-          end;
-        finally
-          Query.Close; // Close the query when done
-        end;
-
-        var RowIndex := 0;
-        var ColIndex := 0;
-
-        // Hide object, and show it when done - so we only draw once.
-        SbSearchResults.Visible := False;
-        try
-          for var SetObject in FSetObjects do begin
-            var ResultPanel := FCreateNewResultPanel(SetObject, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
-            ResultPanel.Parent := SbSearchResults;
-
-            FResultPanels.Add(ResultPanel);
-
-            Inc(ColIndex);
-            if ColIndex >= FCurMaxCols then begin
-              Inc(RowIndex);
-              ColIndex := 0;
-            end;
-          end;
-        finally
-          SbSearchResults.Visible := True; // Only draw once
+          FDQuery.Next; // Move to the next row
         end;
       finally
-        Query.Free;
-        SQLConnection1.Close;
-        SQLConnection1.Free;
+        FDQuery.Free;
+        FrmMain.ReleaseConnection(SqlConnection);
+      end;
+
+      var RowIndex := 0;
+      var ColIndex := 0;
+
+      // Hide object, and show it when done - so we only draw once.
+      SbSearchResults.Visible := False;
+      try
+        for var SetObject in FSetObjects do begin
+          var ResultPanel := FCreateNewResultPanel(SetObject, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
+          ResultPanel.Parent := SbSearchResults;
+
+          FResultPanels.Add(ResultPanel);
+
+          Inc(ColIndex);
+          if ColIndex >= FCurMaxCols then begin
+            Inc(RowIndex);
+            ColIndex := 0;
+          end;
+        end;
+      finally
+        SbSearchResults.Visible := True; // Only draw once
       end;
     finally
       begin

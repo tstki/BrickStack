@@ -146,7 +146,7 @@ begin
   //CbxFilter.Items.Add('Custom tag 3');
   CbxFilter.ItemIndex := 0;
 
-  var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
+  var SqlConnection := FrmMain.AcquireConnection;
   var FDQuery := TFDQuery.Create(nil);
   try
     // Set up the query
@@ -193,7 +193,7 @@ begin
     DlgImport.IdHttp := FIdHttp;
     if DlgImport.ShowModal = mrOK then begin
       //FSetLists.SaveToFile(True);
-      var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
+      var SqlConnection := FrmMain.AcquireConnection;
       try
         FSetListObjectList.SaveToSQL(SqlConnection);
       finally
