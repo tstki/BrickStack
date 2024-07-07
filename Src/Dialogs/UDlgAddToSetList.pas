@@ -18,8 +18,8 @@ type
     ChkBuilt: TCheckBox;
     ChkSpareParts: TCheckBox;
     MemoNote: TMemo;
-    Label3: TLabel;
     LblMaxNote: TLabel;
+    LblNoteCap: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -42,9 +42,9 @@ implementation
 {$R *.dfm}
 
 uses
+  Math,
+  FireDAC.Comp.Client, FireDAC.Stan.Param, USqLiteConnection,
   UFrmMain,
-  FireDAC.Comp.Client,
-  USQLiteConnection,
   UStrings;
 
 procedure TDlgAddToSetList.FormCreate(Sender: TObject);
@@ -61,9 +61,12 @@ end;
 
 procedure TDlgAddToSetList.FormShow(Sender: TObject);
 begin
+  Self.Caption := Format(StrAddSetTo, [SetNum]);
+
   FFillPulldown;
   EditAmount.Text := '1';
   MemoNoteChange(Self);
+  FUpdateUI;
 end;
 
 procedure TDlgAddToSetList.OnChange(Sender: TObject);
@@ -79,9 +82,37 @@ end;
 
 procedure TDlgAddToSetList.BtnOKClick(Sender: TObject);
 begin
-// do query
-//get ID
-//
+  // Should not happen
+  if CbxSetList.ItemIndex < 0 then
+    Exit;
+
+  var SetListID := Integer(CbxSetList.Items.Objects[CbxSetList.ItemIndex]);
+
+  //get mode - edit or insert. If update mode
+
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+  try
+    FDQuery.Connection := SqlConnection;
+
+    FDQuery.SQL.Text := 'INSERT INTO MySets' +
+                        ' (MySetListID, set_num, Built, Quantity, HaveSpareParts, Notes)' +
+                        ' VALUES(:MySetListID, :SetNum, :Built, :Quantity, :HaveSpareParts, :Notes);';
+
+    var Params := FDQuery.Params;
+    Params.ParamByName('MySetListID').asInteger := SetListID;
+    Params.ParamByName('SetNum').asString := Setnum;
+    Params.ParamByName('Built').asInteger := IfThen(ChkBuilt.Checked,1,0);
+    Params.ParamByName('Quantity').asInteger := StrToInt(EditAmount.Text); // Already checked to be valid
+    Params.ParamByName('HaveSpareParts').asInteger := IfThen(ChkSpareParts.Checked,1,0);
+    Params.ParamByName('Notes').asString := MemoNote.Text;
+    FDQuery.ExecSQL;
+  finally
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
+
+  // call frmmain to update any possible frames that may already be open
 end;
 
 procedure TDlgAddToSetList.FFillPulldown();

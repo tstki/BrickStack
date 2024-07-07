@@ -2,8 +2,8 @@ object FrmSearch: TFrmSearch
   Left = 190
   Top = 150
   Caption = 'Search'
-  ClientHeight = 441
-  ClientWidth = 624
+  ClientHeight = 438
+  ClientWidth = 612
   Color = clBtnFace
   ParentFont = True
   FormStyle = fsMDIChild
@@ -24,9 +24,9 @@ object FrmSearch: TFrmSearch
   object Label2: TLabel
     Left = 403
     Top = 11
-    Width = 34
+    Width = 24
     Height = 15
-    Caption = 'Where'
+    Caption = 'Type'
   end
   object ImgSearch: TImage
     Left = 335
@@ -99,6 +99,28 @@ object FrmSearch: TFrmSearch
       04572DF8375847244B2FB3D7520000000049454E44AE426082}
     OnClick = ImgSearchClick
   end
+  object Label6: TLabel
+    Left = 8
+    Top = 40
+    Width = 28
+    Height = 15
+    Caption = 'What'
+  end
+  object Label7: TLabel
+    Left = 403
+    Top = 40
+    Width = 27
+    Height = 15
+    Caption = 'Limit'
+  end
+  object LblResultLimit: TLabel
+    Left = 560
+    Top = 40
+    Width = 45
+    Height = 15
+    Alignment = taRightJustify
+    Caption = 'LimitRes'
+  end
   object EditSearchText: TEdit
     Left = 72
     Top = 8
@@ -107,18 +129,19 @@ object FrmSearch: TFrmSearch
     TabOrder = 0
     OnKeyPress = HandleKeyPress
   end
-  object ComboBox3: TComboBox
+  object CbxSearchType: TComboBox
     Left = 443
     Top = 8
-    Width = 177
+    Width = 162
     Height = 23
+    Style = csDropDownList
     TabOrder = 2
     OnKeyPress = HandleKeyPress
   end
   object PageControl1: TPageControl
     Left = 8
-    Top = 38
-    Width = 612
+    Top = 70
+    Width = 604
     Height = 97
     ActivePage = TabSheet1
     TabOrder = 3
@@ -169,14 +192,14 @@ object FrmSearch: TFrmSearch
       object ComboBox1: TComboBox
         Left = 459
         Top = 32
-        Width = 145
+        Width = 134
         Height = 23
         TabOrder = 0
       end
       object ComboBox2: TComboBox
         Left = 459
         Top = 3
-        Width = 145
+        Width = 134
         Height = 23
         TabOrder = 1
       end
@@ -227,10 +250,11 @@ object FrmSearch: TFrmSearch
     end
   end
   object SbSearchResults: TScrollBox
-    Left = 8
-    Top = 140
+    Left = 0
+    Top = 173
     Width = 612
-    Height = 301
+    Height = 265
+    Align = alBottom
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 4
@@ -460,11 +484,30 @@ object FrmSearch: TFrmSearch
     TabOrder = 1
     OnKeyPress = HandleKeyPress
   end
+  object CbxSearchWhat: TComboBox
+    Left = 72
+    Top = 37
+    Width = 177
+    Height = 23
+    Style = csDropDownList
+    TabOrder = 5
+    OnKeyPress = HandleKeyPress
+  end
+  object TrackBar1: TTrackBar
+    Left = 436
+    Top = 37
+    Width = 109
+    Height = 27
+    Max = 4
+    Position = 2
+    TabOrder = 6
+    OnChange = TrackBar1Change
+  end
   object TmrRefresh: TTimer
     Enabled = False
     Interval = 250
     OnTimer = TmrRefreshTimer
     Left = 224
-    Top = 152
+    Top = 184
   end
 end

@@ -252,6 +252,7 @@ end;
 
 procedure TFrmMain.ReleaseConnection(Conn: TFDConnection);
 begin
+  Conn.Close;
   FConnectionPool.ReleaseConnection(Conn);
 end;
 

@@ -53,7 +53,7 @@ object FrmSetListCollection: TFrmSetListCollection
       430
       41)
     object ImgOpen: TImage
-      Left = 172
+      Left = 168
       Top = 5
       Width = 30
       Height = 30
@@ -148,7 +148,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Filter'
     end
     object ImgEdit: TImage
-      Left = 208
+      Left = 204
       Top = 5
       Width = 30
       Height = 30
@@ -243,7 +243,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 252
     end
     object ImgAdd: TImage
-      Left = 244
+      Left = 240
       Top = 5
       Width = 30
       Height = 30
@@ -350,7 +350,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 288
     end
     object ImgDelete: TImage
-      Left = 280
+      Left = 276
       Top = 5
       Width = 30
       Height = 30
@@ -453,7 +453,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 324
     end
     object ImgImport: TImage
-      Left = 316
+      Left = 312
       Top = 5
       Width = 30
       Height = 30
@@ -545,7 +545,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 360
     end
     object ImgExport: TImage
-      Left = 352
+      Left = 348
       Top = 5
       Width = 30
       Height = 30
@@ -630,13 +630,13 @@ object FrmSetListCollection: TFrmSetListCollection
     object CbxFilter: TComboBox
       Left = 40
       Top = 8
-      Width = 126
+      Width = 122
       Height = 23
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
-      ExplicitWidth = 122
+      ExplicitWidth = 118
     end
   end
   object ActionList1: TActionList
@@ -651,14 +651,14 @@ object FrmSetListCollection: TFrmSetListCollection
     end
     object ActDeleteSetList: TAction
       Category = 'SetList'
-      Caption = 'Delete'
-      ImageIndex = 1
+      Caption = 'Delete...'
+      ImageIndex = 3
       OnExecute = ActDeleteSetListExecute
     end
     object ActEditSetList: TAction
       Category = 'SetList'
       Caption = 'Edit...'
-      ImageIndex = 3
+      ImageIndex = 5
       OnExecute = ActEditSetListExecute
     end
     object ActImport: TAction
@@ -676,6 +676,7 @@ object FrmSetListCollection: TFrmSetListCollection
     object ActOpenCollection: TAction
       Category = 'SetList'
       Caption = 'View...'
+      ImageIndex = 2
       OnExecute = ActOpenCollectionExecute
     end
   end
@@ -960,6 +961,7 @@ object FrmSetListCollection: TFrmSetListCollection
     Top = 176
     object test1: TMenuItem
       Action = ActOpenCollection
+      SubMenuImages = ImageList16
     end
     object Edit1: TMenuItem
       Action = ActEditSetList

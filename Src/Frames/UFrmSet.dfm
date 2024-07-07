@@ -2,8 +2,8 @@ object FrmSet: TFrmSet
   Left = 0
   Top = 0
   Caption = 'FrmSet'
-  ClientHeight = 247
-  ClientWidth = 555
+  ClientHeight = 246
+  ClientWidth = 581
   Color = clBtnFace
   DoubleBuffered = True
   ParentFont = True
@@ -11,24 +11,22 @@ object FrmSet: TFrmSet
   Visible = True
   OnClick = ActEditToSetListExecute
   OnClose = FormClose
-  OnDestroy = FormDestroy
-  OnShow = FormShow
   DesignSize = (
-    555
-    247)
+    581
+    246)
   TextHeight = 15
   object ImgSetImage: TImage
     Left = 8
     Top = 8
-    Width = 240
+    Width = 258
     Height = 233
-    Anchors = [akLeft, akTop, akRight]
+    Anchors = [akLeft, akTop, akRight, akBottom]
     Proportional = True
     Stretch = True
     ExplicitWidth = 246
   end
   object ImgViewSetExternal: TImage
-    Left = 525
+    Left = 543
     Top = 211
     Width = 30
     Height = 30
@@ -112,7 +110,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 531
   end
   object ImgAdd: TImage
-    Left = 326
+    Left = 344
     Top = 211
     Width = 30
     Height = 30
@@ -219,7 +217,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 332
   end
   object ImgRemove: TImage
-    Left = 362
+    Left = 380
     Top = 211
     Width = 30
     Height = 30
@@ -322,7 +320,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 368
   end
   object ImgEdit: TImage
-    Left = 290
+    Left = 308
     Top = 211
     Width = 30
     Height = 30
@@ -417,7 +415,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 296
   end
   object ImgParts: TImage
-    Left = 254
+    Left = 272
     Top = 211
     Width = 30
     Height = 30
@@ -532,7 +530,7 @@ object FrmSet: TFrmSet
     ExplicitLeft = 260
   end
   object LvTagData: TListView
-    Left = 254
+    Left = 272
     Top = 8
     Width = 301
     Height = 199
@@ -549,7 +547,7 @@ object FrmSet: TFrmSet
     RowSelect = True
     TabOrder = 0
     ViewStyle = vsReport
-    ExplicitLeft = 260
+    ExplicitLeft = 242
   end
   object ActionList1: TActionList
     Left = 192

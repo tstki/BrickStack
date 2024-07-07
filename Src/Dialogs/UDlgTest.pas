@@ -35,6 +35,7 @@ uses
   IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
   UFrmMain,
   FireDAC.Comp.Client,
+  Data.DB,
   USQLiteConnection,
   System.Net.HttpClient, System.IOUtils,
   //Vcl.Graphics, // TWICImage

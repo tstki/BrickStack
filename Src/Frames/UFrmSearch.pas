@@ -16,7 +16,7 @@ type
     EditSearchText: TEdit;
     LblSearch: TLabel;
     Label2: TLabel;
-    ComboBox3: TComboBox;
+    CbxSearchType: TComboBox;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
@@ -47,6 +47,11 @@ type
     LblTemplatePart: TLabel;
     LblTemplateName: TLabel;
     TmrRefresh: TTimer;
+    Label6: TLabel;
+    CbxSearchWhat: TComboBox;
+    Label7: TLabel;
+    TrackBar1: TTrackBar;
+    LblResultLimit: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -59,6 +64,7 @@ type
     procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure TmrRefreshTimer(Sender: TObject);
+    procedure TrackBar1Change(Sender: TObject);
   private
     { Private declarations }
     FSetObjects: TSetObjectList; // Stored locally from query result.
@@ -80,6 +86,7 @@ implementation
 
 uses
   Math, Diagnostics,
+  Data.DB,
   FireDAC.Comp.Client,
   USQLiteConnection,
   UDlgAddToSetList, UDelayedImage,
@@ -96,11 +103,16 @@ const
   cYourMinifigs = 6;     // Your minifigs / minifigs in your sets     // Minifig search
   cDatabaseMinifigs = 7; // Minifigs in the database                  //
 
+  // Search what
+  cSetNum = 0;
+  cName = 1;
+
   // Search style for others:
-  cSearchAll = 0;        // "%SearchText%"  // May find a lot more than you want
+  cSearchAll = 0;    // "%SearchText%" // May find a lot more unrelated stuff
   // Search style for sets:
-  cSearchSetDefault = 1; // "SearchText-%"  // Also get all If the set has versions
-  cSearchSetLike = 2;    // "%SearchText-%" // Find parts of sets
+  cSearchPrefix = 1; // "SearchText%" // Also gets all versions
+  cSearchSuffix = 2; // "%SearchText" and "%Searchtext-1" // Find parts of sets
+  cSearchExact = 3; // "SearchText"
 
 procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
@@ -108,9 +120,21 @@ begin
 
   CbxSearchStyle.Clear;
   CbxSearchStyle.Items.Add(StrSearchAll);
-  CbxSearchStyle.Items.Add(StrSearchSetDefault);
-  CbxSearchStyle.Items.Add(StrSearchSetLike);
-  CbxSearchStyle.ItemIndex := 1;
+  CbxSearchStyle.Items.Add(StrSearchPrefix);
+  CbxSearchStyle.Items.Add(StrSearchSuffix);
+  CbxSearchStyle.Items.Add(StrSearchExact);
+  CbxSearchStyle.ItemIndex := 0;
+
+  CbxSearchWhat.Clear;
+  CbxSearchWhat.Items.Add(StrSearchSetNum);
+  CbxSearchWhat.Items.Add(StrSearchName);
+  CbxSearchWhat.ItemIndex := 0;
+
+  CbxSearchType.Clear;
+  CbxSearchType.Items.Add(StrSearchSets);
+  CbxSearchType.Items.Add(StrSearchMinifigs);
+  CbxSearchType.Items.Add(StrSearchParts);
+  CbxSearchType.ItemIndex := 0;
 
   // Template used for other results:
   PnlTemplateResult.Parent := nil;
@@ -145,6 +169,8 @@ begin
   Width := 640;
   Height := 480;
   SbSearchResults.Anchors := [TAnchorKind.akLeft,TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
+
+  TrackBar1Change(Self);
 
   var CurWidth := SbSearchResults.ClientWidth;
   var MinimumPanelWidth := PnlTemplateResult.Width;
@@ -266,21 +292,42 @@ begin
       var SqlConnection := FrmMain.AcquireConnection;
       var FDQuery := TFDQuery.Create(nil);
       try
+        var SearchSubject := '';
+        if CbxSearchWhat.ItemIndex = cSetNum then
+          SearchSubject := 'set_num'
+        else
+          SearchSubject := 'name';
+
+        var SearchLikeOrExact := '';
+        if CbxSearchStyle.ItemIndex = cSearchExact then
+          SearchLikeOrExact := '='
+        else
+          SearchLikeOrExact := 'like';
+
         // Set up the query
         FDQuery.Connection := SqlConnection;
         FDQuery.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
-                            ' FROM Sets where set_num like :Param1 LIMIT 30'; // todo: configure result limitation
+                            ' FROM Sets where (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+        if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + TrackBar1.Position * 10);
 
         var Params := FDQuery.Params;
-        var SearchValue := EditSearchText.Text;
-        if CbxSearchStyle.ItemIndex = cSearchSetDefault then
-          SearchValue := EditSearchText.Text
+        var SearchValue1 := EditSearchText.Text;
+        if CbxSearchStyle.ItemIndex = cSearchAll then
+          SearchValue1 := '%' + EditSearchText.Text + '%'
+        else if CbxSearchStyle.ItemIndex = cSearchPrefix then
+          SearchValue1 := EditSearchText.Text + '%'
+        else if CbxSearchStyle.ItemIndex = cSearchSuffix then
+          SearchValue1 := '%' + EditSearchText.Text
         else
-          SearchValue := '%' + EditSearchText.Text;
-        if CbxSearchStyle.ItemIndex in [cSearchSetDefault, cSearchSetLike] then
-          SearchValue := SearchValue + '-';
-        SearchValue := SearchValue + '%';
-        Params.ParamByName('Param1').AsString := SearchValue;
+          SearchValue1 := EditSearchText.Text;
+
+        var SearchValue2 := SearchValue1 + '-1';
+        Params.ParamByName('Param1').AsString := SearchValue1;
+
+        if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
+          Params.ParamByName('Param2').AsString := SearchValue2;
 
         FDQuery.Open;
 
@@ -447,6 +494,11 @@ begin
       // See if we can widen the existing cols a little.
     end;
   end;
+end;
+
+procedure TFrmSearch.TrackBar1Change(Sender: TObject);
+begin
+  LblResultLimit.Caption := IntToStr(10 + TrackBar1.Position * 10);
 end;
 
 end.

@@ -11,6 +11,7 @@ type
   private
     { Private declarations }
     // Set details
+    FMySetID: Integer;            //ms.ID
     FSetNum: String;              //s.set_num,
     FSetName: String;             //s.name,
     FSetYear: Integer;            //s."year",
@@ -26,6 +27,7 @@ type
     //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
   public
     { Public declarations }
+    property MySetID: Integer read FMySetID write FMySetID;
     property SetNum: String read FSetNum write FSetNum;
     property SetName: String read FSetName write FSetName;
     property SetYear: Integer read FSetYear write FSetYear;

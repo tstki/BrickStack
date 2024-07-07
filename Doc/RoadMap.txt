@@ -65,6 +65,7 @@ Collection window:
 - Option to open selected collections in the same window, or a new window for each.
 - Drag n drop (+shift) to move / add set to collection.
 - Sub-setlists, in collections screen.
+- Show number of sets
 
 Settings:
 - Add option to display more columns for collection
@@ -114,8 +115,9 @@ Search:
 - Show search as image panels or table with text
 - Prevent text overlap (cut off by replacing text with ..."
 - Show category (query join category name)
-- search add limit 20/30/50/100, and next button.
-- also to future part search dialogs
+- Search add next results button.
+- Also to future part search dialogs
+- When searching for minifigs, also search "in sets"
 
 Search parts in:
 - Search for parts in sets, to find sets

@@ -27,6 +27,7 @@ const
   StrSearchFrameTitle = 'Search';
   StrFrmSetTitle = 'Lego set: %s - %s';
   StrMax = 'Max: %d';
+  StrAddSetTo = 'Add set ''%s'' to:';
 
   // Search areas
   StrYourCollections = 'All owned';
@@ -49,9 +50,17 @@ const
   // Setlist Types (External type)
 
   // Search style
-  StrSearchAll = '%Text%';
-  StrSearchSetDefault = 'Text-%';
-  StrSearchSetLike = '%Text-%';
+  StrSearchAll = '% text %';
+  StrSearchPrefix = 'prefix %';
+  StrSearchSuffix = '% suffix';
+  StrSearchExact = 'Exact';
+
+  StrSearchSetNum = 'Set number';
+  StrSearchName = 'Set name';
+
+  StrSearchSets = 'Sets';
+  StrSearchMinifigs = 'Minifigures';
+  StrSearchParts = 'Parts';
 
   // Option labels
   StrNameRebrickable = 'Rebrickable';
@@ -69,6 +78,7 @@ const
 
   // Message strings
   StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';
+  StrMsgSureRemoveFromList = 'Are you sure you wish to remove set "%s" (num: %s)? This action can''t be undone.';
 
   // Error strings
   StrErrNoResult = 'No result';

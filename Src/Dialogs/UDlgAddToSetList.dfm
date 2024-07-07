@@ -31,13 +31,6 @@ object DlgAddToSetList: TDlgAddToSetList
     Height = 15
     Caption = 'Amount'
   end
-  object Label3: TLabel
-    Left = 8
-    Top = 92
-    Width = 31
-    Height = 15
-    Caption = 'Notes'
-  end
   object LblMaxNote: TLabel
     Left = 113
     Top = 166
@@ -45,19 +38,26 @@ object DlgAddToSetList: TDlgAddToSetList
     Height = 15
     Caption = 'Max'
   end
+  object LblNoteCap: TLabel
+    Left = 8
+    Top = 92
+    Width = 26
+    Height = 15
+    Caption = 'Note'
+  end
   object CbxSetList: TComboBox
     Left = 113
     Top = 8
-    Width = 249
+    Width = 241
     Height = 23
     Style = csDropDownList
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
     OnChange = OnChange
-    ExplicitWidth = 245
+    ExplicitWidth = 237
   end
   object BtnCancel: TButton
-    Left = 287
+    Left = 279
     Top = 178
     Width = 75
     Height = 25
@@ -66,11 +66,11 @@ object DlgAddToSetList: TDlgAddToSetList
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 6
-    ExplicitLeft = 283
+    ExplicitLeft = 275
     ExplicitTop = 177
   end
   object BtnOK: TButton
-    Left = 206
+    Left = 198
     Top = 178
     Width = 75
     Height = 25
@@ -80,7 +80,7 @@ object DlgAddToSetList: TDlgAddToSetList
     ModalResult = 1
     TabOrder = 5
     OnClick = BtnOKClick
-    ExplicitLeft = 202
+    ExplicitLeft = 194
     ExplicitTop = 177
   end
   object EditAmount: TEdit
@@ -110,12 +110,12 @@ object DlgAddToSetList: TDlgAddToSetList
   object MemoNote: TMemo
     Left = 113
     Top = 89
-    Width = 251
+    Width = 243
     Height = 71
     Anchors = [akLeft, akTop, akRight]
     MaxLength = 256
     TabOrder = 4
     OnChange = MemoNoteChange
-    ExplicitWidth = 247
+    ExplicitWidth = 239
   end
 end
