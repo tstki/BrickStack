@@ -214,6 +214,10 @@ begin
   PopulateTreeView();
   FUpdateCacheFolderSize;
 
+  for var I:=0 to PCConfig.PageCount-1 do
+    PCConfig.Pages[I].TabVisible := False;
+  PCConfig.ActivePage := PCConfig.Pages[0];
+
   FUpdateUI;
 end;
 

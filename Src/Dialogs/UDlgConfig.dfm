@@ -3,7 +3,7 @@ object DlgConfig: TDlgConfig
   Top = 0
   Caption = 'Options'
   ClientHeight = 316
-  ClientWidth = 693
+  ClientWidth = 719
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,11 +14,11 @@ object DlgConfig: TDlgConfig
   OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
-    693
+    719
     316)
   TextHeight = 15
   object BtnCancel: TButton
-    Left = 594
+    Left = 636
     Top = 283
     Width = 75
     Height = 25
@@ -27,11 +27,10 @@ object DlgConfig: TDlgConfig
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 1
-    ExplicitLeft = 590
-    ExplicitTop = 282
+    ExplicitLeft = 610
   end
   object BtnOK: TButton
-    Left = 513
+    Left = 555
     Top = 283
     Width = 75
     Height = 25
@@ -41,35 +40,36 @@ object DlgConfig: TDlgConfig
     ModalResult = 1
     TabOrder = 0
     OnClick = BtnOKClick
-    ExplicitLeft = 509
-    ExplicitTop = 282
+    ExplicitLeft = 529
   end
   object TreeView1: TTreeView
     Left = 8
     Top = 8
-    Width = 147
+    Width = 162
     Height = 255
     Anchors = [akLeft, akTop, akBottom]
     Indent = 19
+    ReadOnly = True
+    RowSelect = True
     TabOrder = 2
     OnChange = TreeView1Change
-    ExplicitHeight = 254
   end
   object PCConfig: TPageControl
-    Left = 161
+    Left = 176
     Top = 8
-    Width = 508
+    Width = 535
     Height = 255
     ActivePage = TsAuthentication
     Anchors = [akLeft, akTop, akRight, akBottom]
+    Style = tsButtons
+    TabHeight = 4
     TabOrder = 3
-    ExplicitWidth = 504
-    ExplicitHeight = 254
+    ExplicitWidth = 509
     object TsAuthentication: TTabSheet
       Caption = 'Authentication'
       DesignSize = (
-        500
-        225)
+        527
+        241)
       object LblRebrickableAPIKey: TLabel
         Left = 15
         Top = 39
@@ -103,46 +103,51 @@ object DlgConfig: TDlgConfig
       object EditRebrickableAPIKey: TEdit
         Left = 87
         Top = 36
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 0
         OnChange = EditRebrickableAPIKeyChange
+        ExplicitWidth = 329
       end
       object EditRebrickableBaseUrl: TEdit
         Left = 87
         Top = 65
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
         OnChange = EditRebrickableBaseUrlChange
+        ExplicitWidth = 329
       end
       object BtnRebrickableAPIInfo: TButton
-        Left = 422
+        Left = 449
         Top = 35
         Width = 75
         Height = 25
         Action = ActAPIInfo
         Anchors = [akTop, akRight]
         TabOrder = 1
+        ExplicitLeft = 422
       end
       object EditAuthenticationToken: TEdit
         Left = 87
         Top = 94
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 3
+        ExplicitWidth = 329
       end
       object BtnLogin: TButton
-        Left = 422
+        Left = 449
         Top = 93
         Width = 75
         Height = 25
         Action = ActLogin
         Anchors = [akTop, akRight]
         TabOrder = 4
+        ExplicitLeft = 422
       end
       object ChkRememberAuthenticationToken: TCheckBox
         Left = 87
@@ -159,8 +164,8 @@ object DlgConfig: TDlgConfig
       Caption = 'External'
       ImageIndex = 1
       DesignSize = (
-        500
-        225)
+        527
+        241)
       object Label3: TLabel
         Left = 15
         Top = 10
@@ -220,42 +225,47 @@ object DlgConfig: TDlgConfig
       object EditViewRebrickableUrl: TEdit
         Left = 87
         Top = 36
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 0
+        ExplicitWidth = 329
       end
       object EditViewBrickLinkUrl: TEdit
         Left = 87
         Top = 65
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 1
+        ExplicitWidth = 329
       end
       object EditViewBrickOwlUrl: TEdit
         Left = 87
         Top = 94
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
+        ExplicitWidth = 329
       end
       object EditViewBrickSetUrl: TEdit
         Left = 87
         Top = 123
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 3
+        ExplicitWidth = 329
       end
       object EditViewLDrawUrl: TEdit
         Left = 87
         Top = 152
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 4
+        ExplicitWidth = 329
       end
       object CbxViewPartDefault: TComboBox
         Left = 302
@@ -278,8 +288,8 @@ object DlgConfig: TDlgConfig
       Caption = 'Local'
       ImageIndex = 2
       DesignSize = (
-        500
-        225)
+        527
+        241)
       object LblLocalImageCachePath: TLabel
         Left = 15
         Top = 39
@@ -339,112 +349,112 @@ object DlgConfig: TDlgConfig
       object EditLocalImageCachePath: TEdit
         Left = 87
         Top = 36
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 0
-        ExplicitWidth = 325
+        ExplicitWidth = 329
       end
       object BtnSelectLocalImageCachePath: TButton
-        Left = 422
+        Left = 449
         Top = 35
         Width = 75
         Height = 25
         Action = ActSelectLocalCacheFolder
         Anchors = [akTop, akRight]
         TabOrder = 1
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
       object EditLocalLogsPath: TEdit
         Left = 87
         Top = 94
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 2
-        ExplicitWidth = 325
+        ExplicitWidth = 329
       end
       object BtnSelectEditLocalLogsPath: TButton
-        Left = 422
+        Left = 449
         Top = 93
         Width = 75
         Height = 25
         Action = ActSelectLogsFolder
         Anchors = [akTop, akRight]
         TabOrder = 3
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
       object EditDbasePath: TEdit
         Left = 87
         Top = 123
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 4
-        ExplicitWidth = 325
+        ExplicitWidth = 329
       end
       object Button1: TButton
-        Left = 422
+        Left = 449
         Top = 122
         Width = 75
         Height = 25
         Action = ActDBasePath
         Anchors = [akTop, akRight]
         TabOrder = 5
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
       object EditImportPath: TEdit
         Left = 87
         Top = 152
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 6
-        ExplicitWidth = 325
+        ExplicitWidth = 329
       end
       object Button2: TButton
-        Left = 422
+        Left = 449
         Top = 151
         Width = 75
         Height = 25
         Action = ActSelectImportFolder
         Anchors = [akTop, akRight]
         TabOrder = 7
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
       object EditExportPath: TEdit
         Left = 87
         Top = 181
-        Width = 329
+        Width = 356
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 8
-        ExplicitWidth = 325
+        ExplicitWidth = 329
       end
       object Button3: TButton
-        Left = 422
+        Left = 449
         Top = 180
         Width = 75
         Height = 25
         Action = ActSelectExportFolder
         Anchors = [akTop, akRight]
         TabOrder = 9
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
       object Button7: TButton
-        Left = 422
+        Left = 449
         Top = 64
         Width = 75
         Height = 25
         Action = ActClearLocalCache
         Anchors = [akTop, akRight]
         TabOrder = 10
-        ExplicitLeft = 418
+        ExplicitLeft = 422
       end
     end
     object TsCustomSetListTags: TTabSheet
