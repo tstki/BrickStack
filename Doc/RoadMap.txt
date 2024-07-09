@@ -66,12 +66,14 @@ Collection window:
 - Drag n drop (+shift) to move / add set to collection.
 - Sub-setlists, in collections screen.
 - Show number of sets
+- Right click mark as built
 
 Settings:
 - Add option to display more columns for collection
 - Add ability to add custom fields
 - Option to store backup files on changes / periodically.
 - Slider for delay setting between image downloads.
+- Search options box above treeview
 
 Windows:
 - Collection

@@ -13,30 +13,7 @@ uses
 
 type
   TFrmSearch = class(TForm)
-    EditSearchText: TEdit;
-    LblSearch: TLabel;
-    Label2: TLabel;
-    CbxSearchType: TComboBox;
-    PageControl1: TPageControl;
-    TabSheet1: TTabSheet;
-    TabSheet2: TTabSheet;
-    TabSheet3: TTabSheet;
     SbSearchResults: TScrollBox;
-    Theme: TLabel;
-    Label1: TLabel;
-    ComboBox1: TComboBox;
-    ComboBox2: TComboBox;
-    Edit3: TEdit;
-    Edit5: TEdit;
-    CheckBox2: TCheckBox;
-    Label5: TLabel;
-    Label4: TLabel;
-    Edit2: TEdit;
-    Edit4: TEdit;
-    Label3: TLabel;
-    Year: TLabel;
-    ImgSearch: TImage;
-    CbxSearchStyle: TComboBox;
     PnlTemplateResult: TPanel;
     ImgTemplateSetImage: TImage;
     ImgAddSet: TImage;
@@ -47,11 +24,31 @@ type
     LblTemplatePart: TLabel;
     LblTemplateName: TLabel;
     TmrRefresh: TTimer;
-    Label6: TLabel;
+    PnlSearchOptions: TPanel;
+    Year: TLabel;
+    TrackYearFrom: TTrackBar;
+    Label3: TLabel;
+    TrackPartsFrom: TTrackBar;
+    Label4: TLabel;
+    Label5: TLabel;
+    TrackYearTo: TTrackBar;
+    LblTrackYear: TLabel;
+    TrackPartsTo: TTrackBar;
+    LblTrackParts: TLabel;
+    Panel1: TPanel;
+    BtnExpandOptions: TButton;
+    CbxSearchStyle: TComboBox;
     CbxSearchWhat: TComboBox;
+    CbxThemes: TComboBox;
+    EditSearchText: TEdit;
+    ImgSearch: TImage;
+    Label1: TLabel;
+    Label6: TLabel;
     Label7: TLabel;
-    TrackBar1: TTrackBar;
-    LblResultLimit: TLabel;
+    LblSearch: TLabel;
+    LblTrackResultLimit: TLabel;
+    TrackResultLimit: TTrackBar;
+    Label2: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -64,7 +61,8 @@ type
     procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure TmrRefreshTimer(Sender: TObject);
-    procedure TrackBar1Change(Sender: TObject);
+    procedure TrackChange(Sender: TObject);
+    procedure BtnExpandOptionsClick(Sender: TObject);
   private
     { Private declarations }
     FSetObjects: TSetObjectList; // Stored locally from query result.
@@ -73,6 +71,10 @@ type
     FImageCache: TImageCache;
     FCurMaxCols: Integer;
     procedure FDoSearch;
+    function FGetFromYear(): Integer;
+    function FGetToYear(): Integer;
+    function FGetFromParts(): Integer;
+    function FGetToParts(): Integer;
     function FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
   public
     { Public declarations }
@@ -87,9 +89,11 @@ implementation
 uses
   Math, Diagnostics,
   Data.DB,
+  StrUtils,
   FireDAC.Comp.Client,
   USQLiteConnection,
   UDlgAddToSetList, UDelayedImage,
+  DateUtils,
   UFrmMain, UStrings;
 
 const
@@ -130,15 +134,27 @@ begin
   CbxSearchWhat.Items.Add(StrSearchName);
   CbxSearchWhat.ItemIndex := 0;
 
-  CbxSearchType.Clear;
+  //This whole dialog is themed for search in sets.
+{  CbxSearchType.Clear;
   CbxSearchType.Items.Add(StrSearchSets);
   CbxSearchType.Items.Add(StrSearchMinifigs);
   CbxSearchType.Items.Add(StrSearchParts);
-  CbxSearchType.ItemIndex := 0;
+  CbxSearchType.ItemIndex := 0;    }
 
   // Template used for other results:
   PnlTemplateResult.Parent := nil;
   PnlTemplateResult.Visible := False;
+
+//  EditPartsFrom.Text := '0';
+//  EditPartsTo.Text := '9000';
+//  EditYearFrom.Text := '1945';
+//  EditYearTo.Text := '2050';
+
+  // Ensure the year track has enough space for coming year.
+  var yearsSince1945 := YearOf(Now) - 1945+1;
+  var numYearTicks := yearsSince1945/10;
+  TrackYearFrom.Max := Round(numYearTicks+0.5);
+  TrackYearTo.Max := TrackYearFrom.Max;
 
   FResultPanels := TObjectList.Create;
   FResultPanels.OwnsObjects := True;
@@ -146,6 +162,7 @@ begin
   FSetObjects := TSetObjectList.Create;
 
   SbSearchResults.UseWheelForScrolling := True;
+  BtnExpandOptionsClick(Self);
 end;
 
 procedure TFrmSearch.FormDestroy(Sender: TObject);
@@ -165,16 +182,70 @@ end;
 procedure TFrmSearch.FormShow(Sender: TObject);
 begin
   inherited;
+  EditSearchText.SetFocus;
+
   // Research this more later - mdi child anchors are weird.
   Width := 640;
   Height := 480;
   SbSearchResults.Anchors := [TAnchorKind.akLeft,TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
 
-  TrackBar1Change(Self);
+  TrackChange(Self);
 
   var CurWidth := SbSearchResults.ClientWidth;
   var MinimumPanelWidth := PnlTemplateResult.Width;
   FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
+
+  // Fill the theme pulldown - just main themes for now. No sub themes.
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+  CbxThemes.Clear;
+  CbxThemes.Items.BeginUpdate;
+  CbxThemes.Items.AddObject('(' + StrAny + ')', TObject(0));
+  try
+    FDQuery.Connection := SqlConnection;
+
+    // Substring because some value has more than 40 characters, firedac moans about it when retrieving data.
+    FDQuery.SQL.Text := 'SELECT t.id as id, substr(t.name,1,40) as name, pt.name AS ptname, t.parent_id as ptid FROM themes t' +
+                        ' LEFT JOIN themes pt ON pt.id = t.parent_id' +
+                        ' ORDER BY t.name';
+    FDQuery.Open;
+
+    while not FDQuery.Eof do begin
+      var ThemeName := FDQuery.FieldByName('name').AsString;
+      var ParentThemeName := FDQuery.FieldByName('ptname').AsString;
+      var ThemeID := FDQuery.FieldByName('id').AsInteger;
+
+      var DisplayName := '';
+      if ParentThemeName <> '' then
+        DisplayName := Format('%s (%s)', [ThemeName, ParentThemeName])
+      else
+        DisplayName := ThemeName;
+
+      CbxThemes.Items.AddObject(DisplayName, TObject(ThemeID));
+
+      FDQuery.Next; // Move to the next row
+    end;
+  finally
+    CbxThemes.ItemIndex := 0;
+    CbxThemes.Items.EndUpdate;
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
+
+  CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
+end;
+
+procedure TFrmSearch.BtnExpandOptionsClick(Sender: TObject);
+begin
+  var OldTop := SbSearchResults.Top;
+  PnlSearchOptions.Visible := not PnlSearchOptions.Visible;
+  if PnlSearchOptions.Visible then begin
+    SbSearchResults.Top := PnlSearchOptions.Top + PnlSearchOptions.Height + 2;
+    SbSearchResults.Height := SbSearchResults.Height - (SbSearchResults.Top-OldTop);
+  end else begin
+    SbSearchResults.Top := PnlSearchOptions.Top;
+    SbSearchResults.Height := SbSearchResults.Height + (OldTop-SbSearchResults.Top);
+  end;
 end;
 
 function TFrmSearch.FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
@@ -307,10 +378,20 @@ begin
         // Set up the query
         FDQuery.Connection := SqlConnection;
         FDQuery.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
-                            ' FROM Sets where (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+                            ' FROM Sets where (year between :fromyear and :toyear) AND' +
+                            ' (num_parts BETWEEN :fromparts AND :toparts) AND ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
         if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + TrackBar1.Position * 10);
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+        var ThemeID := 0;
+        if CbxThemes.ItemIndex <> 0 then begin
+          ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+          if ThemeID > 0 then
+            FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND theme_id = :themeid';
+        end;
+
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + TrackResultLimit.Position * 10);
 
         var Params := FDQuery.Params;
         var SearchValue1 := EditSearchText.Text;
@@ -328,6 +409,13 @@ begin
 
         if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
           Params.ParamByName('Param2').AsString := SearchValue2;
+
+        Params.ParamByName('fromyear').AsInteger := FGetFromYear;
+        Params.ParamByName('toyear').AsInteger := FGetToYear;
+        Params.ParamByName('fromparts').AsInteger := FGetFromParts;
+        Params.ParamByName('toparts').AsInteger := FGetToParts;
+        if ThemeID > 0 then
+          Params.ParamByName('themeid').AsInteger := ThemeID;
 
         FDQuery.Open;
 
@@ -496,9 +584,59 @@ begin
   end;
 end;
 
-procedure TFrmSearch.TrackBar1Change(Sender: TObject);
+function TFrmSearch.FGetFromYear(): Integer;
 begin
-  LblResultLimit.Caption := IntToStr(10 + TrackBar1.Position * 10);
+  Result := 1945 + TrackYearFrom.Position * 10;
+end;
+
+function TFrmSearch.FGetToYear(): Integer;
+begin
+  var CurrentYear := YearOf(Now);
+  var ToYear := 1945 + TrackYearTo.Position * 10;
+
+  if ToYear > CurrentYear then
+    Result := CurrentYear+1
+  else
+    Result := ToYear;
+end;
+
+function TFrmSearch.FGetFromParts(): Integer;
+begin
+  Result := TrackPartsFrom.Position * 500;
+end;
+
+function TFrmSearch.FGetToParts(): Integer;
+begin
+  var ToParts := TrackPartsTo.Position * 500;
+
+  Result := IfThen(TrackPartsTo.Position = TrackPartsTo.Max, 9999, ToParts);
+end;
+
+procedure TFrmSearch.TrackChange(Sender: TObject);
+begin
+  LblTrackResultLimit.Caption := IntToStr(10 + TrackResultLimit.Position * 10);
+
+  // Restrict year selections so they can't have the same value.
+  if TrackYearFrom.Position >= TrackYearTo.Position then begin
+    if Sender = TrackYearFrom then
+      TrackYearFrom.Position := TrackYearTo.Position-1;
+    if Sender = TrackYearTo then
+      TrackYearTo.Position := TrackYearFrom.Position+1;
+  end;
+  // Restrict parts selection
+  if TrackPartsFrom.Position >= TrackPartsTo.Position then begin
+    if Sender = TrackPartsFrom then
+      TrackPartsFrom.Position := TrackPartsTo.Position-1;
+    if Sender = TrackPartsTo then
+      TrackPartsTo.Position := TrackPartsFrom.Position+1;
+  end;
+
+  LblTrackYear.Caption := IntToStr(FGetFromYear) + '-' + IntToStr(FGetToYear);
+
+  var ToParts := FGetToParts;
+
+  LblTrackParts.Caption := IntToStr(FGetFromParts) + '-' +
+                           IfThen(ToParts = 9999, 'Any', IntToStr(ToParts));
 end;
 
 end.

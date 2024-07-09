@@ -61,6 +61,7 @@ const
   StrSearchSets = 'Sets';
   StrSearchMinifigs = 'Minifigures';
   StrSearchParts = 'Parts';
+  StrAny = 'Any';
 
   // Option labels
   StrNameRebrickable = 'Rebrickable';
