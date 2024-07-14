@@ -29,8 +29,13 @@ object FrmMain: TFrmMain
     Margins.Right = 2
     Margins.Bottom = 2
     AutoHint = True
-    Panels = <>
+    Panels = <
+      item
+        Width = 50
+      end>
     SimplePanel = True
+    ExplicitTop = 240
+    ExplicitWidth = 344
   end
   object ToolBar2: TToolBar
     Left = 0
@@ -46,6 +51,7 @@ object FrmMain: TFrmMain
     ShowHint = True
     TabOrder = 1
     Wrapable = False
+    ExplicitWidth = 344
     object ToolButton9: TToolButton
       Left = 5
       Top = 0

@@ -43,6 +43,7 @@ type
     ImgDelete: TImage;
     ImgImport: TImage;
     ImgExport: TImage;
+    StatusBar1: TStatusBar;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure ActEditSetListExecute(Sender: TObject);
@@ -85,11 +86,13 @@ implementation
 
 uses
   StrUtils, SysUtils, Dialogs, UITypes, Math,
-  UFrmMain, UStrings,
+  UFrmMain, UStrings, USqLiteConnection, Data.DB,
   UDlgSetList, UDlgImport;
 
 procedure TFrmSetListCollection.RebuildListView;
 begin
+  var TotalSetCount := 0;
+
   LvSetLists.items.BeginUpdate;
   try
     LvSetLists.Items.Clear;
@@ -110,9 +113,19 @@ begin
       // Add items to the list view
       var Item := LvSetLists.Items.Add;
       Item.Caption := SetListObject.Name;
-      Item.SubItems.Add(IfThen(SetListObject.UseInCollection, 'Yes', 'No'));
+      Item.SubItems.Add(IntToStr(SetListObject.SetCount));
+      Item.SubItems.Add(IfThen(SetListObject.UseInCollection, StrYes, StrNo));
       Item.ImageIndex := 0;
       Item.Data := SetListObject;
+
+      TotalSetCount := TotalSetCount + SetListObject.SetCount;
+    end;
+
+    StatusBar1.Panels.BeginUpdate;
+    try
+      StatusBar1.Panels[0].Text := Format(StrYouHaveSetsCollections, [TotalSetCount, FSetListObjectList.Count]);
+    finally
+      StatusBar1.Panels.EndUpdate;
     end;
   finally
     LvSetLists.items.EndUpdate;
@@ -151,7 +164,9 @@ begin
   try
     // Set up the query
     FDQuery.Connection := SqlConnection;
-    FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex FROM mysetlists';
+    FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
+                        ' (select sum(quantity) FROM MySets s WHERE s.MysetlistID = m.ID) AS SetCount' +
+                        ' FROM mysetlists m';
     FSetListObjectList.LoadFromQuery(FDQuery);
   finally
     FDQuery.Free;

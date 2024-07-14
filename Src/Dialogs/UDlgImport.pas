@@ -5,32 +5,40 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  IdHttp, UConfig, USetList;
+  IdHttp, UConfig, USetList, Vcl.Imaging.pngimage, Vcl.ExtCtrls;
 
 type
   TDlgImport = class(TForm)
     CbxImportOptions: TComboBox;
     Label1: TLabel;
     CbxImportLocalOptions: TComboBox;
-    Label2: TLabel;
+    LblImportLocalOptions: TLabel;
     BtnCancel: TButton;
     BtnOK: TButton;
+    LblCollectionName: TLabel;
+    EditCollectionName: TEdit;
+    EditImportFilepath: TEdit;
+    LblImportFilepath: TLabel;
+    ImgOpen: TImage;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure OnChange(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure ImgOpenClick(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
+    procedure FDoImportByRebrickableAPI;
+    procedure FDoImportByRebrickableCSV;
+    procedure FUpdateUI;
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
     property SetListObjectList: TSetListObjectList read FSetListObjectList write FSetListObjectList;
   end;
-
-var
-  DlgImport: TDlgImport;
 
 implementation
 
@@ -72,6 +80,13 @@ uses
   StrUtils;
 
 const
+  cIMPORTREBRICKABLEAPI = 0;
+  cIMPORTREBRICKABLECSV = 1;
+  //cIMPORTFROMBRICKLINKXML = 2; // Unsure on the format for now
+  //cIMPORTBRICKSETMYSETS = 3;   //
+  //cIMPORTBRICKOWLORDER = 4;    //
+  //cIMPORTBRICKLINKORDER = 5;   //
+
   cIMPORTMERGE = 0;
   cIMPORTAPPEND = 1;
   cIMPORTOVERWRITE = 2;
@@ -81,8 +96,8 @@ begin
   inherited;
 
   CbxImportOptions.Items.Clear;
-  CbxImportOptions.Items.Add(StrNameRebrickable);
-  //CbxImportOptions.Items.Add('Other');
+  CbxImportOptions.Items.Add(StrNameRebrickableAPI);
+  CbxImportOptions.Items.Add(StrNameRebrickableCSV);
   CbxImportOptions.ItemIndex := 0;
 
   CbxImportLocalOptions.Items.Clear;
@@ -90,6 +105,14 @@ begin
   CbxImportLocalOptions.Items.Add(StrImportOptionAppend);
   CbxImportLocalOptions.Items.Add(StrImportOptionOverwrite);
   CbxImportLocalOptions.ItemIndex := 0;
+
+  EditCollectionName.Text := StrNewCollectionName;
+end;
+
+procedure TDlgImport.FormShow(Sender: TObject);
+begin
+  inherited;
+  FUpdateUI;
 end;
 
 {
@@ -104,12 +127,100 @@ http response codes for rebrickable:
 429	Request throttled - slow down!
 }
 
-procedure TDlgImport.BtnOKClick(Sender: TObject);
+procedure TDlgImport.FUpdateUI;
 begin
-  // Obtain a token for user actions such as import/export
+  LblImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
+  EditImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
+  EditCollectionName.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
+  LblCollectionName.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
 
-  //Option: also fetch all sets in each setlist right away
-  //Option (heavy load) also obtain all parts in each set - might not be the best idea
+  BtnOK.Enabled := ((Length(EditImportFilepath.Text) > 0) and (Length(EditCollectionName.Text) > 0)) or
+                   (CbxImportOptions.ItemIndex = cIMPORTREBRICKABLEAPI);
+end;
+
+procedure TDlgImport.ImgOpenClick(Sender: TObject);
+begin
+  var OpenDialog := TFileOpenDialog.Create(nil);
+  try
+    OpenDialog.Title := StrSelectFile;
+    OpenDialog.DefaultFolder := GetCurrentDir;
+    if OpenDialog.Execute then
+      EditImportFilepath.Text := OpenDialog.FileName;
+  finally
+    OpenDialog.Free;
+  end;
+end;
+
+procedure TDlgImport.OnChange(Sender: TObject);
+begin
+  FUpdateUI;
+end;
+
+procedure TDlgImport.FDoImportByRebrickableCSV;
+begin
+  if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
+    ShowMessage(StrErrMergeUnavailableForRebrickableCSVImport);
+    Exit;
+  end else if not FileExists(EditImportFilepath.Text) then begin
+    ShowMessage(Format(StrErrFileNotFound, [EditImportFilepath.Text]));
+    Exit;
+  end;
+
+  {//Example Import CSV:
+  Set Number,Quantity,Includes Spares,Inventory ID
+  76039-1,1,True,3961
+  44013-1,1,True,4097
+  6203-1,1,True,11731}
+
+  //'SELECT id FROM MysetLists WHERE name = :name'
+  //If result, use result
+  //If no result, insert into
+
+
+  var SL := TStringList.Create;
+  SL.LoadFromFile(EditImportFilepath.Text);
+  if SL.Count > 0 then begin
+    for var Item in SL do begin
+      var SplitStr := Item.Split([',']);
+
+      if Length(SplitStr) < 4 then begin
+        // Skipping row - dont forget to alert user.
+        Continue;
+      end;
+
+      //determine collectionID
+      //create if needed
+
+      //var MySetListID := selected;
+      //var Set_num := SplitStr[0];
+      //var built := false;
+      //var quantity := SplitStr[1];
+      //var havespareparts := SplitStr[2];
+      //var notes := '';
+
+//      ShowMessage(SplitStr);
+    end;
+  end;
+
+
+//TODO
+//find list by name.
+//If not found, create new one and use that as ID
+//otherwise use the found ID
+  //Check to make sure the listname the user entered does not exist yet, or ask to import there anyway.
+//  cIMPORTAPPEND = 1; //
+//  cIMPORTOVERWRITE = 2; // Delete the items that are in this list
+
+
+  //load CSV into TStringList, then go split and nextfield
+  //Create new database entry for new setlist collection.
+  //Import rows to database.
+  //Report any errors with the CSV.
+end;
+
+procedure TDlgImport.FDoImportByRebrickableAPI;
+begin
+  // Check token, if not available - request login. Obtain a token for user actions such as import/export
 
   // API key is mandatory
   if FConfig.RebrickableAPIKey = '' then begin
@@ -214,6 +325,14 @@ begin
       Modalresult := mrNone;
     end
   end;
+end;
+
+procedure TDlgImport.BtnOKClick(Sender: TObject);
+begin
+  if CbxImportOptions.ItemIndex = cIMPORTREBRICKABLEAPI then
+    FDoImportByRebrickableAPI
+  else
+    FDoImportByRebrickableCSV;
 end;
 
 end.

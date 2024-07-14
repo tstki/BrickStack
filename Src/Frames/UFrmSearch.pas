@@ -49,6 +49,7 @@ type
     LblTrackResultLimit: TLabel;
     TrackResultLimit: TTrackBar;
     Label2: TLabel;
+    StatusBar1: TStatusBar;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);

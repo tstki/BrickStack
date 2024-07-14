@@ -15,12 +15,6 @@ type
   TFrmParts = class(TForm)
     Panel1: TPanel;
     LblInventoryVersion: TLabel;
-    SbSetParts: TScrollBox;
-    PnlTemplateResult: TPanel;
-    ImgTemplatePartImage: TImage;
-    ImgTemplateShowPart: TImage;
-    LblTemplateName: TLabel;
-    CbxTemplateCheck: TCheckBox;
     CbxInventoryVersion: TComboBox;
     Button1: TButton;
     TmrRefresh: TTimer;
@@ -54,6 +48,13 @@ type
     ImageList1: TImageList;
     ImgPrinter: TImage;
     ImgExport: TImage;
+    StatusBar1: TStatusBar;
+    SbSetParts: TScrollBox;
+    PnlTemplateResult: TPanel;
+    ImgTemplatePartImage: TImage;
+    ImgTemplateShowPart: TImage;
+    LblTemplateName: TLabel;
+    CbxTemplateCheck: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure SbSetPartsResize(Sender: TObject);

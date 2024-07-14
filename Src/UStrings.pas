@@ -28,6 +28,11 @@ const
   StrFrmSetTitle = 'Lego set: %s - %s';
   StrMax = 'Max: %d';
   StrAddSetTo = 'Add set ''%s'' to:';
+  StrSelectFile = 'Select a file';
+  StrNewCollectionName = 'New collection';
+  StrYouHaveSetsCollections = 'You have %d sets across %d setlists.';
+  StrYes = 'Yes';
+  StrNo = 'No';
 
   // Search areas
   StrYourCollections = 'All owned';
@@ -64,7 +69,8 @@ const
   StrAny = 'Any';
 
   // Option labels
-  StrNameRebrickable = 'Rebrickable';
+  StrNameRebrickableAPI = 'Rebrickable API';
+  StrNameRebrickableCSV = 'Rebrickable CSV';
   StrImportOptionMerge = 'Merge with local by ID';
   StrImportOptionAppend = 'Keep local and append new';
   StrImportOptionOverwrite = 'Clear local and add new';
@@ -85,6 +91,8 @@ const
   StrErrNoResult = 'No result';
   StrErrAPIKeyNotSet = 'API key not set, please see configuration first.';
   StrErrTokenNotSet = 'Missing authentication token, please login first.';
+  StrErrFileNotFound = 'File not found or no longer accessible. (%s)';
+  StrErrMergeUnavailableForRebrickableCSVImport = '"Merge by ID" is unavailable for Rebrickable CSV imports. Please select another option.';
 
 implementation
 

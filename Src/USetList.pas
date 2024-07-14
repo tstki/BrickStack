@@ -24,6 +24,7 @@ type
     FExternalID: Integer;
     FExternalType: Integer;
     FSortIndex: Integer;
+    FSetCount: Integer;
     //FIconIndex: Integer; // Make the collection stand out more. // provide the user an icon from the imagelist
     FDirty: Boolean;    // Not saved // Item was modified and needs to update
     FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
@@ -38,6 +39,7 @@ type
     property ExternalID: Integer read FExternalID write FExternalID;
     property ExternalType: Integer read FExternalType write FExternalType;
     property SortIndex: Integer read FSortIndex write FSortIndex;
+    property SetCount: Integer read FSetCount write FSetCount;
     property Dirty: Boolean read FDirty write FDirty;
     property DoDelete: Boolean read FDoDelete write FDoDelete;
   end;
@@ -56,7 +58,7 @@ implementation
 
 uses
   FireDAC.Stan.Param,
-  SysUtils, IniFiles, UFrmMain,
+  SysUtils, IniFiles, UFrmMain, USqLiteConnection, Data.DB,
   UStrings;
 
 procedure TSetListObject.LoadByID(ID: Integer);
@@ -64,10 +66,10 @@ begin
   var SqlConnection := FrmMain.AcquireConnection; // Kept until end of form
   var FDQuery := TFDQuery.Create(nil);
   try
-    // Set up the query
     FDQuery.Connection := SqlConnection;
-
-    FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex FROM mysetlists WHERE ID=:ID';
+    FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
+                        ' (select sum(quantity) FROM MySets s WHERE s.MysetlistID = m.ID) AS SetCount' +
+                        ' FROM mysetlists m WHERE ID=:ID';
 
     var Params := FDQuery.Params;
     Params.ParamByName('id').asInteger := ID;
@@ -91,6 +93,7 @@ begin
   Self.ExternalType := FDQuery.FieldByName('externaltype').AsInteger;
   Self.SortIndex := FDQuery.FieldByName('sortindex').AsInteger;
   //Self.IconIndex := FDQuery.FieldByName('iconindex').AsInteger;
+  Self.SetCount := FDQuery.FieldByName('setcount').AsInteger;
   Self.FDirty := False;
   Self.DoDelete := False;
 end;

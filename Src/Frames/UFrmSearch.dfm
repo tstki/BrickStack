@@ -18,7 +18,7 @@ object FrmSearch: TFrmSearch
     Left = 0
     Top = 129
     Width = 612
-    Height = 309
+    Height = 296
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
@@ -501,6 +501,16 @@ object FrmSearch: TFrmSearch
       TabOrder = 5
       OnChange = TrackChange
     end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 419
+    Width = 612
+    Height = 19
+    Panels = <>
+    ExplicitLeft = 192
+    ExplicitTop = 408
+    ExplicitWidth = 0
   end
   object TmrRefresh: TTimer
     Enabled = False

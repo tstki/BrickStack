@@ -17,12 +17,15 @@ object FrmSetListCollection: TFrmSetListCollection
     Left = 0
     Top = 41
     Width = 430
-    Height = 273
+    Height = 254
     Align = alClient
     Columns = <
       item
         Caption = 'Name'
         Width = 250
+      end
+      item
+        Caption = 'Sets'
       end
       item
         Caption = 'Use in build calc'
@@ -37,7 +40,7 @@ object FrmSetListCollection: TFrmSetListCollection
     OnColumnRightClick = LvSetListsColumnRightClick
     OnDblClick = ActOpenCollectionExecute
     ExplicitWidth = 426
-    ExplicitHeight = 272
+    ExplicitHeight = 253
   end
   object Panel1: TPanel
     Left = 0
@@ -53,7 +56,7 @@ object FrmSetListCollection: TFrmSetListCollection
       430
       41)
     object ImgOpen: TImage
-      Left = 168
+      Left = 160
       Top = 5
       Width = 30
       Height = 30
@@ -148,7 +151,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Filter'
     end
     object ImgEdit: TImage
-      Left = 204
+      Left = 196
       Top = 5
       Width = 30
       Height = 30
@@ -243,7 +246,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 252
     end
     object ImgAdd: TImage
-      Left = 240
+      Left = 232
       Top = 5
       Width = 30
       Height = 30
@@ -350,7 +353,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 288
     end
     object ImgDelete: TImage
-      Left = 276
+      Left = 268
       Top = 5
       Width = 30
       Height = 30
@@ -453,7 +456,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 324
     end
     object ImgImport: TImage
-      Left = 312
+      Left = 304
       Top = 5
       Width = 30
       Height = 30
@@ -545,7 +548,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 360
     end
     object ImgExport: TImage
-      Left = 348
+      Left = 340
       Top = 5
       Width = 30
       Height = 30
@@ -630,14 +633,26 @@ object FrmSetListCollection: TFrmSetListCollection
     object CbxFilter: TComboBox
       Left = 40
       Top = 8
-      Width = 122
+      Width = 114
       Height = 23
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
-      ExplicitWidth = 118
+      ExplicitWidth = 110
     end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 295
+    Width = 430
+    Height = 19
+    Panels = <
+      item
+        Width = 50
+      end>
+    ExplicitTop = 294
+    ExplicitWidth = 426
   end
   object ActionList1: TActionList
     Images = ImageList16

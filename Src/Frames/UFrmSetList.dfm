@@ -107,7 +107,7 @@ object FrmSetList: TFrmSetList
     Left = 0
     Top = 41
     Width = 628
-    Height = 401
+    Height = 382
     Align = alClient
     Columns = <
       item
@@ -141,12 +141,31 @@ object FrmSetList: TFrmSetList
     ExplicitWidth = 624
     ExplicitHeight = 400
   end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 423
+    Width = 628
+    Height = 19
+    Panels = <
+      item
+        Width = 200
+      end>
+    ExplicitLeft = 280
+    ExplicitTop = 352
+    ExplicitWidth = 0
+  end
   object PopupMenu1: TPopupMenu
     Left = 120
     Top = 176
     object test1: TMenuItem
       Action = ActOpenCollection
       SubMenuImages = ImageList16
+    end
+    object Viewpartslist1: TMenuItem
+      Action = ActViewPartsList
+    end
+    object Viewexternally1: TMenuItem
+      Action = ActViewExternal
     end
     object Edit1: TMenuItem
       Action = ActEditSetList
@@ -188,6 +207,14 @@ object FrmSetList: TFrmSetList
       Caption = 'View...'
       ImageIndex = 2
       OnExecute = ActOpenCollectionExecute
+    end
+    object ActViewExternal: TAction
+      Category = 'SetList'
+      Caption = 'View externally'
+    end
+    object ActViewPartsList: TAction
+      Category = 'SetList'
+      Caption = 'View partslist...'
     end
   end
   object ImageList16: TImageList

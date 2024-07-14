@@ -31,6 +31,11 @@ type
     ActEditSetList: TAction;
     ActOpenCollection: TAction;
     ImageList16: TImageList;
+    ActViewExternal: TAction;
+    Viewexternally1: TMenuItem;
+    ActViewPartsList: TAction;
+    Viewpartslist1: TMenuItem;
+    StatusBar1: TStatusBar;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
@@ -70,6 +75,11 @@ uses
   USqLiteConnection,
   UITypes,
   UFrmMain, UStrings;
+
+const //CbxFilter
+  fltQuantity = 0;
+  fltBuilt = 1;
+  fltSpareParts = 2;
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
@@ -253,6 +263,13 @@ begin
     FSetListObject.Free;
   FOwnsSetList := OwnsObject;
   FSetListObject := SetListObject;
+
+  StatusBar1.Panels.BeginUpdate;
+  try
+    StatusBar1.Panels[0].Text := 'Total sets: ' + IntToStr(FSetListObject.SetCount);
+  finally
+    StatusBar1.Panels.EndUpdate;
+  end;
 
   FReloadAndRefresh;
  end;
