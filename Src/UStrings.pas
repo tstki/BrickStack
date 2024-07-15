@@ -34,6 +34,19 @@ const
   StrYes = 'Yes';
   StrNo = 'No';
 
+  // Setlist filter
+  StrSetListFillterShowAll = 'All';
+  StrSetListFillterShowLocal = 'Created locally';
+  StrSetListFillterShowRebrickable = 'Imported from Rebrickable';
+  StrSetListFillterShowSets = 'Has sets';
+  StrSetListFillterShowNoSets = 'Has no sets';
+
+  StrSetListFillterQuantity = 'Quantity 2 or more';
+  StrSetListFillterBuilt = 'Built';
+  StrSetListFillterNotBuilt = 'Not built';
+  StrSetListFillterSpareParts = 'Have spare parts';
+  StrSetListFillterNoSpareParts = 'No spare parts';
+
   // Search areas
   StrYourCollections = 'All owned';
   StrDatabase = 'Database';

@@ -43,6 +43,7 @@ type
     procedure ActDeleteSetListExecute(Sender: TObject);
     procedure ActEditSetListExecute(Sender: TObject);
     procedure ActOpenCollectionExecute(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -77,9 +78,13 @@ uses
   UFrmMain, UStrings;
 
 const //CbxFilter
-  fltQuantity = 0;
-  fltBuilt = 1;
-  fltSpareParts = 2;
+  fltALL = 0;
+  fltQUANTITY = 1;
+  fltBUILT = 2;
+  fltNOTBUILT = 3;
+  fltSPAREPARTS = 4;
+  fltNOSPAREPARTS = 5;
+  //custom tag
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
@@ -95,6 +100,26 @@ begin
   FSetObjects.Free;
 
   inherited;
+end;
+
+procedure TFrmSetList.FormShow(Sender: TObject);
+begin
+  inherited;
+
+  CbxFilter.Items.Clear;
+  CbxFilter.Items.Add(StrSetListFillterShowAll);
+  CbxFilter.Items.Add(StrSetListFillterQuantity);
+  CbxFilter.Items.Add(StrSetListFillterBuilt);
+  CbxFilter.Items.Add(StrSetListFillterNotBuilt);
+  CbxFilter.Items.Add(StrSetListFillterSpareParts);
+  CbxFilter.Items.Add(StrSetListFillterNoSpareParts);
+
+  //Perform query, get possible custom tags for setlistcollections
+  //And custom tags from setlists type:
+  //CbxFilter.Items.Add('Custom tag 1');
+  //CbxFilter.Items.Add('Custom tag 2');
+  //CbxFilter.Items.Add('Custom tag 3');
+  CbxFilter.ItemIndex := 0;
 end;
 
 procedure TFrmSetList.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -114,6 +139,24 @@ begin
   LvSets.Clear;
 
   for var Obj in FSetObjects do begin
+    // Check filter.
+    if CbxFilter.ItemIndex = fltQUANTITY then begin
+      if StrToIntDef(Obj.Quantity, 0) <= 1 then
+        Continue;
+    end else if CbxFilter.ItemIndex = fltBUILT then begin
+      if not Obj.Built then
+        Continue;
+    end else if CbxFilter.ItemIndex = fltNOTBUILT then begin
+      if Obj.Built then
+        Continue;
+    end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
+      if not Obj.IncludeSpares then
+        Continue;
+    end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
+      if Obj.IncludeSpares then
+        Continue;
+    end; // Else, no filter.
+
     var ListItem := LvSets.Items.Add;
     ListItem.Data := Obj;
     ListItem.Caption := Obj.SetName;

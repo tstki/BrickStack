@@ -67,6 +67,7 @@ Collection window:
 - Sub-setlists, in collections screen.
 - Show number of sets
 - Right click mark as built
+- Add "all your sets" table entry to view your collection and filter from there.
 
 Settings:
 - Add option to display more columns for collection

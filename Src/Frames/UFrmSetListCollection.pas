@@ -76,6 +76,9 @@ const
   cETFALL = 0;
   cETFLOCAL = 1;       // So, not actually external
   cETFREBRICKABLE = 2; // Imported from Rebrickable
+  cETFHASSETS = 3;
+  cETFNOSETS = 4;
+
   //cETF...  // Imported from other places
   //cETFSETS =
   //cETF
@@ -107,6 +110,12 @@ begin
       end else if CbxFilter.ItemIndex = cETFREBRICKABLE then begin
         if SetListObject.ExternalID = 0 then
           Continue;
+      end else if CbxFilter.ItemIndex = cETFHASSETS then begin
+        if SetListObject.SetCount = 0 then
+          Continue;
+      end else if CbxFilter.ItemIndex = cETFNOSETS then begin
+        if SetListObject.SetCount <> 0 then
+          Continue;
       end; // Else, no filter.
 
 
@@ -134,24 +143,26 @@ end;
 
 procedure TFrmSetListCollection.FormResize(Sender: TObject);
 begin
-// If size < X, hide filter, show hamburger menu, hide buttons
+  inherited;
+  // If size < X, hide filter, show hamburger menu, hide buttons
 end;
 
 procedure TFrmSetListCollection.FormShow(Sender: TObject);
 begin
+  inherited;
+
   Width := 450;
   //read size from config as well
 
   FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
 
   CbxFilter.Items.Clear;
-  CbxFilter.Items.Add('All');
-  CbxFilter.Items.Add('Created locally');
-  CbxFilter.Items.Add('Imported from Rebrickable');
+  CbxFilter.Items.Add(StrSetListFillterShowAll);
+  CbxFilter.Items.Add(StrSetListFillterShowLocal);
+  CbxFilter.Items.Add(StrSetListFillterShowRebrickable);
+  CbxFilter.Items.Add(StrSetListFillterShowSets);
+  CbxFilter.Items.Add(StrSetListFillterShowNoSets);
   //CbxFilter.Items.Add('Imported from ...');
-  //CbxFilter.Items.Add('Has sets');
-  //CbxFilter.Items.Add('Has no sets');
-
   //Perform query, get possible custom tags for setlistcollections
   //And custom tags from setlists type:
   //CbxFilter.Items.Add('Custom tag 1');
@@ -175,15 +186,19 @@ begin
 
   if FSetListObjectList.Count > 0 then
     RebuildListView;
+
+  CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
 begin
+  inherited;
 // Check selection. Enable/disable actions as needed.
 end;
 
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
 begin
+  inherited;
 // Show context menu to show/hide columns
 end;
 

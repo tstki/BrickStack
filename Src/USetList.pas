@@ -93,7 +93,10 @@ begin
   Self.ExternalType := FDQuery.FieldByName('externaltype').AsInteger;
   Self.SortIndex := FDQuery.FieldByName('sortindex').AsInteger;
   //Self.IconIndex := FDQuery.FieldByName('iconindex').AsInteger;
-  Self.SetCount := FDQuery.FieldByName('setcount').AsInteger;
+  if FDQuery.FieldByName('setcount').AsString <> '' then // Zero gives empty string
+    Self.SetCount := FDQuery.FieldByName('setcount').AsInteger
+  else
+    Self.SetCount := 0;
   Self.FDirty := False;
   Self.DoDelete := False;
 end;
