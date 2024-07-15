@@ -50,7 +50,6 @@ type
     FImageCache: TImageCache;
     FSetNum: String;
     procedure FHandleQueryAndHandleSetFields(Query: TFDQuery);
-    procedure FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
   public
     { Public declarations }
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
@@ -71,134 +70,6 @@ uses
   Math, Diagnostics, Data.DB, StrUtils,
   UFrmMain, UDlgViewExternal, UDlgAddToSetList,
   UStrings;
-
-procedure TFrmSet.FOpenExternal(PartOrSet: Integer; PartOrSetNumber: String);
-
-  function EnsureEndsWith(const S: string; const Ch: Char): string;
-  begin
-    if (S <> '') and (S[Length(S)] = Ch) then
-      Result := S
-    else
-      Result := S + Ch;
-  end;
-
-begin
-  var OpenType := cOTNONE;
-  if (PartOrSet = cTYPESET) and (FConfig.DefaultViewSetOpenType <> cOTNONE) then begin
-    OpenType := FConfig.DefaultViewSetOpenType;
-  end else if (PartOrSet = cTYPEPART) and (FConfig.DefaultViewPartOpenType <> cOTNONE) then begin
-    OpenType := FConfig.DefaultViewPartOpenType;
-  end else begin // No default, ask the user what to use
-    var Dlg := TDlgViewExternal.Create(Self);
-    try
-      Dlg.PartOrSet := PartOrSet;
-      Dlg.PartOrSetNumber := PartOrSetNumber;
-      if Dlg.ShowModal = mrOk then begin
-        OpenType := Dlg.OpenType;
-        if Dlg.CheckState then begin
-          if PartOrSet = cTYPESET then
-            FConfig.DefaultViewSetOpenType := OpenType
-          else
-            FConfig.DefaultViewPartOpenType := OpenType;
-          FConfig.Save;
-        end;
-      end;
-    finally
-      Dlg.Free;
-    end;
-  end;
-
-  //Add soap call to API to get the external_id -> {{baseUrl}}/api/v3/lego/parts/:part_num/
-  // Save it in the database?
-  //Example response:
-  (*
-  {
-    "part_num": "3001pr0043",
-    "name": "Brick 2 x 4 with Smile and Frown Print on Opposite Sides",
-    "part_cat_id": 11,
-    "year_from": 1981,
-    "year_to": 2009,
-    "part_url": "https://rebrickable.com/parts/3001pr0043/brick-2-x-4-with-smile-and-frown-print-on-opposite-sides/",
-    "part_img_url": "https://cdn.rebrickable.com/media/parts/elements/80141.jpg",
-    "prints": [],
-    "molds": [],
-    "alternates": [],
-    "external_ids": {
-        "BrickLink": [
-            "3001pe1"
-        ],
-        "BrickOwl": [
-            "57647"
-        ],
-        "Brickset": [
-            "80141"
-        ],
-        "LDraw": [
-            "3001pe1"
-        ],
-        "LEGO": [
-            "80141"
-        ]
-    },
-    "print_of": "3001"
-}
-  *)
-
-  var OpenLink := '';
-  case OpenType of
-    cOTREBRICKABLE:
-    begin
-      if FConfig.ViewRebrickableUrl = '' then
-        Exit;
-      OpenLink := EnsureEndsWith(FConfig.ViewRebrickableUrl, '/');
-      if PartOrSet = cTYPESET then
-        OpenLink := OpenLink + 'sets/' + PartOrSetNumber
-      else
-        OpenLink := OpenLink + 'parts/' + PartOrSetNumber;
-    end;
-    cOTBRICKLINK:
-    begin
-      if FConfig.ViewBrickLinkUrl = '' then
-        Exit;
-      OpenLink := EnsureEndsWith(FConfig.ViewBrickLinkUrl, '/');
-      if PartOrSet = cTYPESET then
-        OpenLink := OpenLink + 'v2/search.page?q=' + PartOrSetNumber
-      else
-        OpenLink := OpenLink + 'v2/catalog/catalogitem.page?P=' + PartOrSetNumber;
-    end;
-    cOTBRICKOWL:
-    begin
-      if FConfig.ViewBrickOwlUrl = '' then
-        Exit;
-      OpenLink := EnsureEndsWith(FConfig.ViewBrickOwlUrl, '/');
-      if PartOrSet = cTYPESET then
-        OpenLink := OpenLink + 'search/catalog?query=' + PartOrSetNumber
-      else
-        OpenLink := OpenLink + 'search/catalog/' + PartOrSetNumber;
-    end;
-    cOTBRICKSET:
-    begin
-      if FConfig.ViewBrickSetUrl = '' then
-        Exit;
-      OpenLink := EnsureEndsWith(FConfig.ViewBrickSetUrl, '/') + 'sets/' + PartOrSetNumber;
-    end;
-    cOTLDRAW:
-    begin
-      if FConfig.ViewLDrawUrl = '' then
-        Exit;
-      OpenLink := EnsureEndsWith(FConfig.ViewLDrawUrl, '/') + 'search/part?s=' + PartOrSetNumber;
-    end;
-    cOTCUSTOM:
-    begin
-      // Not implemented yet
-    end;
-  end;
-
-  if OpenLink <> '' then begin
-    // Include utm_source?
-    ShellExecute(0, 'open', PChar(OpenLink), nil, nil, SW_SHOWNORMAL);
-  end;
-end;
 
 procedure TFrmSet.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
@@ -448,18 +319,17 @@ procedure TFrmSet.ActViewPartExternalExecute(Sender: TObject);
 
 begin
   // get partnum from sender
-  FOpenExternal(cTYPEPART, FGetPartNumByComponentName(TImage(Sender).Name));
+  TFrmMain.OpenExternal(cTYPEPART, FGetPartNumByComponentName(TImage(Sender).Name));
 end;
 
 procedure TFrmSet.ActViewPartsExecute(Sender: TObject);
 begin
-//Tell UFrmMain to Open UFrmParts
   TFrmMain.ShowPartsWindow(FSetNum);
 end;
 
 procedure TFrmSet.ActViewSetExternalExecute(Sender: TObject);
 begin
-  FOpenExternal(cTYPESET, FSetNum);
+  TFrmMain.OpenExternal(cTYPESET, FSetNum);
 end;
 
 procedure TFrmSet.Button1Click(Sender: TObject);

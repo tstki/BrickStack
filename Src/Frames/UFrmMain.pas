@@ -96,6 +96,7 @@ type
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
     procedure WMShowPartsList(var Msg: TMessage); message WM_SHOW_PARTSLIST;
     procedure WMShowSetList(var Msg: TMessage); message WM_SHOW_SETLIST;
+    procedure WMOpenExternal(var Msg: TMessage); message WM_OPEN_EXTERNAL;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
   private
@@ -115,6 +116,7 @@ type
     class procedure ShowSetWindow(const set_num: String);
     class procedure ShowPartsWindow(const set_num: String);
     class procedure ShowSetListWindow(const SetListID: Integer);
+    class procedure OpenExternal(ObjectType: Integer; const ObjectID: String);
   end;
 
 var
@@ -126,8 +128,9 @@ implementation
 
 uses
   IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
+  ShellAPI,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
-  UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp,
+  UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
   UStrings;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
@@ -245,6 +248,136 @@ begin
   end;
 end;
 
+procedure TFrmMain.WMOpenExternal(var Msg: TMessage);
+
+  function EnsureEndsWith(const S: string; const Ch: Char): string;
+  begin
+    if (S <> '') and (S[Length(S)] = Ch) then
+      Result := S
+    else
+      Result := S + Ch;
+  end;
+
+begin
+  var MsgData := POpenExternalData(Msg.WParam);
+
+  var OpenType := cOTNONE;
+  if (MsgData.ObjectType = cTYPESET) and (FConfig.DefaultViewSetOpenType <> cOTNONE) then begin
+    OpenType := FConfig.DefaultViewSetOpenType;
+  end else if (MsgData.ObjectType = cTYPEPART) and (FConfig.DefaultViewPartOpenType <> cOTNONE) then begin
+    OpenType := FConfig.DefaultViewPartOpenType;
+  end else begin // No default, ask the user what to use
+    var Dlg := TDlgViewExternal.Create(Self);
+    try
+      Dlg.PartOrSet := MsgData.ObjectType;
+      Dlg.PartOrSetNumber := MsgData.ObjectID;
+      if Dlg.ShowModal = mrOk then begin
+        OpenType := Dlg.OpenType;
+        if Dlg.CheckState then begin
+          if MsgData.ObjectType = cTYPESET then
+            FConfig.DefaultViewSetOpenType := OpenType
+          else
+            FConfig.DefaultViewPartOpenType := OpenType;
+          FConfig.Save;
+        end;
+      end;
+    finally
+      Dlg.Free;
+    end;
+  end;
+
+  //Add soap call to API to get the external_id -> {{baseUrl}}/api/v3/lego/parts/:part_num/
+  // Save it in the database?
+  //Example response:
+  (*
+  {
+    "part_num": "3001pr0043",
+    "name": "Brick 2 x 4 with Smile and Frown Print on Opposite Sides",
+    "part_cat_id": 11,
+    "year_from": 1981,
+    "year_to": 2009,
+    "part_url": "https://rebrickable.com/parts/3001pr0043/brick-2-x-4-with-smile-and-frown-print-on-opposite-sides/",
+    "part_img_url": "https://cdn.rebrickable.com/media/parts/elements/80141.jpg",
+    "prints": [],
+    "molds": [],
+    "alternates": [],
+    "external_ids": {
+        "BrickLink": [
+            "3001pe1"
+        ],
+        "BrickOwl": [
+            "57647"
+        ],
+        "Brickset": [
+            "80141"
+        ],
+        "LDraw": [
+            "3001pe1"
+        ],
+        "LEGO": [
+            "80141"
+        ]
+    },
+    "print_of": "3001"
+}
+  *)
+
+  var OpenLink := '';
+  case OpenType of
+    cOTREBRICKABLE:
+    begin
+      if FConfig.ViewRebrickableUrl = '' then
+        Exit;
+      OpenLink := EnsureEndsWith(FConfig.ViewRebrickableUrl, '/');
+      if MsgData.ObjectType = cTYPESET then
+        OpenLink := OpenLink + 'sets/' + MsgData.ObjectID
+      else
+        OpenLink := OpenLink + 'parts/' + MsgData.ObjectID;
+    end;
+    cOTBRICKLINK:
+    begin
+      if FConfig.ViewBrickLinkUrl = '' then
+        Exit;
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickLinkUrl, '/');
+      if MsgData.ObjectType = cTYPESET then
+        OpenLink := OpenLink + 'v2/search.page?q=' + MsgData.ObjectID
+      else
+        OpenLink := OpenLink + 'v2/catalog/catalogitem.page?P=' + MsgData.ObjectID;
+    end;
+    cOTBRICKOWL:
+    begin
+      if FConfig.ViewBrickOwlUrl = '' then
+        Exit;
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickOwlUrl, '/');
+      if MsgData.ObjectType = cTYPESET then
+        OpenLink := OpenLink + 'search/catalog?query=' + MsgData.ObjectID
+      else
+        OpenLink := OpenLink + 'search/catalog/' + MsgData.ObjectID;
+    end;
+    cOTBRICKSET:
+    begin
+      if FConfig.ViewBrickSetUrl = '' then
+        Exit;
+      OpenLink := EnsureEndsWith(FConfig.ViewBrickSetUrl, '/') + 'sets/' + MsgData.ObjectID;
+    end;
+    cOTLDRAW:
+    begin
+      if FConfig.ViewLDrawUrl = '' then
+        Exit;
+      OpenLink := EnsureEndsWith(FConfig.ViewLDrawUrl, '/') + 'search/part?s=' + MsgData.ObjectID;
+    end;
+    cOTCUSTOM:
+    begin
+      // Not implemented yet
+    end;
+  end;
+
+  if OpenLink <> '' then begin
+    // Include utm_source?
+    ShellExecute(0, 'open', PChar(OpenLink), nil, nil, SW_SHOWNORMAL);
+  end;
+end;
+
 function TFrmMain.AcquireConnection: TFDConnection;
 begin
   Result := FConnectionPool.AcquireConnection;
@@ -281,6 +414,17 @@ begin
   New(PostData);
   PostData^.SetListID := SetListID;
   PostMessage(FrmMain.Handle, WM_SHOW_SETLIST, WPARAM(PostData), 0);
+end;
+
+// May be set_num or part_num
+class procedure TFrmMain.OpenExternal(ObjectType: Integer; const ObjectID: String);
+var
+  PostData: POpenExternalData;
+begin
+  New(PostData);
+  PostData^.ObjectType := ObjectType;
+  PostData^.ObjectID := ObjectID;
+  PostMessage(FrmMain.Handle, WM_OPEN_EXTERNAL, WPARAM(PostData), 0);
 end;
 
 procedure TFrmMain.ActAuthenticateExecute(Sender: TObject);

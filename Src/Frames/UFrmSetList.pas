@@ -44,6 +44,8 @@ type
     procedure ActEditSetListExecute(Sender: TObject);
     procedure ActOpenCollectionExecute(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure ActViewExternalExecute(Sender: TObject);
+    procedure ActViewPartsListExecute(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -204,7 +206,7 @@ end;
 
 procedure TFrmSetList.ActEditSetListExecute(Sender: TObject);
 begin
-//do addToSetList dialog.
+//todo: do addToSetList dialog.
 //set mode add or update.
 
 //update query
@@ -217,6 +219,20 @@ begin
   var SetObject := FGetSelectedObject;
   if (SetObject <> nil) and (SetObject.SetNum <> '') then
     TFrmMain.ShowSetWindow(SetObject.SetNum);
+end;
+
+procedure TFrmSetList.ActViewExternalExecute(Sender: TObject);
+begin
+  var SetObject := FGetSelectedObject;
+  if (SetObject <> nil) and (SetObject.SetNum <> '') then
+    TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
+end;
+
+procedure TFrmSetList.ActViewPartsListExecute(Sender: TObject);
+begin
+  var SetObject := FGetSelectedObject;
+  if (SetObject <> nil) and (SetObject.SetNum <> '') then
+    TFrmMain.ShowPartsWindow(SetObject.SetNum);
 end;
 
 procedure TFrmSetList.CbxFilterChange(Sender: TObject);

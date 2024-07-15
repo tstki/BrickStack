@@ -212,10 +212,12 @@ object FrmSetList: TFrmSetList
     object ActViewExternal: TAction
       Category = 'SetList'
       Caption = 'View externally'
+      OnExecute = ActViewExternalExecute
     end
     object ActViewPartsList: TAction
       Category = 'SetList'
       Caption = 'View partslist...'
+      OnExecute = ActViewPartsListExecute
     end
   end
   object ImageList16: TImageList
