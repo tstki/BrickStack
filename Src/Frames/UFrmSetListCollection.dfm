@@ -5,6 +5,7 @@ object FrmSetListCollection: TFrmSetListCollection
   ClientHeight = 314
   ClientWidth = 430
   Color = clBtnFace
+  DoubleBuffered = True
   ParentFont = True
   FormStyle = fsMDIChild
   Position = poDefault
@@ -48,6 +49,8 @@ object FrmSetListCollection: TFrmSetListCollection
     Width = 430
     Height = 41
     Align = alTop
+    DoubleBuffered = True
+    ParentDoubleBuffered = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
@@ -56,7 +59,7 @@ object FrmSetListCollection: TFrmSetListCollection
       430
       41)
     object ImgOpen: TImage
-      Left = 160
+      Left = 156
       Top = 5
       Width = 30
       Height = 30
@@ -151,7 +154,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Filter'
     end
     object ImgEdit: TImage
-      Left = 196
+      Left = 192
       Top = 5
       Width = 30
       Height = 30
@@ -246,7 +249,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 252
     end
     object ImgAdd: TImage
-      Left = 232
+      Left = 228
       Top = 5
       Width = 30
       Height = 30
@@ -353,7 +356,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 288
     end
     object ImgDelete: TImage
-      Left = 268
+      Left = 264
       Top = 5
       Width = 30
       Height = 30
@@ -456,7 +459,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 324
     end
     object ImgImport: TImage
-      Left = 304
+      Left = 300
       Top = 5
       Width = 30
       Height = 30
@@ -548,7 +551,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 360
     end
     object ImgExport: TImage
-      Left = 340
+      Left = 336
       Top = 5
       Width = 30
       Height = 30
@@ -633,13 +636,13 @@ object FrmSetListCollection: TFrmSetListCollection
     object CbxFilter: TComboBox
       Left = 40
       Top = 8
-      Width = 114
+      Width = 110
       Height = 23
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
-      ExplicitWidth = 110
+      ExplicitWidth = 106
     end
   end
   object StatusBar1: TStatusBar

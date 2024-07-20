@@ -16,7 +16,7 @@ type
     Panel1: TPanel;
     LblInventoryVersion: TLabel;
     CbxInventoryVersion: TComboBox;
-    Button1: TButton;
+    BtnFilter: TButton;
     TmrRefresh: TTimer;
     PopPartsFilter: TPopupMenu;
     Sort1: TMenuItem;
@@ -27,12 +27,8 @@ type
     Part1: TMenuItem;
     Category1: TMenuItem;
     Quantity1: TMenuItem;
-    ogglecheckboxmode1: TMenuItem;
     Includespareparts1: TMenuItem;
     ActionList1: TActionList;
-    ActAddToSetList: TAction;
-    ActRemoveFromSetList: TAction;
-    ActEditToSetList: TAction;
     ActPrintParts: TAction;
     ActExport: TAction;
     ActToggleCheckboxMode: TAction;
@@ -60,8 +56,17 @@ type
     procedure SbSetPartsResize(Sender: TObject);
     procedure TmrRefreshTimer(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure BtnFilterClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure ActToggleCheckboxModeExecute(Sender: TObject);
+    procedure ActToggleAscendingExecute(Sender: TObject);
+    procedure ActSortByColorExecute(Sender: TObject);
+    procedure ActSortByHueExecute(Sender: TObject);
+    procedure ActSortByPartExecute(Sender: TObject);
+    procedure ActSortByCategoryExecute(Sender: TObject);
+    procedure ActSortByQuantityExecute(Sender: TObject);
+    procedure ActToggleIncludeSparePartsExecute(Sender: TObject);
+    procedure ActExportExecute(Sender: TObject);
   private
     { Private declarations }
     FIdHttp: TIdHttp;
@@ -100,6 +105,11 @@ const
   cPARTSORTBYCATEGORY = 3;
   //cPARTSORTBYPRICE = 3; // No price info yet
   cPARTSORTBYQUANTITY = 4;
+
+procedure TFrmParts.ActExportExecute(Sender: TObject);
+begin
+//
+end;
 
 procedure TFrmParts.ActPrintPartsExecute(Sender: TObject);
 
@@ -252,7 +262,82 @@ begin
   end;
 end;
 
-procedure TFrmParts.Button1Click(Sender: TObject);
+procedure TFrmParts.ActSortByCategoryExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActSortByColorExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActSortByHueExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActSortByPartExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActSortByQuantityExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActToggleAscendingExecute(Sender: TObject);
+begin
+{
+//  cPARTSORTBYCOLOR = 0;
+  cPARTSORTBYHUE = 1;
+  cPARTSORTBYPART = 2;
+  cPARTSORTBYCATEGORY = 3;
+  //cPARTSORTBYPRICE = 3; // No price info yet
+  cPARTSORTBYQUANTITY = 4; }
+
+{  CbxSortPartsBy.Clear;
+  CbxSortPartsBy.Items.Add(StrPartSortByColor); //inventory_parts.color_id
+  CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
+  CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
+  CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
+  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
+  CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
+  CbxSortPartsBy.ItemIndex := 0; }
+end;
+
+procedure TFrmParts.ActToggleCheckboxModeExecute(Sender: TObject);
+begin
+//  FCheckboxMode := not FCheckboxMode;
+//  ActToggleCheckboxMode.Checked := FCheckboxMode;
+{
+  for var ResultPanel:TPanel in FInventoryPanels do begin
+    for var i := 0 to ResultPanel.ControlCount - 1 do begin
+      var Control := ResultPanel.Controls[i];
+      if Control.ClassType = TCheckbox then begin
+        var NewCheckbox := TCheckbox(Control);
+        NewCheckbox.Visible := FCheckboxMode;
+      end else if Control.ClassType = TLabel then begin
+        var NewLabel := TLabel(Control);
+        NewLabel.Visible := not FCheckboxMode;
+      end else if Control.ClassType = TImage then begin
+        var NewImage := TImage(Control);
+        if NewImage.Name <> '' then
+          NewImage.Visible := not FCheckboxMode;
+      end;
+    end;
+
+    ResultPanel.Invalidate;
+  end;   }
+end;
+
+procedure TFrmParts.ActToggleIncludeSparePartsExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.BtnFilterClick(Sender: TObject);
 begin
   var P := Mouse.CursorPos;
   // Show the popup menu at the mouse cursor position

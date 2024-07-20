@@ -17,31 +17,17 @@ type
     ImgViewSetExternal: TImage;
     LvTagData: TListView;
     ImgAdd: TImage;
-    ImgRemove: TImage;
     ActionList1: TActionList;
     ActAddToSetList: TAction;
     ActRemoveFromSetList: TAction;
     ActViewSetExternal: TAction;
-    ImgEdit: TImage;
     ActEditToSetList: TAction;
     ImgParts: TImage;
     ActViewParts: TAction;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ActAddToSetListExecute(Sender: TObject);
-    procedure ActRemoveFromSetListExecute(Sender: TObject);
-    procedure ActExportExecute(Sender: TObject);
     procedure ActViewSetExternalExecute(Sender: TObject);
-    procedure ActToggleCheckboxModeExecute(Sender: TObject);
-    procedure ActToggleIncludeSparePartsExecute(Sender: TObject);
-    procedure ActToggleAscendingExecute(Sender: TObject);
-    procedure ActSortByColorExecute(Sender: TObject);
-    procedure ActSortByHueExecute(Sender: TObject);
-    procedure ActSortByPartExecute(Sender: TObject);
-    procedure ActSortByCategoryExecute(Sender: TObject);
-    procedure ActSortByQuantityExecute(Sender: TObject);
     procedure ActViewPartExternalExecute(Sender: TObject);
-    procedure ActEditToSetListExecute(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
     procedure ActViewPartsExecute(Sender: TObject);
   private
     { Private declarations }
@@ -212,96 +198,6 @@ begin
   end;
 end;
 
-procedure TFrmSet.ActRemoveFromSetListExecute(Sender: TObject);
-begin
-// Remove from setlist
-end;
-
-procedure TFrmSet.ActEditToSetListExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActExportExecute(Sender: TObject);
-begin
-// choose export format, and output list.
-end;
-
-procedure TFrmSet.ActSortByCategoryExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActSortByColorExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActSortByHueExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActSortByPartExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActSortByQuantityExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmSet.ActToggleAscendingExecute(Sender: TObject);
-begin
-{
-//  cPARTSORTBYCOLOR = 0;
-  cPARTSORTBYHUE = 1;
-  cPARTSORTBYPART = 2;
-  cPARTSORTBYCATEGORY = 3;
-  //cPARTSORTBYPRICE = 3; // No price info yet
-  cPARTSORTBYQUANTITY = 4; }
-
-{  CbxSortPartsBy.Clear;
-  CbxSortPartsBy.Items.Add(StrPartSortByColor); //inventory_parts.color_id
-  CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
-  CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
-  CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
-  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
-  CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
-  CbxSortPartsBy.ItemIndex := 0; }
-end;
-
-procedure TFrmSet.ActToggleCheckboxModeExecute(Sender: TObject);
-begin
-//  FCheckboxMode := not FCheckboxMode;
-//  ActToggleCheckboxMode.Checked := FCheckboxMode;
-{
-  for var ResultPanel:TPanel in FInventoryPanels do begin
-    for var i := 0 to ResultPanel.ControlCount - 1 do begin
-      var Control := ResultPanel.Controls[i];
-      if Control.ClassType = TCheckbox then begin
-        var NewCheckbox := TCheckbox(Control);
-        NewCheckbox.Visible := FCheckboxMode;
-      end else if Control.ClassType = TLabel then begin
-        var NewLabel := TLabel(Control);
-        NewLabel.Visible := not FCheckboxMode;
-      end else if Control.ClassType = TImage then begin
-        var NewImage := TImage(Control);
-        if NewImage.Name <> '' then
-          NewImage.Visible := not FCheckboxMode;
-      end;
-    end;
-
-    ResultPanel.Invalidate;
-  end;   }
-end;
-
-procedure TFrmSet.ActToggleIncludeSparePartsExecute(Sender: TObject);
-begin
-//
-end;
-
 procedure TFrmSet.ActViewPartExternalExecute(Sender: TObject);
 
   function FGetPartNumByComponentName(ComponentName: String): String;
@@ -330,11 +226,6 @@ end;
 procedure TFrmSet.ActViewSetExternalExecute(Sender: TObject);
 begin
   TFrmMain.OpenExternal(cTYPESET, FSetNum);
-end;
-
-procedure TFrmSet.Button1Click(Sender: TObject);
-begin
-//
 end;
 
 end.

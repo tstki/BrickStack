@@ -3,16 +3,36 @@ unit UConfig;
 interface
 
 uses
-  System.Classes;
+  System.Classes, Forms, IniFiles;
 
 type
+  TClientFormStorage = class(TObject)
+  private
+    FOpenOnLoad: String;
+    FTop: Integer;
+    FLeft: Integer;
+    FWidth: Integer;
+    FHeight: Integer;
+    FDimensionsValid: Boolean; // Check before using tl/wh
+    procedure Save(IniFile: TIniFile; const Section, Name: String);
+    procedure Load(IniFile: TIniFile; const Section, Name: String);
+  public
+    property OpenOnLoad: String read FOpenOnLoad write FOpenOnLoad;
+    property Top: Integer read FTop write FTop;
+    property Left: Integer read FLeft write FLeft;
+    property Width: Integer read FWidth write FWidth;
+    property Height: Integer read FHeight write FHeight;
+    procedure GetFormDimensions(const Form: TForm);
+    procedure SetFormDimensions(Form: TForm);
+  end;
+
   TConfig = class(TObject)
   private
     { Private declarations }
     FRebrickableAPIKey: String;
     FRebrickableBaseUrl: String;
-    FAuthenticationToken: String;           // Only saved if,
-    FRememberAuthenticationToken: Boolean;  // is true
+    FAuthenticationToken: String;           // Only saved if:
+    FRememberAuthenticationToken: Boolean;  /// is true
     FLocalImageCachePath: String;
     FLocalLogsPath: String;
     FViewRebrickableUrl: String;
@@ -27,13 +47,27 @@ type
     FExportPath: String;
 
     // Window states (move to separate class object later) - no need to save this every time after all
-    FFrmSetListCollectionWasOpen: Boolean;
+    FReOpenWindowsAfterRestart: Boolean;
+{    FFrmSetListCollectionWasOpen: Boolean;
     FFrmSetWasOpen: String;
+    FFrmSetListWasOpen: Integer;
+    FFrmPartsWasOpen: String;
+    FFrmSearchWasOpen: Boolean; }
+
+    FFrmSetListCollection: TClientFormStorage;
+    FFrmSetList: TClientFormStorage;
+    FFrmSet: TClientFormStorage;
+    FFrmParts: TClientFormStorage;
+    FFrmSearch: TClientFormStorage;
 
   public
     { Public declarations }
-    procedure Load;
+    constructor Create;
+    destructor Destroy; override;
     procedure Save;
+    procedure Load;
+    procedure ResetFramesOpenOnLoad;
+    procedure ResetFramesDimensions;
     property RebrickableAPIKey: String read FRebrickableAPIKey write FRebrickableAPIKey;
     property RebrickableBaseUrl: String read FRebrickableBaseUrl write FRebrickableBaseUrl;
     property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
@@ -51,8 +85,18 @@ type
     property ImportPath: String read FImportPath write FImportPath;
     property ExportPath: String read FExportPath write FExportPath;
 
-    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
+    property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
+{    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
+    property FrmSetListWasOpen: Integer read FFrmSetListWasOpen write FFrmSetListWasOpen;
     property FrmSetWasOpen: String read FFrmSetWasOpen write FFrmSetWasOpen;
+    property FrmPartsWasOpen: String read FFrmPartsWasOpen write FFrmPartsWasOpen;
+    property FrmSearchWasOpen: Boolean read FFrmSearchWasOpen write FFrmSearchWasOpen;
+}
+    property FrmSetListCollection: TClientFormStorage read FFrmSetListCollection write FFrmSetListCollection;
+    property FrmSetList: TClientFormStorage read FFrmSetList write FFrmSetList;
+    property FrmSet: TClientFormStorage read FFrmSet write FFrmSet;
+    property FrmParts: TClientFormStorage read FFrmParts write FFrmParts;
+    property FrmSearch: TClientFormStorage read FFrmSearch write FFrmSearch;
   end;
 
 const
@@ -73,8 +117,122 @@ const
 implementation
 
 uses
-  StrUtils, SysUtils, IniFiles,
+  StrUtils, SysUtils,
   UStrings;
+
+// FormStorage
+procedure TClientFormStorage.Save(IniFile: TIniFile; const Section, Name: String);
+begin
+  var Value := Format('%d,%d,%d,%d,%s', [FTop,FLeft,FWidth,FHeight,FOpenOnLoad]);
+  IniFile.WriteString(Section, Name, Value);
+end;
+
+procedure TClientFormStorage.Load(IniFile: TIniFile; const Section, Name: String);
+begin
+  var Value := IniFile.ReadString(Section, Name, '');
+  var SplitArray := Value.Split([',']);
+
+  if Length(SplitArray) = 5 then begin
+    FTop := StrToIntDef(SplitArray[0], 0);
+    FLeft := StrToIntDef(SplitArray[1], 0);
+    FWidth := StrToIntDef(SplitArray[2], 0);
+    FHeight := StrToIntDef(SplitArray[3], 0);
+    FOpenOnLoad := SplitArray[4];
+
+    FDimensionsValid := ((FTop+FLeft+FWidth+FHeight) <> 0) and (FWidth > 20) and (FHeight > 20);
+  end else
+    FDimensionsValid := False;
+end;
+
+procedure TClientFormStorage.GetFormDimensions(const Form: TForm);
+begin
+  FTop := Form.Top;
+  FLeft := Form.Left;
+  FWidth := Form.Width;
+  FHeight := Form.Height;
+end;
+
+procedure TClientFormStorage.SetFormDimensions(Form: TForm);
+begin
+  Form.Top := FTop;
+  Form.Left := FLeft;
+  Form.Width := FWidth;
+  Form.Height := FHeight;
+end;
+
+// Config
+constructor TConfig.Create;
+begin
+  inherited;
+
+  FrmSetListCollection := TClientFormStorage.Create;
+  FrmSetList := TClientFormStorage.Create;
+  FrmSet := TClientFormStorage.Create;
+  FrmParts := TClientFormStorage.Create;
+  FrmSearch := TClientFormStorage.Create;
+end;
+
+destructor TConfig.Destroy;
+begin
+  FrmSetListCollection.Free;
+  FrmSetList.Free;
+  FrmSet.Free;
+  FrmParts.Free;
+  FrmSearch.Free;
+
+  inherited;
+end;
+
+procedure TConfig.ResetFramesOpenOnLoad;
+begin
+  FrmSetListCollection.OpenOnLoad := '';
+  FrmSetList.OpenOnLoad := '';
+  FrmSet.OpenOnLoad := '';
+  FrmParts.OpenOnLoad := '';
+  FrmSearch.OpenOnLoad := '';
+end;
+
+procedure TConfig.ResetFramesDimensions;
+begin
+  //
+end;
+
+procedure TConfig.Save;
+begin
+  var FilePath := ExtractFilePath(ParamStr(0));
+  var IniFile := TIniFile.Create(FilePath + StrIniFileName);
+  try
+    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
+    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
+    IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
+
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
+    IniFile.WriteString(StrRebrickableIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
+
+    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
+    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
+
+    IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
+    IniFile.WriteString(StrRebrickableIniSection, 'DbasePath', FDbasePath);
+    IniFile.WriteString(StrRebrickableIniSection, 'ImportPath', FImportPath);
+    IniFile.WriteString(StrRebrickableIniSection, 'ExportPath', FExportPath);
+
+    // Frame size/open states
+    IniFile.WriteBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
+    FFrmSetListCollection.Save(IniFile, StrRebrickableIniSection, 'FrmSetListCollection');
+    FFrmSetList.Save(IniFile, StrRebrickableIniSection, 'FrmSetList');
+    FFrmSet.Save(IniFile, StrRebrickableIniSection, 'FrmSet');
+    FFrmParts.Save(IniFile, StrRebrickableIniSection, 'FrmParts');
+    FFrmSearch.Save(IniFile, StrRebrickableIniSection, 'FrmSearch');
+  finally
+    IniFile.Free;
+  end;
+end;
 
 procedure TConfig.Load;
 
@@ -109,40 +267,13 @@ begin
     FImportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
     FExportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
 
-    FFrmSetListCollectionWasOpen := IniFile.ReadBool(StrRebrickableIniSection, 'FrmSetListCollectionWasOpen', False);
-    FFrmSetWasOpen := IniFile.ReadString(StrRebrickableIniSection, 'FrmSetWasOpen', '');
-  finally
-    IniFile.Free;
-  end;
-end;
-
-procedure TConfig.Save;
-begin
-  var FilePath := ExtractFilePath(ParamStr(0));
-  var IniFile := TIniFile.Create(FilePath + StrIniFileName);
-  try
-    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
-    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
-    IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
-
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
-
-    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
-    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
-
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
-    IniFile.WriteString(StrRebrickableIniSection, 'DbasePath', FDbasePath);
-    IniFile.WriteString(StrRebrickableIniSection, 'ImportPath', FImportPath);
-    IniFile.WriteString(StrRebrickableIniSection, 'ExportPath', FExportPath);
-
-    IniFile.WriteBool(StrRebrickableIniSection, 'FrmSetListCollectionWasOpen', FFrmSetListCollectionWasOpen);
-    IniFile.WriteString(StrRebrickableIniSection, 'FrmSetWasOpen', FFrmSetWasOpen);
+    // Frame size/open states
+    FReOpenWindowsAfterRestart := IniFile.ReadBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', False);
+    FFrmSetListCollection.Load(IniFile, StrRebrickableIniSection, 'FrmSetListCollection');
+    FFrmSetList.Load(IniFile, StrRebrickableIniSection, 'FrmSetList');
+    FFrmSet.Load(IniFile, StrRebrickableIniSection, 'FrmSet');
+    FFrmParts.Load(IniFile, StrRebrickableIniSection, 'FrmParts');
+    FFrmSearch.Load(IniFile, StrRebrickableIniSection, 'FrmSearch');
   finally
     IniFile.Free;
   end;

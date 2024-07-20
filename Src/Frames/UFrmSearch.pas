@@ -111,6 +111,8 @@ const
   // Search what
   cSetNum = 0;
   cName = 1;
+  //cOwnedSetsByNumber = 2;
+  //cOwnedSetsByName = 3;
 
   // Search style for others:
   cSearchAll = 0;    // "%SearchText%" // May find a lot more unrelated stuff

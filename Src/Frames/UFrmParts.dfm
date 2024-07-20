@@ -26,7 +26,7 @@ object FrmParts: TFrmParts
       628
       41)
     object LblInventoryVersion: TLabel
-      Left = 466
+      Left = 462
       Top = 13
       Width = 91
       Height = 15
@@ -35,7 +35,7 @@ object FrmParts: TFrmParts
       ExplicitLeft = 478
     end
     object ImgPrinter: TImage
-      Left = 359
+      Left = 355
       Top = 4
       Width = 30
       Height = 30
@@ -90,7 +90,7 @@ object FrmParts: TFrmParts
       ExplicitLeft = 371
     end
     object ImgExport: TImage
-      Left = 395
+      Left = 391
       Top = 4
       Width = 30
       Height = 30
@@ -172,16 +172,16 @@ object FrmParts: TFrmParts
       ExplicitLeft = 407
     end
     object CbxInventoryVersion: TComboBox
-      Left = 563
+      Left = 559
       Top = 10
       Width = 42
       Height = 23
       Style = csDropDownList
       Anchors = [akTop, akRight]
       TabOrder = 0
-      ExplicitLeft = 559
+      ExplicitLeft = 555
     end
-    object Button1: TButton
+    object BtnFilter: TButton
       Left = 8
       Top = 9
       Width = 72
@@ -190,7 +190,7 @@ object FrmParts: TFrmParts
       ImageIndex = 0
       Images = ImageList1
       TabOrder = 1
-      OnClick = Button1Click
+      OnClick = BtnFilterClick
     end
   end
   object StatusBar1: TStatusBar
@@ -368,7 +368,7 @@ object FrmParts: TFrmParts
         Action = ActSortByHue
       end
       object Part1: TMenuItem
-        Action = ActSortByHue
+        Action = ActSortByPart
       end
       object Category1: TMenuItem
         Action = ActSortByCategory
@@ -387,45 +387,45 @@ object FrmParts: TFrmParts
   object ActionList1: TActionList
     Left = 384
     Top = 56
-    object ActAddToSetList: TAction
-      Caption = 'ActAddToSetList'
-    end
-    object ActRemoveFromSetList: TAction
-      Caption = 'ActRemoveFromSetList'
-    end
-    object ActEditToSetList: TAction
-      Caption = 'Edit'
-    end
     object ActPrintParts: TAction
       Caption = 'ActPrintParts'
       OnExecute = ActPrintPartsExecute
     end
     object ActExport: TAction
       Caption = 'ActExport'
+      OnExecute = ActExportExecute
     end
     object ActToggleCheckboxMode: TAction
       Caption = 'Checkbox mode'
+      OnExecute = ActToggleCheckboxModeExecute
     end
     object ActToggleIncludeSpareParts: TAction
       Caption = 'Include spare parts'
+      OnExecute = ActToggleIncludeSparePartsExecute
     end
     object ActToggleAscending: TAction
       Caption = 'Ascending'
+      OnExecute = ActToggleAscendingExecute
     end
     object ActSortByColor: TAction
       Caption = 'Color'
+      OnExecute = ActSortByColorExecute
     end
     object ActSortByHue: TAction
       Caption = 'Hue'
+      OnExecute = ActSortByHueExecute
     end
     object ActSortByPart: TAction
       Caption = 'Part'
+      OnExecute = ActSortByPartExecute
     end
     object ActSortByCategory: TAction
       Caption = 'Category'
+      OnExecute = ActSortByCategoryExecute
     end
     object ActSortByQuantity: TAction
       Caption = 'Quantity'
+      OnExecute = ActSortByQuantityExecute
     end
     object ActViewPartExternal: TAction
       Caption = 'View part externally'

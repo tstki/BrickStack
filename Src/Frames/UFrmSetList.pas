@@ -14,7 +14,6 @@ uses
 type
   TFrmSetList = class(TForm)
     Panel1: TPanel;
-    Image1: TImage;
     LblFilter: TLabel;
     CbxFilter: TComboBox;
     LvSets: TListView;
@@ -27,25 +26,37 @@ type
     ag21: TMenuItem;
     ag31: TMenuItem;
     ActionList1: TActionList;
-    ActDeleteSetList: TAction;
-    ActEditSetList: TAction;
-    ActOpenCollection: TAction;
+    ActDeleteSet: TAction;
+    ActEditSet: TAction;
     ImageList16: TImageList;
     ActViewExternal: TAction;
     Viewexternally1: TMenuItem;
     ActViewPartsList: TAction;
     Viewpartslist1: TMenuItem;
     StatusBar1: TStatusBar;
+    ImgFind: TImage;
+    ImgEdit: TImage;
+    ImgDelete: TImage;
+    ImgImport: TImage;
+    ImgExport: TImage;
+    ActSearch: TAction;
+    ActImport: TAction;
+    ActExport: TAction;
+    ActViewSet: TAction;
+    ImgView: TImage;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure CbxFilterChange(Sender: TObject);
-    procedure ActDeleteSetListExecute(Sender: TObject);
-    procedure ActEditSetListExecute(Sender: TObject);
-    procedure ActOpenCollectionExecute(Sender: TObject);
+    procedure ActDeleteSetExecute(Sender: TObject);
+    procedure ActEditSetExecute(Sender: TObject);
+    procedure ActViewSetExecute(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ActViewExternalExecute(Sender: TObject);
     procedure ActViewPartsListExecute(Sender: TObject);
+    procedure ActImportExecute(Sender: TObject);
+    procedure ActExportExecute(Sender: TObject);
+    procedure ActSearchExecute(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -53,6 +64,7 @@ type
     FOwnsSetList: Boolean;
     FIdHttp: TIdHttp;
     FConfig: TConfig;
+    FSetListID: Integer;
     procedure FSetConfig(Config: TConfig);
     procedure FSetSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
     procedure FSetSetListID(SetSetListID: Integer);
@@ -62,7 +74,7 @@ type
   public
     { Public declarations }
     property SetListObject: TSetListObject read FSetListObject write FSetListObject;
-    property SetListID: Integer write FSetSetListID;
+    property SetListID: Integer read FSetListID write FSetSetListID;
     property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FSetConfig;
   end;
@@ -176,7 +188,7 @@ begin
   LvSets.Items.EndUpdate;
 end;
 
-procedure TFrmSetList.ActDeleteSetListExecute(Sender: TObject);
+procedure TFrmSetList.ActDeleteSetExecute(Sender: TObject);
 begin
   var SetObject := FGetSelectedObject;
   if (SetObject <> nil) and (SetObject.SetNum <> '') and
@@ -204,7 +216,7 @@ begin
 //check if there's a details dialog open that needs to be closed or cleared
 end;
 
-procedure TFrmSetList.ActEditSetListExecute(Sender: TObject);
+procedure TFrmSetList.ActEditSetExecute(Sender: TObject);
 begin
 //todo: do addToSetList dialog.
 //set mode add or update.
@@ -214,7 +226,22 @@ begin
 //update table
 end;
 
-procedure TFrmSetList.ActOpenCollectionExecute(Sender: TObject);
+procedure TFrmSetList.ActExportExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSetList.ActSearchExecute(Sender: TObject);
+begin
+//TFrmMain.ActSearch
+end;
+
+procedure TFrmSetList.ActImportExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmSetList.ActViewSetExecute(Sender: TObject);
 begin
   var SetObject := FGetSelectedObject;
   if (SetObject <> nil) and (SetObject.SetNum <> '') then
@@ -347,6 +374,8 @@ end;
 
 procedure TFrmSetList.FSetSetListID(SetSetListID: Integer);
 begin
+  FSetListID := SetSetListID;
+
   var SetListObject := TSetListObject.Create;
   SetListObject.LoadByID(SetSetListID);
 

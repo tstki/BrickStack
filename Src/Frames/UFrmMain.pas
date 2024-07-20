@@ -97,6 +97,8 @@ type
     procedure WMShowPartsList(var Msg: TMessage); message WM_SHOW_PARTSLIST;
     procedure WMShowSetList(var Msg: TMessage); message WM_SHOW_SETLIST;
     procedure WMOpenExternal(var Msg: TMessage); message WM_OPEN_EXTERNAL;
+    procedure WMShowSearch(var Msg: TMessage); message WM_SHOW_SEARCH;
+    procedure WMShowCollection(var Msg: TMessage); message WM_SHOW_COLLECTION;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
   private
@@ -106,7 +108,7 @@ type
     FImageCache: TImageCache;
     FConnectionPool: TFDConnectionPool;
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
-//    procedure CreateMDIChild(const Name: string);
+    function CtrlShiftPressed: Boolean;
   public
     { Public declarations }
     //class procedure ShowSetList();
@@ -117,6 +119,8 @@ type
     class procedure ShowPartsWindow(const set_num: String);
     class procedure ShowSetListWindow(const SetListID: Integer);
     class procedure OpenExternal(ObjectType: Integer; const ObjectID: String);
+    class procedure ShowSearchWindow;
+    class procedure ShowCollectionWindow;
   end;
 
 var
@@ -173,31 +177,84 @@ end;
 
 procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  // Remember open windows
-  FConfig.FrmSetListCollectionWasOpen := False;
-  FConfig.FrmSetWasOpen := '';
+  // First, reset which windows were open
+  FConfig.ResetFramesOpenOnLoad;
+
+  // Remember open windows and size
   for var I := 0 to MDIChildCount-1 do begin
     var Child := MDIChildren[I];
     if Child.ClassType = TFrmSetListCollection then begin
-      FConfig.FrmSetListCollectionWasOpen := True;
+      FConfig.FrmSetListCollection.OpenOnLoad := '1';
+      FConfig.FrmSetListCollection.GetFormDimensions(Child);
+    end else if Child.ClassType = TFrmSetList then begin
+      FConfig.FrmSetList.OpenOnLoad := IntToStr(TFrmSetList(Child).SetListID);
+      FConfig.FrmSetList.GetFormDimensions(Child);
     end else if Child.ClassType = TFrmSet then begin
-      FConfig.FrmSetWasOpen := TFrmSet(Child).SetNum;
+      FConfig.FrmSet.OpenOnLoad := TFrmSet(Child).SetNum;
+      FConfig.FrmSet.GetFormDimensions(Child);
+    end else if Child.ClassType = TFrmParts then begin
+      FConfig.FrmParts.OpenOnLoad := TFrmParts(Child).SetNum;
+      FConfig.FrmParts.GetFormDimensions(Child);
+    end else if Child.ClassType = TFrmSearch then begin
+      FConfig.FrmSearch.OpenOnLoad := '1';
+      FConfig.FrmSearch.GetFormDimensions(Child);
     end;
-    //Also save top/left/width/height of each child
   end;
 
   inherited;
 end;
 
+function TFrmMain.CtrlShiftPressed: Boolean;
+begin
+  Result := (GetKeyState(VK_CONTROL) < 0) and (GetKeyState(VK_SHIFT) < 0);
+end;
+
 procedure TFrmMain.FormShow(Sender: TObject);
 begin
   inherited;
-  // Restore previously open child windows
 
-  if FConfig.FrmSetListCollectionWasOpen then
-    ActCollectionExecute(Self);
-  if FConfig.FrmSetWasOpen <> '' then
-    ShowSetWindow(FConfig.FrmSetWasOpen);
+  // Restore previously open child windows
+  if FConfig.ReOpenWindowsAfterRestart then begin
+    // Skip if both Ctrl and Shift are pressed, so we can reset window positions.
+    if CtrlShiftPressed then
+      FConfig.ResetFramesOpenOnLoad
+    else begin
+      if StrToIntDef(FConfig.FrmSetListCollection.OpenOnLoad, 0) <> 0 then
+        ShowCollectionWindow;
+      if StrToIntDef(FConfig.FrmSetList.OpenOnLoad, 0) > 0 then
+        ShowSetListWindow(StrToInt(FConfig.FrmSetList.OpenOnLoad)); // Already checked to be valid
+      if FConfig.FrmSet.OpenOnLoad <> '' then
+        ShowSetWindow(FConfig.FrmSet.OpenOnLoad);
+      if FConfig.FrmParts.OpenOnLoad <> '' then
+        ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
+      if StrToIntDef(FConfig.FrmSearch.OpenOnLoad, 0) <> 0 then
+        ShowSearchWindow;
+    end;
+  end;
+end;
+
+procedure TFrmMain.WMShowSearch(var Msg: TMessage);
+begin
+  {var Child := }FCreateMDIChild(TFrmSearch, StrSearchFrameTitle, False);
+{  try
+    if Assigned(Child) then begin
+      //Do stuff
+    end;
+  finally
+    //
+  end;}
+end;
+
+procedure TFrmMain.WMShowCollection(var Msg: TMessage);
+begin
+  {var Child := }FCreateMDIChild(TFrmSetListCollection, StrSetListFrameTitle, False);
+{  try
+    if Assigned(Child) then begin
+      //Do stuff
+    end;
+  finally
+    //
+  end;}
 end;
 
 procedure TFrmMain.WMShowSet(var Msg: TMessage);
@@ -205,11 +262,11 @@ begin
   var MsgData := PShowSetData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Form := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
-      if Assigned(Form) then begin
-        var FrmSet := TFrmSet(Form);
+      var Child := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      if Assigned(Child) then begin
+        var FrmSet := TFrmSet(Child);
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
-      end;
+    end;
     end;
   finally
     Dispose(MsgData); // Don't forget to free the allocated memory
@@ -221,9 +278,9 @@ begin
   var MsgData := PShowSetData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Form := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple set windows.
-      if Assigned(Form) then begin
-        var FrmParts := TFrmParts(Form);
+      var Child := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      if Assigned(Child) then begin
+        var FrmParts := TFrmParts(Child);
         FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
       end;
     end;
@@ -237,9 +294,9 @@ begin
   var MsgData := PShowSetListData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Form := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
-      if Assigned(Form) then begin
-        var FrmSetList := TFrmSetList(Form);
+      var Child := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      if Assigned(Child) then begin
+        var FrmSetList := TFrmSetList(Child);
         FrmSetList.SetListID := MsgData.SetListID; // - multithreaded load
       end;
     end;
@@ -389,6 +446,16 @@ begin
   FConnectionPool.ReleaseConnection(Conn);
 end;
 
+class procedure TFrmMain.ShowSearchWindow();
+begin
+  PostMessage(FrmMain.Handle, WM_SHOW_SEARCH, 0, 0);
+end;
+
+class procedure TFrmMain.ShowCollectionWindow();
+begin
+  PostMessage(FrmMain.Handle, WM_SHOW_COLLECTION, 0, 0);
+end;
+
 class procedure TFrmMain.ShowSetWindow(const set_num: String);
 var
   PostData: PShowSetData;
@@ -447,8 +514,7 @@ end;
 
 procedure TFrmMain.ActCollectionExecute(Sender: TObject);
 begin
-//  FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False);
-  FCreateMDIChild(TFrmSetListCollection, StrSetListFrameTitle, False);
+  ShowCollectionWindow;
 end;
 
 function TFrmMain.FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
@@ -473,25 +539,35 @@ begin
       var FrmSetListCollection := TFrmSetListCollection(Child);
       FrmSetListCollection.IdHttp := FIdHttp;
       FrmSetListCollection.Config := FConfig;
-      Child.Caption := Title;
+      FrmSetListCollection.Caption := Title;
+      FConfig.FrmSetListCollection.SetFormDimensions(FrmSetListCollection);
     end else if AFormClass = TFrmSetList then begin
       var FrmSetList := TFrmSetList(Child);
       FrmSetList.IdHttp := FIdHttp;
-      // do stuff
-      //Child.Caption := Title;
+      //FrmSetList.Caption := Title;
       //FrmSetList.FSetSetList();
+      FConfig.FrmSetList.SetFormDimensions(FrmSetList);
     end else if AFormClass = TFrmSet then begin
       var FrmSet := TFrmSet(Child);
       FrmSet.IdHttp := FIdHttp;
       FrmSet.Config := FConfig;
       FrmSet.ImageCache := FImageCache;
-      Child.Caption := Title;
+      FrmSet.Caption := Title;
+      FConfig.FrmSet.SetFormDimensions(FrmSet);
     end else if AFormClass = TFrmParts then begin
       var FrmParts := TFrmParts(Child);
       FrmParts.IdHttp := FIdHttp;
       FrmParts.Config := FConfig;
       FrmParts.ImageCache := FImageCache;
-      Child.Caption := Title;
+      FrmParts.Caption := Title;
+      FConfig.FrmParts.SetFormDimensions(FrmParts);
+    end else if AFormClass = TFrmSearch then begin
+      var FrmSearch := TFrmSearch(Child);
+      FrmSearch.IdHttp := FIdHttp;
+      FrmSearch.ImageCache := FImageCache;
+      //FrmSearch.Config := FConfig;
+      FrmSearch.Caption := StrSearchFrameTitle;
+      FConfig.FrmSearch.SetFormDimensions(FrmSearch);
     end;
 
     Result := Child;
@@ -502,15 +578,7 @@ end;
 
 procedure TFrmMain.ActSearchExecute(Sender: TObject);
 begin
-  var Child := TFrmSearch.Create(Application);
-  try
-    Child.IdHttp := FIdHttp;
-    Child.ImageCache := FImageCache;
-    //Child.Config := FConfig;
-    Child.Caption := StrSearchFrameTitle;
-  finally
-    //
-  end;
+  ShowSearchWindow;
 end;
 
 procedure TFrmMain.ActConfigExecute(Sender: TObject);
@@ -538,8 +606,7 @@ end;
 
 procedure TFrmMain.FileOpen1Execute(Sender: TObject);
 begin
-//  if OpenDialog.Execute then
-//    CreateMDIChild(OpenDialog.FileName);
+  ShowCollectionWindow;
 end;
 
 procedure TFrmMain.ActAboutExecute(Sender: TObject);

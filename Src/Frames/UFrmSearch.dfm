@@ -508,9 +508,8 @@ object FrmSearch: TFrmSearch
     Width = 612
     Height = 19
     Panels = <>
-    ExplicitLeft = 192
-    ExplicitTop = 408
-    ExplicitWidth = 0
+    ExplicitTop = 418
+    ExplicitWidth = 608
   end
   object TmrRefresh: TTimer
     Enabled = False
