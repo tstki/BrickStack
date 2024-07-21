@@ -202,6 +202,11 @@
             <Form>FrmParts</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
+        <DCCReference Include="Src\Dialogs\UDlgExport.pas">
+            <Form>DlgExport</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

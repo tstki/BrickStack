@@ -89,8 +89,9 @@ implementation
 
 uses
   StrUtils, SysUtils, Dialogs, UITypes, Math,
+  UBrickLinkXMLIntf,
   UFrmMain, UStrings, USqLiteConnection, Data.DB,
-  UDlgSetList, UDlgImport;
+  UDlgSetList, UDlgExport, UDlgImport;
 
 procedure TFrmSetListCollection.RebuildListView;
 begin
@@ -151,8 +152,8 @@ procedure TFrmSetListCollection.FormShow(Sender: TObject);
 begin
   inherited;
 
+  // Research this more later - mdi child anchors are weird.
   Width := 450;
-  //read size from config as well
 
   FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
 
@@ -212,6 +213,17 @@ procedure TFrmSetListCollection.ActExportExecute(Sender: TObject);
 begin
 // choose to export all, or only selection
 // option to overwrite data at host
+
+//SELECT S.SET_NUM, S.quantity, S.havespareparts, (SELECT i.ID FROM INVENTORIES i
+// WHERE i.SET_NUM=S.set_num) AS INVENTORYID FROM mysets S WHERE mysetlistID=4
+
+//RebrickableCSV
+//Set Number,Quantity,Includes Spares,Inventory ID
+//1,2,3,4
+
+//BrickLinkXML - UBrickLinkXMLIntf
+//<INVENTORY><ITEM><ITEMTYPE>S</ITEMTYPE><ITEMID>7065-1</ITEMID><MINQTY>1</MINQTY></ITEM>
+//Itemtype: S=Set, S=Minifig, P=Part?
 end;
 
 procedure TFrmSetListCollection.ActImportExecute(Sender: TObject);

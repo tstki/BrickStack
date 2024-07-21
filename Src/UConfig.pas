@@ -23,7 +23,7 @@ type
     property Width: Integer read FWidth write FWidth;
     property Height: Integer read FHeight write FHeight;
     procedure GetFormDimensions(const Form: TForm);
-    procedure SetFormDimensions(Form: TForm);
+    function SetFormDimensions(Form: TForm): Boolean;
   end;
 
   TConfig = class(TObject)
@@ -152,12 +152,16 @@ begin
   FHeight := Form.Height;
 end;
 
-procedure TClientFormStorage.SetFormDimensions(Form: TForm);
+function TClientFormStorage.SetFormDimensions(Form: TForm): Boolean;
 begin
-  Form.Top := FTop;
-  Form.Left := FLeft;
-  Form.Width := FWidth;
-  Form.Height := FHeight;
+  if FDimensionsValid then begin
+    Form.Top := FTop;
+    Form.Left := FLeft;
+    Form.Width := FWidth;
+    Form.Height := FHeight;
+    Result := True;
+  end else
+    Result := False;
 end;
 
 // Config

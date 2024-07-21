@@ -540,34 +540,44 @@ begin
       FrmSetListCollection.IdHttp := FIdHttp;
       FrmSetListCollection.Config := FConfig;
       FrmSetListCollection.Caption := Title;
-      FConfig.FrmSetListCollection.SetFormDimensions(FrmSetListCollection);
+      if not FConfig.FrmSetListCollection.SetFormDimensions(FrmSetListCollection) then begin
+        //Set default size
+      end;
     end else if AFormClass = TFrmSetList then begin
       var FrmSetList := TFrmSetList(Child);
       FrmSetList.IdHttp := FIdHttp;
       //FrmSetList.Caption := Title;
       //FrmSetList.FSetSetList();
-      FConfig.FrmSetList.SetFormDimensions(FrmSetList);
+      if not FConfig.FrmSetList.SetFormDimensions(FrmSetList) then begin
+        //Set default size
+      end;
     end else if AFormClass = TFrmSet then begin
       var FrmSet := TFrmSet(Child);
       FrmSet.IdHttp := FIdHttp;
       FrmSet.Config := FConfig;
       FrmSet.ImageCache := FImageCache;
       FrmSet.Caption := Title;
-      FConfig.FrmSet.SetFormDimensions(FrmSet);
+      if not FConfig.FrmSet.SetFormDimensions(FrmSet) then begin
+        //Set default size
+      end;
     end else if AFormClass = TFrmParts then begin
       var FrmParts := TFrmParts(Child);
       FrmParts.IdHttp := FIdHttp;
       FrmParts.Config := FConfig;
       FrmParts.ImageCache := FImageCache;
       FrmParts.Caption := Title;
-      FConfig.FrmParts.SetFormDimensions(FrmParts);
+      if not FConfig.FrmParts.SetFormDimensions(FrmParts) then begin
+        //Set default size
+      end;
     end else if AFormClass = TFrmSearch then begin
       var FrmSearch := TFrmSearch(Child);
       FrmSearch.IdHttp := FIdHttp;
       FrmSearch.ImageCache := FImageCache;
       //FrmSearch.Config := FConfig;
       FrmSearch.Caption := StrSearchFrameTitle;
-      FConfig.FrmSearch.SetFormDimensions(FrmSearch);
+      if not FConfig.FrmSearch.SetFormDimensions(FrmSearch) then begin
+        //Set default size
+      end;
     end;
 
     Result := Child;

@@ -28,7 +28,9 @@ uses
   UGetImageThread in 'Src\UGetImageThread.pas',
   USqlThread in 'Src\USqlThread.pas',
   UDelayedImage in 'Src\UDelayedImage.pas',
-  UFrmParts in 'Src\Frames\UFrmParts.pas' {FrmParts};
+  UFrmParts in 'Src\Frames\UFrmParts.pas' {FrmParts},
+  UBrickLinkXMLIntf in 'Src\UBrickLinkXMLIntf.pas',
+  UDlgExport in 'Src\Dialogs\UDlgExport.pas' {DlgExport};
 
 {$R *.RES}
 

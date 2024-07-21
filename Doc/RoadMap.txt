@@ -80,6 +80,8 @@ Windows:
 - Right mouse menu options on table
 - View set on rebrickable/other links. from set details page.
 - Remember checkbox mode and checks between sessions
+- "layout" set for all windows to switch window placements configured by the user.
+- Hamburger menu if window size is too thin.
 
 Export collection:
 - Choose format
