@@ -1,8 +1,8 @@
-object Form1: TForm1
+object DlgExport: TDlgExport
   Left = 0
   Top = 0
   Caption = 'Export'
-  ClientHeight = 87
+  ClientHeight = 125
   ClientWidth = 327
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -10,11 +10,12 @@ object Form1: TForm1
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poMainFormCenter
   OnCreate = FormCreate
   OnShow = FormShow
   DesignSize = (
     327
-    87)
+    125)
   TextHeight = 15
   object Label1: TLabel
     Left = 8
@@ -22,6 +23,13 @@ object Form1: TForm1
     Width = 73
     Height = 15
     Caption = 'Export format'
+  end
+  object LblRemoteOptions: TLabel
+    Left = 8
+    Top = 40
+    Width = 84
+    Height = 15
+    Caption = 'Remote options'
   end
   object CbxExportOptions: TComboBox
     Left = 112
@@ -36,7 +44,7 @@ object Form1: TForm1
   end
   object BtnOK: TButton
     Left = 163
-    Top = 54
+    Top = 92
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -50,7 +58,7 @@ object Form1: TForm1
   end
   object BtnCancel: TButton
     Left = 244
-    Top = 54
+    Top = 92
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -60,5 +68,15 @@ object Form1: TForm1
     TabOrder = 2
     ExplicitLeft = 360
     ExplicitTop = 135
+  end
+  object CbxRemoteOptions: TComboBox
+    Left = 112
+    Top = 37
+    Width = 207
+    Height = 23
+    Style = csDropDownList
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 3
+    OnChange = CbxExportOptionsChange
   end
 end

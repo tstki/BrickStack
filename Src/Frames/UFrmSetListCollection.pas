@@ -211,19 +211,23 @@ end;
 
 procedure TFrmSetListCollection.ActExportExecute(Sender: TObject);
 begin
-// choose to export all, or only selection
-// option to overwrite data at host
+  var SetList := FGetSelectedObject;
+  if (SetList <> nil) and (SetList.ID <> 0) then begin
+    var DlgExport := TDlgExport.Create(Self);
+    try
+      DlgExport.ExportType := etSETLIST;
+      DlgExport.ExportID := SetList.ID.ToString;
+      DlgExport.ExportName := SetList.Name;
 
-//SELECT S.SET_NUM, S.quantity, S.havespareparts, (SELECT i.ID FROM INVENTORIES i
-// WHERE i.SET_NUM=S.set_num) AS INVENTORYID FROM mysets S WHERE mysetlistID=4
+      //.config
+      //.http
+      //.stuff
 
-//RebrickableCSV
-//Set Number,Quantity,Includes Spares,Inventory ID
-//1,2,3,4
-
-//BrickLinkXML - UBrickLinkXMLIntf
-//<INVENTORY><ITEM><ITEMTYPE>S</ITEMTYPE><ITEMID>7065-1</ITEMID><MINQTY>1</MINQTY></ITEM>
-//Itemtype: S=Set, S=Minifig, P=Part?
+      DlgExport.ShowModal;
+    finally
+      DlgExport.Free;
+    end;
+  end;
 end;
 
 procedure TFrmSetListCollection.ActImportExecute(Sender: TObject);

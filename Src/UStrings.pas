@@ -88,6 +88,10 @@ const
   StrImportOptionMerge = 'Merge with local by ID';
   StrImportOptionAppend = 'Keep local and append new';
   StrImportOptionOverwrite = 'Clear local and add new';
+  StrExportRemoteAppend = 'Append';
+  StrExportRemoteSubtract = 'Subtract';
+  StrExportRemoteReplace = 'Replace';
+  StrExportRemoteDeleteAll = 'Delete all';
 
   StrOTNone = 'Request on open'; // Only used by DlgConfig
   StrOTRebrickable = 'Rebrickable';
@@ -96,6 +100,14 @@ const
   StrOTBrickSet = 'BrickSet';
   StrOTLDraw = 'LDraw';
   //StrOTCustom = 'Custom (Link)';
+
+  // Export
+  StrExportCSVFilter = 'CSV Files (*.csv)|*.CSV|All Files (*.*)|*.*';
+  StrExportXMLFilter = 'XML Files (*.xml)|*.XML|All Files (*.*)|*.*';
+  StrExportCSVFileType = 'csv';
+  StrExportXMLileType = 'xml';
+  StrSaveAsTitle = 'Save As';
+  StrFileExistsWarning = 'File "%s" already exists, do you want to overwrite it?';
 
   // Message strings
   StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';

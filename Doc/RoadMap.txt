@@ -63,6 +63,9 @@ Collection window:
 - Right click mark as built
 - Add "all your sets" table entry to view your collection and filter from there.
 - Remember column widths
+- Add inventory version to set selection, so export knows what version to use rather than v1
+- Support adding figures
+- Support filtering separate figures or all figures in your sets.
 
 Settings:
 - Add option to show/hide columns for collection.

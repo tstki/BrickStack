@@ -84,7 +84,7 @@ begin
     FrmMain.ReleaseConnection(SqlConnection);
   end;
 
-  // Seems the "fieldname as" does not work. See how to get the fieldnames or FieldDefs example:
+  // In case the "fieldname as" does not work. See how to get the fieldnames or FieldDefs example:
   //  for var I := 0 to FDQuery.FieldCount - 1 do
   //    ShowMessage(FDQuery.Fields[I].FieldName);
 end;
