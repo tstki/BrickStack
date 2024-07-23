@@ -4,13 +4,6 @@ Keep an eye on development through my ReBrickable workbench:
 
 * https://rebrickable.com/users/tstki/workbench/
 
-Before starting, get the SSL libraries. (We can't distribute those due to complex export restrictions)
-
-* https://en.delphipraxis.net/topic/4776-where-i-can-find-the-ssl-dlls-for-indy/
-* https://indy.fulgan.com/SSL/
-
-Make sure you get the latest (1.0.2u+) 32/64 bit version depending on the version of BrickStack.
-
 #Credits
 
 * Icons used: https://www.iconarchive.com/show/farm-fresh-icons-by-fatcow.html

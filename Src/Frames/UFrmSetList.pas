@@ -5,7 +5,6 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.Actions, Vcl.ActnList,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Stan.Param, FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
   UConfig, USetList, Vcl.StdCtrls, Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.ComCtrls,
@@ -62,7 +61,6 @@ type
     FSetListObject: TSetListObject;
     FSetObjects: TSetObjectList;
     FOwnsSetList: Boolean;
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     FSetListID: Integer;
     procedure FSetConfig(Config: TConfig);
@@ -75,7 +73,6 @@ type
     { Public declarations }
     property SetListObject: TSetListObject read FSetListObject write FSetListObject;
     property SetListID: Integer read FSetListID write FSetSetListID;
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FSetConfig;
   end;
 

@@ -5,7 +5,6 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   Contnrs, UDelayedImage,
   FireDAC.Comp.Client, FireDAC.Stan.Param,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
@@ -69,7 +68,6 @@ type
     procedure ActExportExecute(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     FImageCache: TImageCache;
     FInventoryPanels: TObjectList;
@@ -80,7 +78,6 @@ type
     function FCreateNewResultPanel(Query: TFDQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
     property ImageCache: TImageCache read FImageCache write FImageCache;
     procedure LoadPartsBySet(const set_num: String);

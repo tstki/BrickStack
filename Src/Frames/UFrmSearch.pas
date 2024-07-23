@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages,
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  Contnrs, IdHttp, USet,
+  Contnrs, USet,
   FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
   UImageCache;
@@ -68,7 +68,6 @@ type
     { Private declarations }
     FSetObjects: TSetObjectList; // Stored locally from query result.
     FResultPanels: TObjectList;
-    FIdHttp: TIdHTTP;
     FImageCache: TImageCache;
     FCurMaxCols: Integer;
     procedure FDoSearch;
@@ -79,7 +78,6 @@ type
     function FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property ImageCache: TImageCache read FImageCache write FImageCache;
   end;
 

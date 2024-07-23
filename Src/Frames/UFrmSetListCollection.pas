@@ -6,7 +6,6 @@ uses
   Winapi.Windows, System.Classes,
   Vcl.Graphics, Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.Menus, Vcl.ComCtrls,
   Vcl.ToolWin, Vcl.ActnMan, Vcl.ActnCtrls, System.Actions, Vcl.ActnList,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   UConfig, Vcl.PlatformDefaultStyleActnCtrls, System.ImageList, Vcl.ImgList,
   Vcl.Imaging.pngimage, Vcl.ExtCtrls,
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
@@ -58,16 +57,12 @@ type
     procedure FormResize(Sender: TObject);
   private
     { Private declarations }
-    //FIdHttp: TIdHttp;
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
-//    FSqlConnection: TFDConnection;
     procedure RebuildListView;
     function FGetSelectedObject: TSetListObject;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
   end;
 
@@ -236,7 +231,6 @@ begin
   try
     DlgImport.Config := FConfig;
     DlgImport.SetListObjectList := FSetListObjectList;
-    DlgImport.IdHttp := FIdHttp;
     if DlgImport.ShowModal = mrOK then begin
       //FSetLists.SaveToFile(True);
       var SqlConnection := FrmMain.AcquireConnection;

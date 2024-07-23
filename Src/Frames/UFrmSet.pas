@@ -5,7 +5,6 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   Contnrs, UDelayedImage,
   FireDAC.Comp.Client,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
@@ -31,14 +30,12 @@ type
     procedure ActViewPartsExecute(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     FImageCache: TImageCache;
     FSetNum: String;
     procedure FHandleQueryAndHandleSetFields(Query: TFDQuery);
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
     property ImageCache: TImageCache read FImageCache write FImageCache;
     procedure LoadSet(const set_num: String);

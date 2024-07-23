@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  IdHttp, UConfig, USetList, Vcl.Imaging.pngimage, Vcl.ExtCtrls;
+  UConfig, USetList, Vcl.Imaging.pngimage, Vcl.ExtCtrls;
 
 type
   TDlgImport = class(TForm)
@@ -27,7 +27,6 @@ type
     procedure ImgOpenClick(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
     procedure FDoImportByRebrickableAPI;
@@ -35,7 +34,6 @@ type
     procedure FUpdateUI;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
     property SetListObjectList: TSetListObjectList read FSetListObjectList write FSetListObjectList;
   end;
@@ -74,7 +72,7 @@ Example response:
 }
 *)
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
+  Net.HttpClientComponent,
   UStrings,
   System.JSON,
   StrUtils;
@@ -238,90 +236,88 @@ begin
   var BaseUrl := FConfig.RebrickableBaseUrl;
   var EndPoint := '/api/v3/users/' + FConfig.AuthenticationToken + '/setlists/?page=1&page_size=20';
 
-  FIdHttp.Request.CustomHeaders.Clear;
-  FIdHttp.Request.CustomHeaders.AddValue('Authorization', 'key ' + ApiKey);
-
+  var StatusCode := 0;
+  var HttpClient := TNetHttpClient.Create(nil);
   try
-    var Params := TStringList.Create;
-    try
-      var ResponseContent := FIdHttp.Get(BaseUrl + EndPoint);
+    HttpClient.CustomHeaders['Authorization'] := 'key ' + ApiKey;
 
-      // Attempt to parse the response:
-      if (IdHTTP.ResponseCode = 200) and (ResponseContent <> '') then begin
-        var JSONObject := TJSONObject.ParseJSONValue(ResponseContent) as TJSONObject;
+    //var Params := TStringList.Create;
+    var ResponseContent := HttpClient.Get(BaseUrl + EndPoint);
+    StatusCode := ResponseContent.StatusCode;
+    var ResponseContentString := ResponseContent.ContentAsString();
 
-        var ResultCount := '';
-        JSONObject.TryGetValue<string>('count', ResultCount);
-        if ResultCount <> '' then begin
+    // Attempt to parse the response:
+    if (StatusCode = 200) and (ResponseContentString <> '') then begin
+      var JSONObject := TJSONObject.ParseJSONValue(ResponseContentString) as TJSONObject;
 
-          if CbxImportLocalOptions.ItemIndex = cIMPORTOVERWRITE then begin
-            // clear the current collection list
-            SetListObjectList.Clear;
-          end;
+      var ResultCount := '';
+      JSONObject.TryGetValue<string>('count', ResultCount);
+      if ResultCount <> '' then begin
 
-          var ResultsArray: TJSONArray;
-          JSONObject.TryGetValue<TJSonArray>('results', ResultsArray);
-          for var Item in ResultsArray do begin
-            var ResultID := '';
-            Item.TryGetValue<string>('id', ResultID);
-            var ResultBuildable := false;
-            Item.TryGetValue<boolean>('is_buildable', ResultBuildable);
-            var ResultName := '';
-            Item.TryGetValue<string>('name', ResultName);
+        if CbxImportLocalOptions.ItemIndex = cIMPORTOVERWRITE then begin
+          // clear the current collection list
+          SetListObjectList.Clear;
+        end;
 
-            var Found := False;
+        var ResultsArray: TJSONArray;
+        JSONObject.TryGetValue<TJSonArray>('results', ResultsArray);
+        for var Item in ResultsArray do begin
+          var ResultID := '';
+          Item.TryGetValue<string>('id', ResultID);
+          var ResultBuildable := false;
+          Item.TryGetValue<boolean>('is_buildable', ResultBuildable);
+          var ResultName := '';
+          Item.TryGetValue<string>('name', ResultName);
 
-            if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
-              // Lookup by ID
-              for var SetListObject in SetListObjectList do begin
-                if (SetListObject.ExternalID > 0) and
-                   (SetListObject.ExternalID = StrToIntDef(ResultID, 0)) then begin
-                  SetListObject.Name := ResultName;
-                  SetListObject.UseInCollection := ResultBuildable;
-                  Found := True;
-                end;
+          var Found := False;
+
+          if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
+            // Lookup by ID
+            for var SetListObject in SetListObjectList do begin
+              if (SetListObject.ExternalID > 0) and
+                 (SetListObject.ExternalID = StrToIntDef(ResultID, 0)) then begin
+                SetListObject.Name := ResultName;
+                SetListObject.UseInCollection := ResultBuildable;
+                Found := True;
               end;
             end;
-
-            if not Found then begin
-              // Insert new item
-              var SetListObject := TSetListObject.Create;
-              //SetList.ID;
-              SetListObject.Name := ResultName;
-              SetListObject.Description := ''; // Not supported by API, or needs a separate call.
-              SetListObject.UseInCollection := ResultBuildable;
-              SetListObject.ExternalID := StrToIntDef(ResultID, 0);
-              SetListObject.ExternalType := cETREBRICKABLE;
-              SetListObjectList.Add(SetListObject);
-            end;
           end;
 
-          // (default is 100 items per page)
-          //  "next": null,
-          // if next is not null
-          // call the api again for the next page
-          // re-run the above code after a delay of 1 second.
-
-          ModalResult := mrOk;
-        end else begin // Something went wrong
-          var Detail := '';
-          JSONObject.TryGetValue<string>('detail', Detail);
-          ShowMessage(Detail);
-          ModalResult := mrNone;
+          if not Found then begin
+            // Insert new item
+            var SetListObject := TSetListObject.Create;
+            //SetList.ID;
+            SetListObject.Name := ResultName;
+            SetListObject.Description := ''; // Not supported by API, or needs a separate call.
+            SetListObject.UseInCollection := ResultBuildable;
+            SetListObject.ExternalID := StrToIntDef(ResultID, 0);
+            SetListObject.ExternalType := cETREBRICKABLE;
+            SetListObjectList.Add(SetListObject);
+          end;
         end;
-      end else begin
-        ShowMessage(Format('%s (%d)', [StrErrNoResult, IdHTTP.ResponseCode]));
+
+        // (default is 100 items per page)
+        //  "next": null,
+        // if next is not null
+        // call the api again for the next page
+        // re-run the above code after a delay of 1 second.
+
+        ModalResult := mrOk;
+      end else begin // Something went wrong
+        var Detail := '';
+        JSONObject.TryGetValue<string>('detail', Detail);
+        ShowMessage(Detail);
         ModalResult := mrNone;
       end;
-    finally
-      Params.Free;
+    end else begin
+      ShowMessage(Format('%s (%d)', [StrErrNoResult, ResponseContent.StatusCode]));
+      ModalResult := mrNone;
     end;
   except on e:exception do
     begin
       // show error if any
-      var idErr := IdSSLOpenSSLHeaders.WhichFailedToLoad();
-      var Msg := IfThen(idErr <> '', idErr, e.Message);
-      ShowMessage(Format('%s (%d)', [Msg, IdHTTP.ResponseCode]));
+      var Msg := e.Message;
+      ShowMessage(Format('%s (%d)', [Msg, StatusCode]));
       Modalresult := mrNone;
     end
   end;

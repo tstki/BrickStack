@@ -25,7 +25,6 @@ More of a todo / idea list than a roadmap, but here goes:
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
-- Ditch indy and use THTTPClient
 - Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases
 - Inline small functions.
 - More multithreading - performing the query and convert to internal values, converting internal values to display list.

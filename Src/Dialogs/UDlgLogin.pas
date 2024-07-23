@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  IdHttp, UConfig;
+  UConfig;
 
 type
   TDlgLogin = class(TForm)
@@ -23,8 +23,6 @@ type
     procedure FormShow(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
-//    FConfig: TConfig;
     FRebrickableAPIKey: String;
     FRebrickableBaseUrl: String;
     FAuthenticationToken: String;
@@ -32,8 +30,6 @@ type
     procedure FUpdateUI;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
-//    property Config: TConfig read FConfig write FConfig;
     property RebrickableAPIKey: String read FRebrickableAPIKey write FRebrickableAPIKey;
     property RebrickableBaseUrl: String read FRebrickableBaseUrl write FRebrickableBaseUrl;
     property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
@@ -49,9 +45,8 @@ implementation
 {$R *.dfm}
 
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
   UStrings,
-  System.JSON,
+  System.JSON, Net.HttpClientComponent,
   StrUtils;
 
 procedure TDlgLogin.FormShow(Sender: TObject);
@@ -71,25 +66,24 @@ begin
     Exit;
   end;
 
-  var BaseUrl := FRebrickableBaseUrl;
-  var EndPoint := '/api/v3/users/_token/';
-
-  FIdHttp.Request.CustomHeaders.Clear;
-  FIdHttp.Request.CustomHeaders.AddValue('Authorization', 'key ' + ApiKey);
+  const EndPoint = '/api/v3/users/_token/';
 
   try
+    var HttpClient := TNetHttpClient.Create(nil);
     var Params := TStringList.Create;
     try
       // Set authentication:
       Params.Add('username=' + EditUsername.Text);
       Params.Add('password=' + EditPassword.Text);
 
-      FIdHttp.Request.ContentType := 'application/x-www-form-urlencoded';
-      var ResponseContent := FIdHttp.Post(BaseUrl + EndPoint, Params);
+      HttpClient.CustomHeaders['Authorization'] := 'key ' + ApiKey;
+
+      var ResponseContent := HttpClient.Post(FRebrickableBaseUrl + EndPoint, Params);
+      var ResponseAsString := ResponseContent.ContentAsString();
 
       // Attempt to parse the response:
-      if ResponseContent <> '' then begin
-        var JSONObject := TJSONObject.ParseJSONValue(ResponseContent) as TJSONObject;
+      if ResponseAsString <> '' then begin
+        var JSONObject := TJSONObject.ParseJSONValue(ResponseAsString) as TJSONObject;
 
         var ResultToken := '';
         JSONObject.TryGetValue<string>('user_token', ResultToken);
@@ -109,12 +103,28 @@ begin
       end;
     finally
       Params.Free;
+      HttpClient.Free;
     end;
-  except on e:exception do
+  except on e:Exception do
     begin
       // show error if any
-      var idErr := IdSSLOpenSSLHeaders.WhichFailedToLoad();
-      ShowMessage(IfThen(idErr <> '', idErr, e.Message));
+{
+    on E: ENetHTTPClientException do begin
+      // Handle specific HTTP client exceptions
+      ShowMessage('HTTP Client Exception: ' + E.Message);
+      // Additional details from the exception
+      if E.Response <> nil then begin
+        ShowMessage('Response Status Code: ' + E.Response.StatusCode.ToString);
+        ShowMessage('Response Content: ' + E.Response.ContentAsString());
+      end;
+    end;
+    on E: Exception do begin
+      // Handle other exceptions
+      ShowMessage('General Exception: ' + E.Message);
+    end;
+}
+
+      ShowMessage(e.Message);
       Modalresult := mrNone;
     end
   end;

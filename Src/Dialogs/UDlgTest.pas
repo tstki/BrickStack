@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  IdHttp, UConfig, Vcl.ExtCtrls;
+  UConfig, Vcl.ExtCtrls;
 
 type
   TDlgTest = class(TForm)
@@ -19,11 +19,9 @@ type
     procedure Button3Click(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FConfig;
   end;
 
@@ -32,34 +30,47 @@ implementation
 {$R *.dfm}
 
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
+  Net.HttpClient, Net.URLClient, Net.HttpClientComponent,
   UFrmMain,
   FireDAC.Comp.Client,
   Data.DB,
   USQLiteConnection,
-  System.Net.HttpClient, System.IOUtils,
+  System.IOUtils,
   //Vcl.Graphics, // TWICImage
-JPEG,
+  JPEG,
   StrUtils;
 
 procedure TDlgTest.Button1Click(Sender: TObject);
 begin
-  var BaseUrl := FConfig.RebrickableBaseUrl;
   var EndPoint := '/api/v3/lego/colors/';
-  var ApiKey := FConfig.RebrickableAPIKey;
-
-  FIdHttp.Request.CustomHeaders.Clear;
-  FIdHttp.Request.CustomHeaders.AddValue('Authorization', 'key ' + ApiKey);
 
   try
-    var HttpResult := FIdHttp.Get(BaseUrl + EndPoint);
-    Memo1.Text := HttpResult;
+    // The TNetHttpClient replaces indy / IDHTTP. SSL calls are handled by the OS rather than the SSL dll, resulting in a smaller binary.
+    var HttpClient := TNetHttpClient.Create(Self);
+    HttpClient.CustomHeaders['Authorization'] := 'key ' + FConfig.RebrickableAPIKey;
+
+    var HttpResult := HttpClient.Get(FConfig.RebrickableBaseUrl + EndPoint);
+    Memo1.Text := HttpResult.ContentAsString();
   except on e:exception do
     begin
       // show error if any
-      var idErr := IdSSLOpenSSLHeaders.WhichFailedToLoad();
-      ShowMessage(IfThen(idErr <> '', idErr, e.Message));
+      ShowMessage(e.Message);
     end
+{
+    on E: ENetHTTPClientException do begin
+      // Handle specific HTTP client exceptions
+      ShowMessage('HTTP Client Exception: ' + E.Message);
+      // Additional details from the exception
+      if E.Response <> nil then begin
+        ShowMessage('Response Status Code: ' + E.Response.StatusCode.ToString);
+        ShowMessage('Response Content: ' + E.Response.ContentAsString());
+      end;
+    end;
+    on E: Exception do begin
+      // Handle other exceptions
+      ShowMessage('General Exception: ' + E.Message);
+    end;
+}
   end;
 end;
 

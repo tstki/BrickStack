@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  IdHttp, UConfig, System.Actions, Vcl.ActnList, Vcl.ExtCtrls;
+  UConfig, System.Actions, Vcl.ActnList, Vcl.ExtCtrls;
 
 type
   TDlgConfig = class(TForm)
@@ -118,7 +118,6 @@ type
     procedure EditLocalImageCachePathChange(Sender: TObject);
   private
     { Private declarations }
-    FIdHttp: TIdHttp;
     FConfig: TConfig;
     procedure FSetConfig(Config: TConfig);
     procedure FSelectPathAndUpdateEdit(EditField: TEdit; Pickfolder: Boolean);
@@ -126,7 +125,6 @@ type
     procedure FUpdateCacheFolderSize;
   public
     { Public declarations }
-    property IdHttp: TIdHttp read FIdHttp write FIdHttp;
     property Config: TConfig read FConfig write FSetConfig;
   end;
 
@@ -181,7 +179,7 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Authentication');
     ChildNode.Data := Pointer(TsAuthentication);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Extrnal');
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'External');
     ChildNode.Data := Pointer(TsExternal);
 
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Local');
@@ -398,7 +396,6 @@ procedure TDlgConfig.ActLoginExecute(Sender: TObject);
 begin
   var DlgLogin := TDlgLogin.Create(Self);
   try
-    DlgLogin.IdHttp := FIdHttp;
     DlgLogin.RebrickableAPIKey := EditRebrickableAPIKey.Text;
     DlgLogin.RebrickableBaseUrl := EditRebrickableBaseUrl.Text;
     if DlgLogin.ShowModal = mrOk then begin

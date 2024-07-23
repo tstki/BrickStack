@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Menus, Vcl.StdCtrls, Vcl.Dialogs, Vcl.Buttons,
   Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.StdActns, Vcl.ActnList, Vcl.ToolWin, Vcl.ImgList,
   System.SysUtils, System.Classes, System.ImageList, System.Actions,
-  IdHttp, USqLiteConnection,
+  USqLiteConnection,
   FireDAC.Comp.Client,
   UConfig, UImageCache, UPostMessage;
 
@@ -104,7 +104,6 @@ type
   private
     { Private declarations }
     FConfig: TConfig;
-    FIdHttp: TIdHttp;
     FImageCache: TImageCache;
     FConnectionPool: TFDConnectionPool;
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
@@ -131,7 +130,6 @@ implementation
 {$R *.dfm}
 
 uses
-  IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders,
   ShellAPI,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
@@ -143,15 +141,6 @@ begin
 
   FConfig := TConfig.Create;
   FConfig.Load;
-
-  var FilePath := ExtractFilePath(ParamStr(0));
-  IdOpenSSLSetLibPath(FilePath);
-
-  FIdHttp := TIdHttp.Create(nil);
-
-  var SSLHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
-  SSLHandler.SSLOptions.SSLVersions := [sslvTLSv1_2];
-  FIdHttp.IOHandler := SSLHandler;
 
   FImageCache := TImageCache.Create;
   FImageCache.Config := FConfig;
@@ -165,7 +154,6 @@ end;
 procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
   FImageCache.Free;
-  FIdHttp.Free;
   try
     FConfig.Save;
   finally
@@ -499,7 +487,6 @@ begin
   //Keep this available when we "need" the authenticationToken for user actions that need the token.
   var DlgLogin := TDlgLogin.Create(Self);
   try
-    DlgLogin.IdHttp := FIdHttp;
     if DlgLogin.ShowModal = mrOk then begin
       FConfig.AuthenticationToken := DlgLogin.AuthenticationToken;
       FConfig.RememberAuthenticationToken := DlgLogin.RememberAuthenticationToken;
@@ -537,7 +524,6 @@ begin
   try
     if AFormClass = TFrmSetListCollection then begin
       var FrmSetListCollection := TFrmSetListCollection(Child);
-      FrmSetListCollection.IdHttp := FIdHttp;
       FrmSetListCollection.Config := FConfig;
       FrmSetListCollection.Caption := Title;
       if not FConfig.FrmSetListCollection.SetFormDimensions(FrmSetListCollection) then begin
@@ -545,7 +531,6 @@ begin
       end;
     end else if AFormClass = TFrmSetList then begin
       var FrmSetList := TFrmSetList(Child);
-      FrmSetList.IdHttp := FIdHttp;
       //FrmSetList.Caption := Title;
       //FrmSetList.FSetSetList();
       if not FConfig.FrmSetList.SetFormDimensions(FrmSetList) then begin
@@ -553,7 +538,6 @@ begin
       end;
     end else if AFormClass = TFrmSet then begin
       var FrmSet := TFrmSet(Child);
-      FrmSet.IdHttp := FIdHttp;
       FrmSet.Config := FConfig;
       FrmSet.ImageCache := FImageCache;
       FrmSet.Caption := Title;
@@ -562,7 +546,6 @@ begin
       end;
     end else if AFormClass = TFrmParts then begin
       var FrmParts := TFrmParts(Child);
-      FrmParts.IdHttp := FIdHttp;
       FrmParts.Config := FConfig;
       FrmParts.ImageCache := FImageCache;
       FrmParts.Caption := Title;
@@ -571,7 +554,6 @@ begin
       end;
     end else if AFormClass = TFrmSearch then begin
       var FrmSearch := TFrmSearch(Child);
-      FrmSearch.IdHttp := FIdHttp;
       FrmSearch.ImageCache := FImageCache;
       //FrmSearch.Config := FConfig;
       FrmSearch.Caption := StrSearchFrameTitle;
@@ -594,7 +576,6 @@ end;
 procedure TFrmMain.ActConfigExecute(Sender: TObject);
 begin
   var DlgConfig := TDlgConfig.Create(Self);
-  DlgConfig.IdHttp := FIdHttp;
   DlgConfig.Config := FConfig;
   try
     DlgConfig.ShowModal;
@@ -626,7 +607,6 @@ begin
     var DlgTest := TDlgTest.Create(Self);
     try
       DlgTest.Config := FConfig;
-      DlgTest.IdHttp := FIdHttp;
       DlgTest.ShowModal;
     finally
       DlgTest.Free;

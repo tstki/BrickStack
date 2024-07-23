@@ -1,10 +1,9 @@
-unit USetList; //Rename unit to ULegoCollection because "TCollection is an existing object name"
+unit USetList;
 
 interface
 
 uses
-  FireDAC.Comp.Client,// FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
-  //FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
+  FireDAC.Comp.Client,
   System.Classes, Generics.Collections;
 
 const
@@ -115,7 +114,7 @@ begin
   end;
 end;
 
-procedure TSetListObjectList.LoadFromExternal();//FIdHttp
+procedure TSetListObjectList.LoadFromExternal();//FNetHttp
 begin
 //
 end;
