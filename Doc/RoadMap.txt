@@ -1,15 +1,5 @@
 More of a todo / idea list than a roadmap, but here goes:
 ====
-- Expand about screen
-- Fix window sizes and anchors
-- Support .gz files for import
-- Automate import / Bulk download:
--- https://rebrickable.com/downloads/ - option to perform a bulk download, unzip and fill a local database with this data.
--- Note bulk downloads may be slow and need to be throttled to +- 1 per second.
-- Helpfile / tutorial / common shortcuts
-- Choose UI elements in search results (several template layouts, with example)
--- Scale options.
-- Sorting tables
 - Dont use "select *" but get the exact columns
 - Add configurable behaviour for "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
 - Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
@@ -19,9 +9,33 @@ More of a todo / idea list than a roadmap, but here goes:
 - Caps lock is active warning in login dialog
 - Convert the older sql connections to firedac
 - Add "force refresh from external" button for sets under a setlist.
-- Delayed image has thread issues, fix.
 - Fix printing, again.
-- Slider to control part/image size.
+- Note bulk downloads may be slow and need to be throttled to +- 1 per second.
+- Closing a dialog should store it's last location, not just on application close
+
+Welcome:
+- Welcome message on launch
+- "Welcome to BrickStack", splash screen on first load - show progress on creating base tables. (should be fast anyway)
+- Mandatory download of required files / database on first load (the software is kinda useless otherwise)
+- reference to tutorial/about and mandatory database creation steps and updating.
+
+Database:
+- Rename Brickstack tables to something more sensible than "my..."
+- Support .gz files for database import. Can be downloaded manually and placed in import folder.
+- Automate import / Bulk download:
+-- https://rebrickable.com/downloads/ - option to perform a bulk download, unzip and fill a local database with this data.
+- Database updater steps:
+-- Start page explaining what it's for. Press Start to start.
+-- Start page, show table with current versions, if available, otherwise "no database yet", press next to download and create it.
+-- Find the 12 download links and show the available version. Give user option to close if version is in the last week. (auto check versions later)
+-- Show download progress. File 1/12, 50%,. until 12/12 100%
+-- First number is unix time
+-- Once downloaded show option to create (if not exist), or wipe and update new imports using sqlite.
+-- Once done show results / versions of all tables.
+-- Disable buttons while loading.
+-- Allow abort with cancel - but keep in mind youll have a broken database.
+-- Base "myTable" stuff will need to exist before anything else.
+-- Track versions in myVersions table
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
@@ -33,13 +47,16 @@ Optimizations:
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller
 
+Images:
+- Delayed image has thread issues, fix.
+- Slider to control part/image size.
+- Image processor - to reduce image size if no big image is needed. Rebrickable only serves one size and it's WAY bigger than needed in most cases.
+
 Add config dialog to enter:
 - Default import / export path (just remember last used)
-- Backup path
-- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
-- Database path
+- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
 
 Get user's inventory
 - ability to export inventory per group to rebrickable csv/xml
@@ -65,6 +82,7 @@ Collection window:
 - Add inventory version to set selection, so export knows what version to use rather than v1
 - Support adding figures
 - Support filtering separate figures or all figures in your sets.
+- Text filter (show/hide text matches by name)
 
 Settings:
 - Add option to show/hide columns for collection.
@@ -84,6 +102,12 @@ Windows:
 - Remember checkbox mode and checks between sessions
 - "layout" set for all windows to switch window placements configured by the user.
 - Hamburger menu if window size is too thin.
+- Expand about screen
+- Fix window sizes and anchors
+- Helpfile / tutorial / common shortcuts
+- Choose UI elements in search results / parts (several template layouts, with example)
+-- Scale options.
+- Sorting tables
 
 Export collection:
 - Choose format
@@ -117,3 +141,7 @@ Search:
 
 Search parts in:
 - Search for parts in sets, to find sets
+
+Analytics:
+- Show graphs of each theme / year / part count of sets you own
+- Maybe some external api that we can call to get set values

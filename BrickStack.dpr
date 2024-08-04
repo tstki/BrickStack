@@ -30,7 +30,9 @@ uses
   UDelayedImage in 'Src\UDelayedImage.pas',
   UFrmParts in 'Src\Frames\UFrmParts.pas' {FrmParts},
   UBrickLinkXMLIntf in 'Src\UBrickLinkXMLIntf.pas',
-  UDlgExport in 'Src\Dialogs\UDlgExport.pas' {DlgExport};
+  UDlgExport in 'Src\Dialogs\UDlgExport.pas' {DlgExport},
+  UDlgUpdateDatabase in 'Src\Dialogs\UDlgUpdateDatabase.pas' {DlgUpdateDatabase},
+  UDownloadThread in 'Src\UDownloadThread.pas';
 
 {$R *.RES}
 

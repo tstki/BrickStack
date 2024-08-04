@@ -2,8 +2,8 @@ object DlgTest: TDlgTest
   Left = 0
   Top = 0
   Caption = 'DlgTest'
-  ClientHeight = 133
-  ClientWidth = 324
+  ClientHeight = 164
+  ClientWidth = 320
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -55,5 +55,14 @@ object DlgTest: TDlgTest
     Caption = 'Load Image'
     TabOrder = 3
     OnClick = Button3Click
+  end
+  object Button4: TButton
+    Left = 8
+    Top = 134
+    Width = 113
+    Height = 25
+    Caption = 'DB Updater'
+    TabOrder = 4
+    OnClick = Button4Click
   end
 end

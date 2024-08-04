@@ -81,7 +81,7 @@ const
   cIMPORTREBRICKABLEAPI = 0;
   cIMPORTREBRICKABLECSV = 1;
   //cIMPORTFROMBRICKLINKXML = 2; // Unsure on the format for now
-  //cIMPORTBRICKSETMYSETS = 3;   //
+  //cIMPORTBRICKSETBSSETS = 3;   //
   //cIMPORTBRICKOWLORDER = 4;    //
   //cIMPORTBRICKLINKORDER = 5;   //
 
@@ -170,7 +170,7 @@ begin
   44013-1,1,True,4097
   6203-1,1,True,11731}
 
-  //'SELECT id FROM MysetLists WHERE name = :name'
+  //'SELECT id FROM BSSetLists WHERE name = :name'
   //If result, use result
   //If no result, insert into
 
@@ -189,17 +189,18 @@ begin
       //determine collectionID
       //create if needed
 
-      //var MySetListID := selected;
+      //var BSSetListID := selected;
       //var Set_num := SplitStr[0];
       //var built := false;
       //var quantity := SplitStr[1];
       //var havespareparts := SplitStr[2];
       //var notes := '';
 
+      //TSetListObjectList.SaveToSQL
+
 //      ShowMessage(SplitStr);
     end;
   end;
-
 
 //TODO
 //find list by name.
@@ -286,13 +287,16 @@ begin
           if not Found then begin
             // Insert new item
             var SetListObject := TSetListObject.Create;
-            //SetList.ID;
+            //SetList.ID; // Local ID is created by the DBase.
             SetListObject.Name := ResultName;
             SetListObject.Description := ''; // Not supported by API, or needs a separate call.
             SetListObject.UseInCollection := ResultBuildable;
             SetListObject.ExternalID := StrToIntDef(ResultID, 0);
             SetListObject.ExternalType := cETREBRICKABLE;
+            SetListObject.Dirty := True;
             SetListObjectList.Add(SetListObject);
+
+            // TSetListObjectList.SaveToSQL - handles the database side creation. See UFrmSetListCollection
           end;
         end;
 

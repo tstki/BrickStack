@@ -14,9 +14,11 @@ type
     Button2: TButton;
     Image1: TImage;
     Button3: TButton;
+    Button4: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -36,6 +38,7 @@ uses
   Data.DB,
   USQLiteConnection,
   System.IOUtils,
+  UDlgUpdateDatabase,
   //Vcl.Graphics, // TWICImage
   JPEG,
   StrUtils;
@@ -81,7 +84,7 @@ begin
   try
     // Set up the query
     FDQuery.Connection := SqlConnection;
-    FDQuery.SQL.Text := 'SELECT * FROM MySetLists';
+    FDQuery.SQL.Text := 'SELECT * FROM BSSetLists';
 
     FDQuery.Open;
 
@@ -155,6 +158,17 @@ begin
   var Url := 'https://cdn.rebrickable.com/media/sets/42111-1.jpg';
   DownloadImage(url, 'd:\temp\image2.jpg');
 //  loadimage();
+end;
+
+procedure TDlgTest.Button4Click(Sender: TObject);
+begin
+  var DlgUpdateDatabase := TDlgUpdateDatabase.Create(Self);
+  try
+    DlgUpdateDatabase.Config := FConfig;
+    DlgUpdateDatabase.ShowModal;
+  finally
+    DlgUpdateDatabase.Free;
+  end;
 end;
 
 end.

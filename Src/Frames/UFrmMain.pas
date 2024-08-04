@@ -108,6 +108,7 @@ type
     FConnectionPool: TFDConnectionPool;
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
     function CtrlShiftPressed: Boolean;
+    procedure FUpdateUI;
   public
     { Public declarations }
     //class procedure ShowSetList();
@@ -130,7 +131,7 @@ implementation
 {$R *.dfm}
 
 uses
-  ShellAPI,
+  ShellAPI, IOUtils,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
   UStrings;
@@ -201,8 +202,11 @@ procedure TFrmMain.FormShow(Sender: TObject);
 begin
   inherited;
 
+  // Check whether we can show dialogs.
+  FUpdateUI;
+
   // Restore previously open child windows
-  if FConfig.ReOpenWindowsAfterRestart then begin
+  if FConfig.ReOpenWindowsAfterRestart and ActCollection.Enabled then begin
     // Skip if both Ctrl and Shift are pressed, so we can reset window positions.
     if CtrlShiftPressed then
       FConfig.ResetFramesOpenOnLoad
@@ -219,6 +223,14 @@ begin
         ShowSearchWindow;
     end;
   end;
+end;
+
+procedure TFrmMain.FUpdateUI;
+begin
+  // Don't allow dialogs that require the database if there is no database.
+  var DbasePath := FConfig.DbasePath;
+  ActCollection.Enabled := FileExists(DbasePath);
+  ActSearch.Enabled := ActCollection.Enabled;
 end;
 
 procedure TFrmMain.WMShowSearch(var Msg: TMessage);
@@ -449,8 +461,13 @@ var
   PostData: PShowSetData;
 begin
   New(PostData);
-  PostData^.Set_num := set_num;
-  PostMessage(FrmMain.Handle, WM_SHOW_SET, WPARAM(PostData), 0);
+  try
+    PostData^.Set_num := set_num;
+    if not PostMessage(FrmMain.Handle, WM_SHOW_SET, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
 end;
 
 class procedure TFrmMain.ShowPartsWindow(const set_num: String);
@@ -458,8 +475,13 @@ var
   PostData: PShowPartsData;
 begin
   New(PostData);
-  PostData^.Set_num := set_num;
-  PostMessage(FrmMain.Handle, WM_SHOW_PARTSLIST, WPARAM(PostData), 0);
+  try
+    PostData^.Set_num := set_num;
+    if not PostMessage(FrmMain.Handle, WM_SHOW_PARTSLIST, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
 end;
 
 class procedure TFrmMain.ShowSetListWindow(const SetListID: Integer);
@@ -467,8 +489,13 @@ var
   PostData: PShowSetListData;
 begin
   New(PostData);
-  PostData^.SetListID := SetListID;
-  PostMessage(FrmMain.Handle, WM_SHOW_SETLIST, WPARAM(PostData), 0);
+  try
+    PostData^.SetListID := SetListID;
+    if not PostMessage(FrmMain.Handle, WM_SHOW_SETLIST, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
 end;
 
 // May be set_num or part_num
@@ -477,9 +504,14 @@ var
   PostData: POpenExternalData;
 begin
   New(PostData);
-  PostData^.ObjectType := ObjectType;
-  PostData^.ObjectID := ObjectID;
-  PostMessage(FrmMain.Handle, WM_OPEN_EXTERNAL, WPARAM(PostData), 0);
+  try
+    PostData^.ObjectType := ObjectType;
+    PostData^.ObjectID := ObjectID;
+    if not PostMessage(FrmMain.Handle, WM_OPEN_EXTERNAL, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
 end;
 
 procedure TFrmMain.ActAuthenticateExecute(Sender: TObject);

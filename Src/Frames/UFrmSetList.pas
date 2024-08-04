@@ -196,10 +196,10 @@ begin
     try
       FDQuery.Connection := SqlConnection;
 
-      FDQuery.SQL.Text := 'DELETE FROM MySets WHERE ID=:ID';
+      FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
 
       var Params := FDQuery.Params;
-      Params.ParamByName('ID').asInteger := SetObject.MySetID;
+      Params.ParamByName('ID').asInteger := SetObject.BSSetID;
       FDQuery.ExecSQL;
     finally
       FDQuery.Free;
@@ -285,13 +285,13 @@ begin
     var SqlConnection := FrmMain.AcquireConnection;
     try
       FDQuery.Connection := SqlConnection;
-      FDQuery.SQL.Text := 'SELECT	ms.ID, s.name, s.set_num, s."year", s.num_parts, s.img_url, t.name, ms.Built, ms.Quantity, ms.HaveSpareParts, ms.Notes from MySets ms'+
+      FDQuery.SQL.Text := 'SELECT	ms.ID, s.name, s.set_num, s."year", s.num_parts, s.img_url, t.name, ms.Built, ms.Quantity, ms.HaveSpareParts, ms.Notes from BSSets ms'+
                           ' left join sets s on s.set_num = ms.set_num'+
                           ' left join themes t on t.id = s.theme_id'+
-                          ' where ms.MySetListID = :MySetListID';
+                          ' where ms.BSSetListID = :BSSetListID';
 
       var Params := FDQuery.Params;
-      Params.ParamByName('MySetListID').asInteger := FSetListObject.ID;
+      Params.ParamByName('BSSetListID').asInteger := FSetListObject.ID;
 
       FDQuery.Open;
       if FDQuery.RecordCount > 0 then begin
@@ -301,7 +301,7 @@ begin
 
           while not FDQuery.EOF do begin
             var SetObject := TSetObject.Create;
-            SetObject.MySetID := FDQuery.FieldByName('id').AsInteger;
+            SetObject.BSSetID := FDQuery.FieldByName('id').AsInteger;
             SetObject.SetName := FDQuery.FieldByName('name').AsString;
             SetObject.SetNum := FDQuery.FieldByName('set_num').AsString;
             SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;

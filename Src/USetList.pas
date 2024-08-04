@@ -67,8 +67,8 @@ begin
   try
     FDQuery.Connection := SqlConnection;
     FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
-                        ' (select sum(quantity) FROM MySets s WHERE s.MysetlistID = m.ID) AS SetCount' +
-                        ' FROM mysetlists m WHERE ID=:ID';
+                        ' (select sum(quantity) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
+                        ' FROM BSSetLists m WHERE ID=:ID';
 
     var Params := FDQuery.Params;
     Params.ParamByName('id').asInteger := ID;
@@ -100,6 +100,8 @@ begin
   Self.DoDelete := False;
 end;
 
+// TSetListObjectList
+
 procedure TSetListObjectList.LoadFromQuery(FDQuery: TFDQuery);
 begin
   FDQuery.Open;
@@ -121,6 +123,7 @@ end;
 
 procedure TSetListObjectList.SaveToSQL(SqlConnection: TFDConnection);
 begin
+//todo: if dirty, do insert or update.
 //Intended for a batch save after import
 
 //start transaction?

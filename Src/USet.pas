@@ -11,7 +11,7 @@ type
   private
     { Private declarations }
     // Set details
-    FMySetID: Integer;            //ms.ID
+    FBSSetID: Integer;            //ms.ID
     FSetNum: String;              //s.set_num,
     FSetName: String;             //s.name,
     FSetYear: Integer;            //s."year",
@@ -22,12 +22,12 @@ type
     FQuantity: String;            //ms.Quantity,
     FIncludeSpares: Boolean;      //ms.HaveSpareParts,
     FBuilt: Boolean;              //ms.Built,
-    FNote: String;                //ms.Notes from MySets ms'+
+    FNote: String;                //ms.Notes from BSSets ms'+
 
     //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
   public
     { Public declarations }
-    property MySetID: Integer read FMySetID write FMySetID;
+    property BSSetID: Integer read FBSSetID write FBSSetID;
     property SetNum: String read FSetNum write FSetNum;
     property SetName: String read FSetName write FSetName;
     property SetYear: Integer read FSetYear write FSetYear;

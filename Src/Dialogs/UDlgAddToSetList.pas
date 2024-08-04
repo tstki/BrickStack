@@ -95,12 +95,12 @@ begin
   try
     FDQuery.Connection := SqlConnection;
 
-    FDQuery.SQL.Text := 'INSERT INTO MySets' +
-                        ' (MySetListID, set_num, Built, Quantity, HaveSpareParts, Notes)' +
-                        ' VALUES(:MySetListID, :SetNum, :Built, :Quantity, :HaveSpareParts, :Notes);';
+    FDQuery.SQL.Text := 'INSERT INTO BSSets' +
+                        ' (BSSetListID, set_num, Built, Quantity, HaveSpareParts, Notes)' +
+                        ' VALUES(:BSSetListID, :SetNum, :Built, :Quantity, :HaveSpareParts, :Notes);';
 
     var Params := FDQuery.Params;
-    Params.ParamByName('MySetListID').asInteger := SetListID;
+    Params.ParamByName('BSSetListID').asInteger := SetListID;
     Params.ParamByName('SetNum').asString := Setnum;
     Params.ParamByName('Built').asInteger := IfThen(ChkBuilt.Checked,1,0);
     Params.ParamByName('Quantity').asInteger := StrToInt(EditAmount.Text); // Already checked to be valid
@@ -132,7 +132,7 @@ begin
     try
       FDQuery.Connection := SqlConnection;
       FDQuery.SQL.Text := 'SELECT ID, NAME' +
-                          ' FROM MySetLists ORDER BY NAME';
+                          ' FROM BSSetLists ORDER BY NAME';
       FDQuery.Open;
 
       while not FDQuery.Eof do begin

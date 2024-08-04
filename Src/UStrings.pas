@@ -17,7 +17,8 @@ const
   StrRebrickableIniSection = 'Rebrickable';
   StrDefaultCachePath = 'Cache\';
   StrDefaultLogPath = 'Logs\';
-  StrDefaultdDbasePath = 'DBase\BrickStack.db';
+  StrDBaseName = 'BrickStack.db';
+  StrDefaultdDBasePath = 'DBase\' + StrDbaseName;
   StrDefaultImportPath = 'Import\';
   StrDefaultExportPath = 'Export\';
 

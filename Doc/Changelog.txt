@@ -5,6 +5,7 @@ Version: 20240706.time (0.0.0.5)
 - Restore window position, open state, and size
 - Lotsa filters
 - Removed indy and ssl. Now handled by the system.
+- Upgraded project from Delphi CE11 to CE12.1
 
 Version: 20240523.1837 (0.0.0.4)
 - Search function to find sets

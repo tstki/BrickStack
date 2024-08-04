@@ -188,7 +188,7 @@ begin
   try
     DlgAddToSetList.SetNum := FSetNum;
     if DlgAddToSetList.ShowModal = mrOK then begin
-      //Do add to MySets
+      //Do add to BSSets
     end;
   finally
     DlgAddToSetList.Free;

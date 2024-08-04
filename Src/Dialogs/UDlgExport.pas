@@ -132,10 +132,10 @@ begin
           // Set up the query
           FDQuery.Connection := SqlConnection;
           FDQuery.SQL.Text := 'SELECT S.Set_Num, S.Quantity, S.HaveSpareParts, (SELECT i.ID FROM INVENTORIES i' +
-                              ' WHERE i.Set_Num = S.Set_Num AND i.version=1) AS InventoryID FROM MySets S WHERE mySetListID = :MySetListID';
+                              ' WHERE i.Set_Num = S.Set_Num AND i.version=1) AS InventoryID FROM BSSets S WHERE BSSetListID = :BSSetListID';
           //todo: warning, using explicit version 1 here because the user can't select an inventory version yet
           var Params := FDQuery.Params;
-          Params.ParamByName('MySetListID').AsInteger := FExportID.ToInteger;
+          Params.ParamByName('BSSetListID').AsInteger := FExportID.ToInteger;
           FDQuery.Open;
 
           if CbxExportOptions.ItemIndex = ekREBRICKABLECSV then begin

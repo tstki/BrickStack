@@ -1,4 +1,6 @@
-CREATE TABLE MySetLists (
+-- This file is not used by the software, but allows you to manually create the database if needed.
+
+CREATE TABLE BSSetLists (
 	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	Name TEXT(128),
 	Description TEXT(1024),
@@ -7,50 +9,40 @@ CREATE TABLE MySetLists (
 	ExternalID INTEGER, -- external site's unique ID of your imported set list
 	ExternalType INTEGER -- rebrickable / bricklink / other
 );
-CONSTRAINT MySetLists_PK PRIMARY KEY (ID);
-CREATE INDEX MySetLists_ID_IDX ON MySetLists (ID);
-CREATE INDEX MySetLists_EXTERNALID_IDX ON MySetLists (EXTERNALID);
+CREATE INDEX BSSetLists_ID_IDX ON BSSetLists (ID);
+CREATE INDEX BSSetLists_EXTERNALID_IDX ON BSSetLists (EXTERNALID);
 
 
-CREATE TABLE MySets (
+CREATE TABLE BSSets (
 	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	MySetListID INTEGER,
+	BSSetListID INTEGER,
 	set_num TEXT(20) NOT NULL, -- link to rebrickable sets table
 	Built INTEGER,
 	Quantity INTEGER,
 	HaveSpareParts INTEGER,
 	Notes TEXT(1024)
 );
-CONSTRAINT MySets_PK PRIMARY KEY (ID);
-CREATE INDEX MySets_ID_IDX ON MySets (ID);
-CREATE INDEX MySets_set_num_IDX ON MySets (set_num);
-CREATE INDEX MySets_MySetListID_IDX ON MySetLists (MySetListID);
+CREATE INDEX BSSets_ID_IDX ON BSSets (ID);
+CREATE INDEX BSSets_set_num_IDX ON BSSets (set_num);
+CREATE INDEX BSSets_BSSetListID_IDX ON BSSets (BSSetListID);
 
 
-CREATE TABLE MyCustomTags (
+CREATE TABLE BSCustomTags (
 	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	LinkedID INTEGER, -- ID of the setlist/set
 	CustomType INTEGER, -- 1/2 = setlist/sets
 	Value TEXT(128)
 );
-CONSTRAINT MySets_PK PRIMARY KEY (ID);
-CREATE INDEX CustomTags_ID_IDX ON MyCustomTags (ID);
-CREATE INDEX CustomTags_LinkedID_IDX ON MyCustomTags (LinkedID);
+CREATE INDEX BSCustomTags_ID_IDX ON BSCustomTags (ID);
+CREATE INDEX BSCustomTags_LinkedID_IDX ON BSCustomTags (LinkedID);
 
 
----- Rebrickable imports:
-.import .\import\inventories.csv inventories
-.import .\import\inventory_parts.csv inventory_parts
-.import .\import\inventory_minifigs.csv inventory_minifigs
-.import .\import\inventory_sets.csv inventory_sets
-.import .\import\part_categories.csv part_categories
-.import .\import\parts.csv parts
-.import .\import\colors.csv colors
-.import .\import\minifigs.csv minifigs
-.import .\import\sets.csv sets
-.import .\import\part_relationships.csv part_relationships
-.import .\import\elements.csv elements
-.import .\import\themes.csv themes
+CREATE TABLE IF NOT EXISTS BSDBVersions (
+	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	DBVersion INTEGER,        -- Database structure version
+	DRebrickableCSV INTEGER   -- Date of import
+);
+CREATE INDEX IF NOT EXISTS DBVersions_ID_IDX ON BSCustomTags (ID);
 
 
 ---- Create Rebrickable tables:
@@ -156,3 +148,18 @@ CREATE TABLE themes (
 );
 CREATE INDEX themes_id_IDX ON themes (id);
 CREATE INDEX themes_parent_id_IDX ON themes (parent_id);
+
+
+---- Rebrickable imports: --skip 1
+.import .\import\inventories.csv inventories
+.import .\import\inventory_parts.csv inventory_parts
+.import .\import\inventory_minifigs.csv inventory_minifigs
+.import .\import\inventory_sets.csv inventory_sets
+.import .\import\part_categories.csv part_categories
+.import .\import\parts.csv parts
+.import .\import\colors.csv colors
+.import .\import\minifigs.csv minifigs
+.import .\import\sets.csv sets
+.import .\import\part_relationships.csv part_relationships
+.import .\import\elements.csv elements
+.import .\import\themes.csv themes

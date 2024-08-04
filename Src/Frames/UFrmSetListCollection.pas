@@ -61,6 +61,7 @@ type
     FSetListObjectList: TSetListObjectList;
     procedure RebuildListView;
     function FGetSelectedObject: TSetListObject;
+    function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -172,8 +173,8 @@ begin
     // Set up the query
     FDQuery.Connection := SqlConnection;
     FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
-                        ' (select sum(quantity) FROM MySets s WHERE s.MysetlistID = m.ID) AS SetCount' +
-                        ' FROM mysetlists m';
+                        ' (select sum(quantity) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
+                        ' FROM BSSetLists m';
     FSetListObjectList.LoadFromQuery(FDQuery);
   finally
     FDQuery.Free;
@@ -215,7 +216,6 @@ begin
       DlgExport.ExportName := SetList.Name;
 
       //.config
-      //.http
       //.stuff
 
       DlgExport.ShowModal;
@@ -232,7 +232,6 @@ begin
     DlgImport.Config := FConfig;
     DlgImport.SetListObjectList := FSetListObjectList;
     if DlgImport.ShowModal = mrOK then begin
-      //FSetLists.SaveToFile(True);
       var SqlConnection := FrmMain.AcquireConnection;
       try
         FSetListObjectList.SaveToSQL(SqlConnection);
@@ -270,6 +269,55 @@ begin
     TFrmMain.ShowSetListWindow(SetList.ID);
 end;
 
+// Create the setlist in the database and return the ID that was created.
+function TFrmSetListCollection.FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
+begin
+//todo, move this to USetList perhaps?
+  Result := 0;
+
+  var FDTransaction := TFDTransaction.Create(nil);
+  try
+    FDTransaction.Connection := SqlConnection;
+    FDTransaction.StartTransaction;
+    try
+      // Set up the query
+      FDQuery.Connection := SqlConnection;
+      FDQuery.SQL.Text := 'INSERT INTO BSSetLists (NAME, DESCRIPTION, USEINCOLLECTION, EXTERNALTYPE, SORTINDEX)' +
+                          'VALUES (:NAME, :DESCRIPTION, :USEINCOLLECTION, :EXTERNALTYPE, :SORTINDEX);';
+
+      var Params := FDQuery.Params;
+      Params.ParamByName('name').AsString := SetListObject.Name;
+      Params.ParamByName('description').AsString := SetListObject.Description;
+      Params.ParamByName('useincollection').asInteger := IfThen(SetListObject.UseInCollection, 1, 0);
+      Params.ParamByName('externaltype').asInteger := SetListObject.ExternalType;
+      Params.ParamByName('sortindex').asInteger := SetListObject.SortIndex;
+      // id/externalid/externaltype can't be changed by the user.
+      // add imageindex later
+      // custom tags are a separate action, not done here.
+      FDQuery.ExecSQL;
+      //Params.Clear;
+
+      // Get the new ID
+      FDQuery.SQL.Text := 'SELECT MAX(id) FROM BSSetLists';
+      FDQuery.Open;
+
+      try
+        FDQuery.First;
+        if not FDQuery.EOF then
+          Result := FDQuery.Fields[0].AsInteger;
+      finally
+        FDQuery.Close;
+      end;
+
+      FDTransaction.Commit;
+    except
+      FDTransaction.Rollback;
+    end;
+  finally
+    FDTransaction.Free;
+  end;
+end;
+
 procedure TFrmSetListCollection.ActAddSetListExecute(Sender: TObject);
 begin
   var SetListObject := TSetListObject.Create;
@@ -280,47 +328,11 @@ begin
       FSetListObjectList.Add(SetListObject);
 
       var FDQuery := TFDQuery.Create(nil);
-      var FDTransaction1 := TFDTransaction.Create(nil);
       var SqlConnection := FrmMain.AcquireConnection;
       try
-        FDTransaction1.Connection := SqlConnection;
-        FDTransaction1.StartTransaction;
-        try
-          // Set up the query
-          FDQuery.Connection := SqlConnection;
-          FDQuery.SQL.Text := 'INSERT INTO mysetlists (NAME, DESCRIPTION, USEINCOLLECTION, EXTERNALTYPE, SORTINDEX)' +
-                              'VALUES (:NAME, :DESCRIPTION, :USEINCOLLECTION, :EXTERNALTYPE, :SORTINDEX);';
-
-          var Params := FDQuery.Params;
-          Params.ParamByName('name').AsString := SetListObject.Name;
-          Params.ParamByName('description').AsString := SetListObject.Description;
-          Params.ParamByName('useincollection').asInteger := IfThen(SetListObject.UseInCollection, 1, 0);
-          Params.ParamByName('externaltype').asInteger := SetListObject.ExternalType;
-          Params.ParamByName('sortindex').asInteger := SetListObject.SortIndex;
-          // id/externalid/externaltype can't be changed by the user.
-          // add imageindex later
-          FDQuery.ExecSQL;
-          Params.Clear;
-
-          // Get the new ID
-          FDQuery.SQL.Text := 'SELECT MAX(id) FROM mysetlists';
-          FDQuery.Open;
-
-          try
-            FDQuery.First;
-            if not FDQuery.EOF then
-              SetListObject.ID := FDQuery.Fields[0].AsInteger;
-          finally
-            FDQuery.Close;
-          end;
-
-          FDTransaction1.Commit;
-        except
-          FDTransaction1.Rollback;
-        end;
+        SetListObject.ID := FCreateSetListInDbase(SetListObject, FDQuery, SqlConnection);
       finally
         FDQuery.Free;
-        FDTransaction1.Free;
         FrmMain.ReleaseConnection(SqlConnection);
       end;
 
@@ -347,7 +359,7 @@ begin
         try
           // Set up the query
           FDQuery.Connection := SqlConnection;
-          FDQuery.SQL.Text := 'UPDATE MySetLists set name=:name, description=:description, useincollection=:useincollection, sortindex=:sortindex where id=:id';
+          FDQuery.SQL.Text := 'UPDATE BSSetLists set name=:name, description=:description, useincollection=:useincollection, sortindex=:sortindex where id=:id';
 
           var Params := FDQuery.Params;
           Params.ParamByName('name').AsString := SetListObject.Name;
@@ -385,7 +397,7 @@ begin
       var SqlConnection := FrmMain.AcquireConnection;
       try
         FDQuery.Connection := SqlConnection;
-        FDQuery.SQL.Text := 'DELETE FROM MySetLists where id=:id';
+        FDQuery.SQL.Text := 'DELETE FROM BSSetLists where id=:id';
 
         var Params := FDQuery.Params;
         Params.ParamByName('id').asInteger := SetList.ID;
