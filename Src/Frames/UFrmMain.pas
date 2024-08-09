@@ -131,7 +131,7 @@ implementation
 {$R *.dfm}
 
 uses
-  ShellAPI, IOUtils,
+  ShellAPI, IOUtils, Themes, Styles,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
   UStrings;
@@ -142,6 +142,8 @@ begin
 
   FConfig := TConfig.Create;
   FConfig.Load;
+
+  TStyleManager.SetStyle(FConfig.VisualStyle);
 
   FImageCache := TImageCache.Create;
   FImageCache.Config := FConfig;
@@ -610,7 +612,8 @@ begin
   var DlgConfig := TDlgConfig.Create(Self);
   DlgConfig.Config := FConfig;
   try
-    DlgConfig.ShowModal;
+    if DlgConfig.ShowModal = mrOK then
+      TStyleManager.SetStyle(FConfig.VisualStyle);
   finally
     FConfig.Save;
     DlgConfig.Free;

@@ -98,6 +98,8 @@ type
     ListView1: TListView;
     Button9: TButton;
     Button10: TButton;
+    CbxVisualStyle: TComboBox;
+    Label25: TLabel;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -116,6 +118,8 @@ type
     procedure EditRebrickableAPIKeyChange(Sender: TObject);
     procedure EditRebrickableBaseUrlChange(Sender: TObject);
     procedure EditLocalImageCachePathChange(Sender: TObject);
+    procedure CbxVisualStyleChange(Sender: TObject);
+    procedure BtnCancelClick(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -135,6 +139,7 @@ implementation
 uses
   IOUtils,  // Used for cache dir size
   ShellAPI, // Needed for ShellExecute
+  Themes, Styles,
   UStrings,
   UDlgLogin;
 
@@ -208,9 +213,29 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     TreeView1.FullExpand;
   end;
 
+  procedure PopulateStyleList();
+  begin
+    CbxVisualStyle.Clear;
+
+    for var StyleName in TStyleManager.StyleNames do
+      CbxVisualStyle.Items.Add(StyleName);
+
+    var FoundItem := CbxVisualStyle.items.IndexOf(Config.VisualStyle);
+    if FoundItem >= 0 then
+      CbxVisualStyle.ItemIndex := FoundItem
+    else begin
+      FoundItem := CbxVisualStyle.items.IndexOf('Windows');
+      if FoundItem >= 0 then
+        CbxVisualStyle.ItemIndex := FoundItem
+      else
+        CbxVisualStyle.ItemIndex := 0;
+    end;
+  end;
+
 begin
-  PopulateTreeView();
+  PopulateTreeView;
   FUpdateCacheFolderSize;
+  PopulateStyleList;
 
   for var I:=0 to PCConfig.PageCount-1 do
     PCConfig.Pages[I].TabVisible := False;
@@ -280,6 +305,9 @@ begin
   EditImportPath.Text := Config.ImportPath;
   EditExportPath.Text := Config.ExportPath;
 
+  // Windows
+  //CbxVisualStyle is set above when filling
+
   PCConfig.ActivePage := TsAuthentication;
 end;
 
@@ -288,6 +316,12 @@ begin
   // Get selected object, update tab
   if Node.Data <> nil then
     PCConfig.ActivePage := Node.Data
+end;
+
+procedure TDlgConfig.BtnCancelClick(Sender: TObject);
+begin
+  // Reset the old style
+  // TStyleManager.SetStyle(Config.VisualStyle); // Disable, see below.
 end;
 
 procedure TDlgConfig.BtnOKClick(Sender: TObject);
@@ -314,7 +348,15 @@ begin
   Config.ImportPath := EditImportPath.Text;
   Config.ExportPath := EditExportPath.Text;
 
+  // Windows
+  Config.VisualStyle := CbxVisualStyle.Text;
+
   ModalResult := mrOK;
+end;
+
+procedure TDlgConfig.CbxVisualStyleChange(Sender: TObject);
+begin
+//  TStyleManager.SetStyle(CbxVisualStyle.Text); // Can't set it right away, causes a can't set focus on invisible object error.
 end;
 
 procedure TDlgConfig.FUpdateUI;
@@ -322,7 +364,7 @@ begin
   //BtnOK.Enabled :=
   //Check to make sure all folders are subfolders of the application's base path, if not, show a warning.
 
-  ActLogin.Enabled := (EditRebrickableAPIKey.Text <> '') and (EditRebrickableBaseUrl.TExt <> '');
+  ActLogin.Enabled := (EditRebrickableAPIKey.Text <> '') and (EditRebrickableBaseUrl.Text <> '');
 end;
 
 procedure TDlgConfig.EditLocalImageCachePathChange(Sender: TObject);

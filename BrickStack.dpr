@@ -32,7 +32,9 @@ uses
   UBrickLinkXMLIntf in 'Src\UBrickLinkXMLIntf.pas',
   UDlgExport in 'Src\Dialogs\UDlgExport.pas' {DlgExport},
   UDlgUpdateDatabase in 'Src\Dialogs\UDlgUpdateDatabase.pas' {DlgUpdateDatabase},
-  UDownloadThread in 'Src\UDownloadThread.pas';
+  UDownloadThread in 'Src\UDownloadThread.pas',
+  Vcl.Themes,
+  Vcl.Styles;
 
 {$R *.RES}
 

@@ -45,6 +45,7 @@ type
     FDbasePath: String;
     FImportPath: String;
     FExportPath: String;
+    FVisualStyle: String;
 
     // Window states (move to separate class object later) - no need to save this every time after all
     FReOpenWindowsAfterRestart: Boolean;
@@ -84,6 +85,7 @@ type
     property DbasePath: String read FDbasePath write FDbasePath;
     property ImportPath: String read FImportPath write FImportPath;
     property ExportPath: String read FExportPath write FExportPath;
+    property VisualStyle: String read FVisualStyle write FVisualStyle;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -226,6 +228,8 @@ begin
     IniFile.WriteString(StrRebrickableIniSection, 'ImportPath', FImportPath);
     IniFile.WriteString(StrRebrickableIniSection, 'ExportPath', FExportPath);
 
+    IniFile.WriteString(StrRebrickableIniSection, 'VisualStyle', FVisualStyle);
+
     // Frame size/open states
     IniFile.WriteBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
     FFrmSetListCollection.Save(IniFile, StrRebrickableIniSection, 'FrmSetListCollection');
@@ -270,6 +274,8 @@ begin
     FDbasePath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'DbasePath', FilePath, StrDefaultdDbasePath, IniFile);
     FImportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
     FExportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
+
+    FVisualStyle := IniFile.ReadString(StrRebrickableIniSection, 'VisualStyle', 'Windows');
 
     // Frame size/open states
     FReOpenWindowsAfterRestart := IniFile.ReadBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', False);

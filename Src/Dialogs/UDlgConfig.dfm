@@ -27,7 +27,7 @@ object DlgConfig: TDlgConfig
     Caption = 'Cancel'
     ModalResult = 2
     TabOrder = 1
-    ExplicitLeft = 610
+    OnClick = BtnCancelClick
   end
   object BtnOK: TButton
     Left = 555
@@ -40,7 +40,6 @@ object DlgConfig: TDlgConfig
     ModalResult = 1
     TabOrder = 0
     OnClick = BtnOKClick
-    ExplicitLeft = 529
   end
   object TreeView1: TTreeView
     Left = 8
@@ -64,7 +63,6 @@ object DlgConfig: TDlgConfig
     Style = tsButtons
     TabHeight = 4
     TabOrder = 3
-    ExplicitWidth = 509
     object TsAuthentication: TTabSheet
       Caption = 'Authentication'
       DesignSize = (
@@ -108,7 +106,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 0
         OnChange = EditRebrickableAPIKeyChange
-        ExplicitWidth = 329
       end
       object EditRebrickableBaseUrl: TEdit
         Left = 87
@@ -118,7 +115,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
         OnChange = EditRebrickableBaseUrlChange
-        ExplicitWidth = 329
       end
       object BtnRebrickableAPIInfo: TButton
         Left = 449
@@ -128,7 +124,6 @@ object DlgConfig: TDlgConfig
         Action = ActAPIInfo
         Anchors = [akTop, akRight]
         TabOrder = 1
-        ExplicitLeft = 422
       end
       object EditAuthenticationToken: TEdit
         Left = 87
@@ -137,7 +132,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 3
-        ExplicitWidth = 329
       end
       object BtnLogin: TButton
         Left = 449
@@ -147,7 +141,6 @@ object DlgConfig: TDlgConfig
         Action = ActLogin
         Anchors = [akTop, akRight]
         TabOrder = 4
-        ExplicitLeft = 422
       end
       object ChkRememberAuthenticationToken: TCheckBox
         Left = 87
@@ -229,7 +222,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 0
-        ExplicitWidth = 329
       end
       object EditViewBrickLinkUrl: TEdit
         Left = 87
@@ -238,7 +230,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 1
-        ExplicitWidth = 329
       end
       object EditViewBrickOwlUrl: TEdit
         Left = 87
@@ -247,7 +238,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
-        ExplicitWidth = 329
       end
       object EditViewBrickSetUrl: TEdit
         Left = 87
@@ -256,7 +246,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 3
-        ExplicitWidth = 329
       end
       object EditViewLDrawUrl: TEdit
         Left = 87
@@ -265,7 +254,6 @@ object DlgConfig: TDlgConfig
         Height = 23
         Anchors = [akLeft, akTop, akRight]
         TabOrder = 4
-        ExplicitWidth = 329
       end
       object CbxViewPartDefault: TComboBox
         Left = 302
@@ -354,7 +342,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 0
-        ExplicitWidth = 329
       end
       object BtnSelectLocalImageCachePath: TButton
         Left = 449
@@ -364,7 +351,6 @@ object DlgConfig: TDlgConfig
         Action = ActSelectLocalCacheFolder
         Anchors = [akTop, akRight]
         TabOrder = 1
-        ExplicitLeft = 422
       end
       object EditLocalLogsPath: TEdit
         Left = 87
@@ -374,7 +360,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 2
-        ExplicitWidth = 329
       end
       object BtnSelectEditLocalLogsPath: TButton
         Left = 449
@@ -384,7 +369,6 @@ object DlgConfig: TDlgConfig
         Action = ActSelectLogsFolder
         Anchors = [akTop, akRight]
         TabOrder = 3
-        ExplicitLeft = 422
       end
       object EditDbasePath: TEdit
         Left = 87
@@ -394,7 +378,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 4
-        ExplicitWidth = 329
       end
       object Button1: TButton
         Left = 449
@@ -404,7 +387,6 @@ object DlgConfig: TDlgConfig
         Action = ActDBasePath
         Anchors = [akTop, akRight]
         TabOrder = 5
-        ExplicitLeft = 422
       end
       object EditImportPath: TEdit
         Left = 87
@@ -414,7 +396,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 6
-        ExplicitWidth = 329
       end
       object Button2: TButton
         Left = 449
@@ -424,7 +405,6 @@ object DlgConfig: TDlgConfig
         Action = ActSelectImportFolder
         Anchors = [akTop, akRight]
         TabOrder = 7
-        ExplicitLeft = 422
       end
       object EditExportPath: TEdit
         Left = 87
@@ -434,7 +414,6 @@ object DlgConfig: TDlgConfig
         Anchors = [akLeft, akTop, akRight]
         ReadOnly = True
         TabOrder = 8
-        ExplicitWidth = 329
       end
       object Button3: TButton
         Left = 449
@@ -444,7 +423,6 @@ object DlgConfig: TDlgConfig
         Action = ActSelectExportFolder
         Anchors = [akTop, akRight]
         TabOrder = 9
-        ExplicitLeft = 422
       end
       object Button7: TButton
         Left = 449
@@ -454,7 +432,6 @@ object DlgConfig: TDlgConfig
         Action = ActClearLocalCache
         Anchors = [akTop, akRight]
         TabOrder = 10
-        ExplicitLeft = 422
       end
     end
     object TsCustomSetListTags: TTabSheet
@@ -616,6 +593,9 @@ object DlgConfig: TDlgConfig
     object TsWindows: TTabSheet
       Caption = 'Windows'
       ImageIndex = 5
+      DesignSize = (
+        527
+        241)
       object Label15: TLabel
         Left = 15
         Top = 10
@@ -650,6 +630,24 @@ object DlgConfig: TDlgConfig
         Width = 227
         Height = 15
         Caption = 'Remember all open windows and positions'
+      end
+      object Label25: TLabel
+        Left = 15
+        Top = 168
+        Width = 58
+        Height = 15
+        Caption = 'Visual style'
+      end
+      object CbxVisualStyle: TComboBox
+        Left = 79
+        Top = 165
+        Width = 207
+        Height = 23
+        Style = csDropDownList
+        Anchors = [akLeft, akTop, akRight]
+        Sorted = True
+        TabOrder = 0
+        OnChange = CbxVisualStyleChange
       end
     end
   end
