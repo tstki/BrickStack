@@ -33,6 +33,7 @@ uses
   UDlgExport in 'Src\Dialogs\UDlgExport.pas' {DlgExport},
   UDlgUpdateDatabase in 'Src\Dialogs\UDlgUpdateDatabase.pas' {DlgUpdateDatabase},
   UDownloadThread in 'Src\UDownloadThread.pas',
+  UImportThread in 'Src\UImportThread.pas',
   Vcl.Themes,
   Vcl.Styles;
 

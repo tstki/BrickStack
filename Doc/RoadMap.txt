@@ -35,6 +35,7 @@ Database:
 -- Allow abort with cancel - but keep in mind youll have a broken database.
 -- Base "myTable" stuff will need to exist before anything else.
 -- Track versions in myVersions table
+- Comma separated search input, so you can search for sets "and / or"
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
@@ -82,6 +83,11 @@ Collection window:
 - Support adding figures
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
+- Select parts.
+- Remember parts.
+- Export parts.
+- Export parts lists across multiple sets or inventories. so you can easily order what you need.
+- Invert selection - so you can select what you are missing and then invert.
 
 Settings:
 - Add option to show/hide columns for collection.
