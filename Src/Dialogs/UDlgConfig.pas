@@ -169,7 +169,7 @@ end;
 
 procedure TDlgConfig.FormShow(Sender: TObject);
 
-  procedure PopulateTreeView();
+  procedure FPopulateTreeView();
   var
     RootNode, ChildNode: TTreeNode;
   begin
@@ -233,7 +233,7 @@ procedure TDlgConfig.FormShow(Sender: TObject);
   end;
 
 begin
-  PopulateTreeView;
+  FPopulateTreeView;
   FUpdateCacheFolderSize;
   PopulateStyleList;
 
