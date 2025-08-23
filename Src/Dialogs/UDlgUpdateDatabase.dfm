@@ -88,7 +88,6 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
           ''
           'Press the '#39'Start'#39' button to continue.')
         TabOrder = 0
-        ExplicitWidth = 549
       end
     end
     object TsUpdate: TTabSheet
@@ -132,7 +131,6 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
             'ases is rarely fast.'
           'Or just click '#39'Close'#39' for now, and we'#39'll ask you again later.')
         TabOrder = 0
-        ExplicitWidth = 550
       end
     end
     object TsTables: TTabSheet

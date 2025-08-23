@@ -5,10 +5,24 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  FireDAC.Comp.Client, UImportThread,
+  FireDAC.Comp.Client,
   UConfig, Vcl.ExtCtrls;
 
 type
+  // These should always match ImportFileNames below.
+  TImportTableIDs = ( itTHEMES = 0,
+                      itCOLORS = 1,
+                      itPARTCATEGORIES = 2,
+                      itPARTS = 3,
+                      itPART_RELATIONSHIPS = 4,
+                      itELEMENTS = 5,
+                      itSETS = 6,
+                      itMINIFIGS = 7,
+                      itINVENTORIES = 8,
+                      itINVENTORY_PARTS = 9,
+                      itINVENTORY_SETS = 10,
+                      itINVENTORY_MINIFIGS = 11);
+
   TDlgUpdateDatabase = class(TForm)
     BtnOK: TButton;
     BtnCancel: TButton;
@@ -38,13 +52,8 @@ type
     procedure FDoDownloadFiles;    
     procedure FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
     procedure FDoImportCSV;
-    procedure FStartImport(const FileName: string; ImportTableID: TImportTableIDs; ProgressRow: TListItem);
     procedure FDoExtractFiles;
     procedure FDoCleanup;
-//    procedure FImportBatchCSV(SqlConnection: TFDConnection; const FileName, TableName: String; TableLabel: TListItem);
-//    procedure FDoImportCSVAsync(const Command: String; TableLabel: TListItem);
-//    procedure FRunCommandAsync(const Command: string; TableLabel: TListItem);
-//    procedure FDoImortFiles;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -63,6 +72,7 @@ uses
   UFrmMain, UStrings,
   UDownloadThread,
   ZLib,
+  UITypes,
   Winapi.ShellAPI,
   System.RegularExpressions;
 
@@ -104,6 +114,36 @@ const
     'inventory_parts.csv.gz',
     'inventory_sets.csv.gz',
     'inventory_minifigs.csv.gz');
+
+  // Must match the sequence of ImportTableID above
+  ImportFileNames: array[0..11] of String = (
+    'themes.csv',
+    'colors.csv',
+    'part_categories.csv',
+    'parts.csv',
+    'part_relationships.csv',
+    'elements.csv',
+    'sets.csv',
+    'minifigs.csv',
+    'inventories.csv',
+    'inventory_parts.csv',
+    'inventory_sets.csv',
+    'inventory_minifigs.csv');
+
+  // Must match the sequence of ImportTableID above
+  ImportTableNames: array[0..11] of String = (
+    'themes',
+    'colors',
+    'part_categories',
+    'parts',
+    'part_relationships',
+    'elements',
+    'sets',
+    'minifigs',
+    'inventories',
+    'inventory_parts',
+    'inventory_sets',
+    'inventory_minifigs');
 
   //2D Array: TableName, SQL
   CreateTableSQL: array[0..15, 0..1] of String = (
@@ -473,17 +513,6 @@ begin
   // once progress done, enable next button.
   Timer1.Enabled := True;
 end;
-
-procedure TDlgUpdateDatabase.FStartImport(const FileName: string; ImportTableID: TImportTableIDs; ProgressRow: TListItem);
-begin
-  var ImportThread := TImportThread.Create(FileName, ImportTableID,
-    procedure(Progress: Integer)
-    begin
-      ProgressRow.Caption := IntToStr(Progress);
-    end);
-  ImportThread.Start;
-end;
-
 
 procedure TDlgUpdateDatabase.FDoImportCSV;
 
