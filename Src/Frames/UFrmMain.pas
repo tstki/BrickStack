@@ -71,7 +71,6 @@ type
     ActImport: TAction;
     ActExport: TAction;
     Import1: TMenuItem;
-    Export1: TMenuItem;
     N3: TMenuItem;
     ActCollection: TAction;
     N4: TMenuItem;
@@ -83,6 +82,9 @@ type
     ActSearch: TAction;
     ActHelp: TAction;
     Help2: TMenuItem;
+    ActUpdateDatabase: TAction;
+    Export2: TMenuItem;
+    Updatedatabase1: TMenuItem;
     procedure FileOpen1Execute(Sender: TObject);
     procedure ActAboutExecute(Sender: TObject);
     procedure FileExit1Execute(Sender: TObject);
@@ -101,6 +103,7 @@ type
     procedure WMShowCollection(var Msg: TMessage); message WM_SHOW_COLLECTION;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
+    procedure ActUpdateDatabaseExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -134,7 +137,7 @@ uses
   ShellAPI, IOUtils, Themes, Styles,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
-  UStrings;
+  UStrings, UDlgUpdateDatabase;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 begin
@@ -207,22 +210,29 @@ begin
   // Check whether we can show dialogs.
   FUpdateUI;
 
-  // Restore previously open child windows
-  if FConfig.ReOpenWindowsAfterRestart and ActCollection.Enabled then begin
-    // Skip if both Ctrl and Shift are pressed, so we can reset window positions.
-    if CtrlShiftPressed then
-      FConfig.ResetFramesOpenOnLoad
-    else begin
-      if StrToIntDef(FConfig.FrmSetListCollection.OpenOnLoad, 0) <> 0 then
-        ShowCollectionWindow;
-      if StrToIntDef(FConfig.FrmSetList.OpenOnLoad, 0) > 0 then
-        ShowSetListWindow(StrToInt(FConfig.FrmSetList.OpenOnLoad)); // Already checked to be valid
-      if FConfig.FrmSet.OpenOnLoad <> '' then
-        ShowSetWindow(FConfig.FrmSet.OpenOnLoad);
-      if FConfig.FrmParts.OpenOnLoad <> '' then
-        ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
-      if StrToIntDef(FConfig.FrmSearch.OpenOnLoad, 0) <> 0 then
-        ShowSearchWindow;
+  var DbasePath := FConfig.DbasePath;
+  if not FileExists(DbasePath) then
+    ActUpdateDatabaseExecute(Self);
+
+  // Check if the user created the database
+  if FileExists(DbasePath) then begin
+    // Restore previously open child windows
+    if FConfig.ReOpenWindowsAfterRestart and ActCollection.Enabled then begin
+      // Skip if both Ctrl and Shift are pressed, so we can reset window positions.
+      if CtrlShiftPressed then
+        FConfig.ResetFramesOpenOnLoad
+      else begin
+        if StrToIntDef(FConfig.FrmSetListCollection.OpenOnLoad, 0) <> 0 then
+          ShowCollectionWindow;
+        if StrToIntDef(FConfig.FrmSetList.OpenOnLoad, 0) > 0 then
+          ShowSetListWindow(StrToInt(FConfig.FrmSetList.OpenOnLoad)); // Already checked to be valid
+        if FConfig.FrmSet.OpenOnLoad <> '' then
+          ShowSetWindow(FConfig.FrmSet.OpenOnLoad);
+        if FConfig.FrmParts.OpenOnLoad <> '' then
+          ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
+        if StrToIntDef(FConfig.FrmSearch.OpenOnLoad, 0) <> 0 then
+          ShowSearchWindow;
+      end;
     end;
   end;
 end;
@@ -233,6 +243,7 @@ begin
   var DbasePath := FConfig.DbasePath;
   ActCollection.Enabled := FileExists(DbasePath);
   ActSearch.Enabled := ActCollection.Enabled;
+  FileOpen1.Enabled := ActCollection.Enabled;
 end;
 
 procedure TFrmMain.WMShowSearch(var Msg: TMessage);
@@ -605,6 +616,18 @@ end;
 procedure TFrmMain.ActSearchExecute(Sender: TObject);
 begin
   ShowSearchWindow;
+end;
+
+procedure TFrmMain.ActUpdateDatabaseExecute(Sender: TObject);
+begin
+  var DlgUpdateDatabase := TDlgUpdateDatabase.Create(Self);
+  try
+    DlgUpdateDatabase.Config := FConfig;
+    DlgUpdateDatabase.ShowModal;
+    FUpdateUI;
+  finally
+    DlgUpdateDatabase.Free;
+  end;
 end;
 
 procedure TFrmMain.ActConfigExecute(Sender: TObject);

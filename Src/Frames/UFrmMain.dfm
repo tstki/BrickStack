@@ -34,8 +34,6 @@ object FrmMain: TFrmMain
         Width = 50
       end>
     SimplePanel = True
-    ExplicitTop = 240
-    ExplicitWidth = 344
   end
   object ToolBar2: TToolBar
     Left = 0
@@ -51,7 +49,6 @@ object FrmMain: TFrmMain
     ShowHint = True
     TabOrder = 1
     Wrapable = False
-    ExplicitWidth = 344
     object ToolButton9: TToolButton
       Left = 5
       Top = 0
@@ -142,7 +139,7 @@ object FrmMain: TFrmMain
       object Import1: TMenuItem
         Action = ActImport
       end
-      object Export1: TMenuItem
+      object Export2: TMenuItem
         Action = ActExport
       end
       object N1: TMenuItem
@@ -208,6 +205,9 @@ object FrmMain: TFrmMain
       Hint = 'Help topics'
       object HelpAboutItem: TMenuItem
         Action = ActAbout
+      end
+      object Updatedatabase1: TMenuItem
+        Action = ActUpdateDatabase
       end
       object Help2: TMenuItem
         Action = ActHelp
@@ -353,6 +353,11 @@ object FrmMain: TFrmMain
       Caption = 'Help...'
       ShortCut = 112
       OnExecute = ActHelpExecute
+    end
+    object ActUpdateDatabase: TAction
+      Category = 'File'
+      Caption = 'Update database...'
+      OnExecute = ActUpdateDatabaseExecute
     end
   end
   object ImageList16: TImageList
