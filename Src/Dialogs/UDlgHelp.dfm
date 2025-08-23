@@ -127,7 +127,26 @@ object DlgHelp: TDlgHelp
         Height = 334
         BorderStyle = bsNone
         Lines.Strings = (
-          'Info about collections goes here')
+          
+            'In the collection window (Ctrl+O) you can keep track of (you gue' +
+            'ssed it) '
+          
+            'your lego collection. You can sort your entire collection into a' +
+            ' single set list, '
+          
+            'or split it up by theme, by room, by completion, or who you boug' +
+            'ht a box '
+          'of sets from. It'#39's all up to you.'
+          ''
+          
+            'Collections can be imported and exported (rebrickable set-lists)' +
+            ' at will, so '
+          'you can choose what set lists to display on the site.'
+          ''
+          
+            'It will also show how many sets are in each set list, so you can' +
+            ' feel more '
+          'shame about big (or small) numbers as you grow your inventory.')
         TabOrder = 0
         StyleElements = [seFont, seClient]
       end
@@ -142,7 +161,73 @@ object DlgHelp: TDlgHelp
         Height = 334
         BorderStyle = bsNone
         Lines.Strings = (
-          'Info about search goes here')
+          
+            'The search window (Ctrl+F) is our mightiest tool with chich to e' +
+            'xpand your '
+          
+            'inventory. Find sets by number, partial number, name, theme and ' +
+            'many '
+          
+            'more choices. You can even search for all space sets between yea' +
+            'r X and Y '
+          'with up to Z parts.'
+          ''
+          
+            'Once you'#39've found the set you are looking for, simply click the ' +
+            'magnifying '
+          
+            'glass to view more details about it, or press the big green plus' +
+            ' to add it to '
+          'one of your set lists.')
+        TabOrder = 0
+        StyleElements = [seFont, seClient]
+      end
+    end
+    object TsSet: TTabSheet
+      Caption = 'TsSet'
+      ImageIndex = 4
+      object Memo5: TMemo
+        Left = 3
+        Top = 3
+        Width = 400
+        Height = 334
+        BorderStyle = bsNone
+        Lines.Strings = (
+          
+            'The set window is a versatile window that can be opened through ' +
+            'the '
+          'search (Ctrl+F) or the set lists in your collection (Ctrl+O).'
+          ''
+          
+            'From the set window you can go to the parts window, add the set ' +
+            'to a set '
+          
+            'list, or view the set on an external website. (Such as rebrickab' +
+            'le)')
+        TabOrder = 0
+        StyleElements = [seFont, seClient]
+      end
+    end
+    object TsParts: TTabSheet
+      Caption = 'TsParts'
+      ImageIndex = 5
+      object Memo6: TMemo
+        Left = 3
+        Top = 3
+        Width = 400
+        Height = 334
+        BorderStyle = bsNone
+        Lines.Strings = (
+          
+            'The parts window is still heavily under development, but it'#39's pr' +
+            'imary '
+          
+            'function is to show you what parts a set contains. This way you ' +
+            'can check '
+          
+            'whether you have all the parts needed for the set, and mark part' +
+            's to be '
+          'ordered later.')
         TabOrder = 0
         StyleElements = [seFont, seClient]
       end

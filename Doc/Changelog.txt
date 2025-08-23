@@ -1,5 +1,8 @@
 BrickStack
 ====
+Version: 
+- Put some meat on the bones of the previously very empty help screen.
+
 Version: 20250823.1210 (0.0.0.6)
 - Basic database creation on startup.
 - Automatically download and import base table info from Rebrickable.

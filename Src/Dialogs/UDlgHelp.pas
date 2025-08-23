@@ -20,6 +20,10 @@ type
     Memo2: TMemo;
     Memo3: TMemo;
     Memo4: TMemo;
+    TsSet: TTabSheet;
+    Memo5: TMemo;
+    TsParts: TTabSheet;
+    Memo6: TMemo;
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure FormShow(Sender: TObject);
   private
@@ -55,9 +59,14 @@ procedure TDlgHelp.FormShow(Sender: TObject);
     ChildNode := TreeView1.Items.AddChild(RootNode, 'The Collection');
     ChildNode.Data := Pointer(TsCollections);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Search');
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Search window');
     ChildNode.Data := Pointer(TsSearch);
 
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Set window');
+    ChildNode.Data := Pointer(TsSet);
+
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Parts window');
+    ChildNode.Data := Pointer(TsParts);
     // Optionally, you can continue adding child nodes to ChildNode if needed
     //TreeView.Items.AddChild(ChildNode, 'Grandchild 1');
     //TreeView.Items.AddChild(ChildNode, 'Grandchild 2');
