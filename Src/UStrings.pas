@@ -113,7 +113,7 @@ const
   // Message strings
   StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';
   StrMsgSureRemoveFromList = 'Are you sure you wish to remove set "%s" (num: %s)? This action can''t be undone.';
-  StrMsgDataBaseUpdateComplete = 'Database update / creation complete. If you need any further information, please use the help menu. Good luck!';
+  StrMsgDataBaseUpdateComplete = 'Database update / creation complete.' + #13#10 + 'If you need information, please use the help menu.' + #13#10#13#10 + 'Good luck!';
 
   // Error strings
   StrErrNoResult = 'No result';
