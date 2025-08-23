@@ -9,15 +9,23 @@ uses
   UConfig, Vcl.ExtCtrls;
 
 type
+  // These should always match ImportFileNames below.
+  TImportTableIDs = ( itTHEMES = 0,
+                      itCOLORS = 1,
+                      itPARTCATEGORIES = 2,
+                      itPARTS = 3,
+                      itPART_RELATIONSHIPS = 4,
+                      itELEMENTS = 5,
+                      itSETS = 6,
+                      itMINIFIGS = 7,
+                      itINVENTORIES = 8,
+                      itINVENTORY_PARTS = 9,
+                      itINVENTORY_SETS = 10,
+                      itINVENTORY_MINIFIGS = 11);
+
   TDlgUpdateDatabase = class(TForm)
     BtnOK: TButton;
     BtnCancel: TButton;
-    Memo2: TMemo;
-    BtnDownloadFiles: TButton;
-    BtnCreateDB: TButton;
-    BtnExtractFiles: TButton;
-    BtnImportCSV: TButton;
-    BtnCleanupImport: TButton;
     Timer1: TTimer;
     PCDBWizard: TPageControl;
     TsTables: TTabSheet;
@@ -28,27 +36,24 @@ type
     TsResults: TTabSheet;
     ListView2: TListView;
     LblResults: TLabel;
-    procedure BtnDownloadFilesClick(Sender: TObject);
-    procedure BtnCreateDBClick(Sender: TObject);
-    procedure BtnExtractFilesClick(Sender: TObject);
-    procedure BtnImportCSVClick(Sender: TObject);
-    procedure BtnCleanupImportClick(Sender: TObject);
+    TsUpdate: TTabSheet;
+    Memo3: TMemo;
+    ChkDoNotRemind: TCheckBox;
     procedure Timer1Timer(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BtnCancelClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
     FCurrentStep: Integer;
     procedure FDoCreateDatabaseAndTables;
     procedure FDoDownloadFiles;    
+    procedure FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
     procedure FDoImportCSV;
     procedure FDoExtractFiles;
     procedure FDoCleanup;
-    procedure FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
-    procedure FImportCSV(SqlConnection: TFDConnection; const FileName, TableName: String; TableLabel: TListItem);
-    procedure FRunCommandAsync(const Command: string; TableLabel: TListItem);
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -64,8 +69,10 @@ uses
   Threading,
   StrUtils,
   Net.HttpClient, Net.URLClient, Net.HttpClientComponent,
-  UFrmMain, UStrings, UDownloadThread,
+  UFrmMain, UStrings,
+  UDownloadThread,
   ZLib,
+  UITypes,
   Winapi.ShellAPI,
   System.RegularExpressions;
 
@@ -93,6 +100,22 @@ const
     'https://cdn.rebrickable.com/media/downloads/inventory_sets.csv.gz',
     'https://cdn.rebrickable.com/media/downloads/inventory_minifigs.csv.gz');
 
+  // Array of just the filenames (without path) for downloaded files
+  DownloadFileNames: array[0..11] of String = (
+    'themes.csv.gz',
+    'colors.csv.gz',
+    'part_categories.csv.gz',
+    'parts.csv.gz',
+    'part_relationships.csv.gz',
+    'elements.csv.gz',
+    'sets.csv.gz',
+    'minifigs.csv.gz',
+    'inventories.csv.gz',
+    'inventory_parts.csv.gz',
+    'inventory_sets.csv.gz',
+    'inventory_minifigs.csv.gz');
+
+  // Must match the sequence of ImportTableID above
   ImportFileNames: array[0..11] of String = (
     'themes.csv',
     'colors.csv',
@@ -106,6 +129,21 @@ const
     'inventory_parts.csv',
     'inventory_sets.csv',
     'inventory_minifigs.csv');
+
+  // Must match the sequence of ImportTableID above
+  ImportTableNames: array[0..11] of String = (
+    'themes',
+    'colors',
+    'part_categories',
+    'parts',
+    'part_relationships',
+    'elements',
+    'sets',
+    'minifigs',
+    'inventories',
+    'inventory_parts',
+    'inventory_sets',
+    'inventory_minifigs');
 
   //2D Array: TableName, SQL
   CreateTableSQL: array[0..15, 0..1] of String = (
@@ -223,12 +261,26 @@ const
                 'CREATE INDEX IF NOT EXISTS themes_parent_id_IDX ON themes (parent_id);')
   );
 
-
+  // The first line has column names, so: "--skip 1"
+  ImportDataCmd: array[0..11] of String = (
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventories.csv inventories" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_parts.csv inventory_parts" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_minifigs.csv inventory_minifigs" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_sets.csv inventory_sets" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\part_categories.csv part_categories" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\parts.csv parts" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\colors.csv colors" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\minifigs.csv minifigs" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\sets.csv sets" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\part_relationships.csv part_relationships" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\elements.csv elements" ".quit"',
+    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\themes.csv themes" ".quit"'
+    );
 
 {
   First launch and updater steps
     Detect current state of database
-      If no database - create it
+      If no database - then create it (sqlite will be distributed with the zip, but we should detect if it exists anyway)
       If database exists, check versions.
         If version is old - update table columns if needed.
         If no data, start downloader. Mandatory, because we can't work without updating.
@@ -243,6 +295,11 @@ const
       Show progress per file / total.
       Once all files imported, show status page at the end.
 }
+
+procedure TDlgUpdateDatabase.FormCreate(Sender: TObject);
+begin
+  ChkDoNotRemind.Visible := False;
+end;
 
 procedure TDlgUpdateDatabase.FormShow(Sender: TObject);
 begin
@@ -277,8 +334,8 @@ begin
       var Item := LvResults.Items.Add;
       Item.Caption := '0';
       Item.SubItems.Add(FileName);
-      Item.SubItems.Add('20240423');
-      Item.SubItems.Add('20240728');
+      Item.SubItems.Add('n/a');     //todo get the old data time (register somewhere in a dbase)
+      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
 
       var LocalFileName := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileName);
       FStartDownload(FileToDownload, LocalFileName, Item);
@@ -310,7 +367,7 @@ procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables;
         Item := LvResults.Items.Add;
         Item.Caption := '0';
         Item.SubItems.Add(Name);
-        Item.SubItems.Add('Updating');
+        Item.SubItems.Add('Running');
         Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
       end);
 
@@ -326,7 +383,7 @@ procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables;
       TThread.Queue(nil, procedure
       begin
         // Update main UI
-        Item.SubItems[1] := IfThen(ExecResult, 'Updated', 'Error');
+        Item.SubItems[1] := IfThen(ExecResult, 'Imported', 'Error');
         Item.Caption := '100';
       end);
     end);
@@ -367,7 +424,6 @@ begin
       //FDQuery.Transaction.StartTransaction;
       try
         try
-
           // In chunks so we can show progress:
           // Create brickstack base tables:
 
@@ -384,7 +440,6 @@ begin
             //if not result then
             //add to error log
           end;
-
         except
           FDQuery.Connection.Rollback;
         end;
@@ -432,14 +487,17 @@ begin
       var Item := LvResults.Items.Add;
       Item.Caption := '0';
       Item.SubItems.Add(FileName);
-      Item.SubItems.Add('Updating');
-      Item.SubItems.Add('20240728');
+      Item.SubItems.Add('Extracting');
+      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
 
       try
         var LocalFileName := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileName);
-        //FStartDownload(FileToDownload, LocalFileName, Item);
         var TargetExtractedFileName := TPath.ChangeExtension(LocalFileName, '');  // Just remove the .gz part
+        if (TargetExtractedFileName.Length > 1) and TargetExtractedFileName.EndsWith('.') then
+          SetLength(TargetExtractedFileName, Length(TargetExtractedFileName) - 1);
         FDecompressGZFile(LocalFileName, TargetExtractedFileName);
+
+        //todo: show better progress?
 
         Item.Caption := '100';
         Item.SubItems[1] := 'Extracted';
@@ -450,235 +508,122 @@ begin
   finally
     LvResults.Items.EndUpdate;
   end;
-end;
-           {
-procedure TDlgUpdateDatabase.FRunCommandAsync(const Command: String; TableLabel: TListItem);
-begin
-  TTask.Run(procedure
-  var
-    StartupInfo: TStartupInfo;
-    ProcessInfo: TProcessInformation;
-    Success: Boolean;
-    ExitCode: DWORD;
-    StatusMessage: string;
-  begin
-    // Initialize the STARTUPINFO structure
-    ZeroMemory(@StartupInfo, SizeOf(StartupInfo));
-    StartupInfo.cb := SizeOf(StartupInfo);
-    // Initialize the PROCESS_INFORMATION structure
-    ZeroMemory(@ProcessInfo, SizeOf(ProcessInfo));
-    // Execute the command
-    Success := CreateProcess(nil, PChar(Command), nil, nil, False, 0, nil, nil, StartupInfo, ProcessInfo);
-    if Success then begin
-      // Wait until the process exits
-      WaitForSingleObject(ProcessInfo.hProcess, INFINITE);
-      // Get the exit code
-      GetExitCodeProcess(ProcessInfo.hProcess, ExitCode);
-      // Clean up
-      CloseHandle(ProcessInfo.hProcess);
-      CloseHandle(ProcessInfo.hThread);
-      // Prepare the status message
-      if ExitCode = 0 then
-        StatusMessage := 'Imported'
-      else
-        StatusMessage := 'Error ' + IntToStr(ExitCode);
-    end else
-      StatusMessage := 'Failed';
-    // Update the label on the main thread
-    TThread.Synchronize(nil, procedure
-    begin
-      TableLabel.SubItems[1] := StatusMessage; // Update Label1 on the main form
-    end);
-  end);
-end;      }
 
-procedure TDlgUpdateDatabase.fRunCommandAsync(const Command: String; TableLabel: TListItem);
-//begin
-//  TTask.Run(procedure
-  var
-    StartupInfo: TStartupInfo;
-    ProcessInfo: TProcessInformation;
-    SecurityAttrs: TSecurityAttributes;
-    ReadPipe, WritePipe: THandle;
-//    Buffer: array[0..4095] of Char;
-//    BytesRead: DWORD;
-    OutputText: string;
-    Success: Boolean;
-    ExitCode: DWORD;
-    StatusMessage: string;
-  begin
-    // Set up security attributes for the pipe
-    ZeroMemory(@SecurityAttrs, SizeOf(SecurityAttrs));
-    SecurityAttrs.nLength := SizeOf(SecurityAttrs);
-    SecurityAttrs.bInheritHandle := True;
-
-    // Create the pipe for reading
-    if not CreatePipe(ReadPipe, WritePipe, @SecurityAttrs, 0) then
-    begin
-      StatusMessage := 'Failed to create pipe.';
-      TThread.Synchronize(nil, procedure
-      begin
-        //Label1.Caption := StatusMessage;
-      end);
-      Exit;
-    end;
-
-    // Initialize the STARTUPINFO structure
-    ZeroMemory(@StartupInfo, SizeOf(StartupInfo));
-    StartupInfo.cb := SizeOf(StartupInfo);
-//    StartupInfo.hStdOutput := WritePipe;
-//    StartupInfo.hStdError := WritePipe;
-    StartupInfo.dwFlags := STARTF_USESHOWWINDOW or STARTF_USESTDHANDLES;
-    StartupInfo.wShowWindow := SW_HIDE;
-
-    // Initialize the PROCESS_INFORMATION structure
-    ZeroMemory(@ProcessInfo, SizeOf(ProcessInfo));
-
-    // Execute the command
-    OutputText := '';
-    Success := CreateProcess(nil, PChar(Command), nil, nil, True, 0, nil, nil, StartupInfo, ProcessInfo);
-
-    if Success then begin
-      CloseHandle(WritePipe);  // Close the write end of the pipe
-
-      // Read the output from the pipe
-      //todo: CRASHES
-{      repeat
-        if ReadFile(ReadPipe, Buffer, SizeOf(Buffer), BytesRead, nil) then
-          OutputText := OutputText + String(Buffer);
-      until BytesRead = 0;
-}
-
-      // Wait until the process exits
-      WaitForSingleObject(ProcessInfo.hProcess, INFINITE);
-
-      // Get the exit code
-      GetExitCodeProcess(ProcessInfo.hProcess, ExitCode);
-
-      // Clean up
-      CloseHandle(ProcessInfo.hProcess);
-      CloseHandle(ProcessInfo.hThread);
-      CloseHandle(ReadPipe);
-
-      // Prepare the status message
-      if ExitCode = 0 then
-        StatusMessage := 'Command executed successfully. Output: ' + OutputText
-      else
-        StatusMessage := 'Command failed with exit code ' + IntToStr(ExitCode) + '. Output: ' + OutputText;
-    end else
-      StatusMessage := 'Failed to execute command.';
-
-    // Update the label on the main thread
-    TThread.Synchronize(nil, procedure
-    begin
-      //Label1.Caption := StatusMessage;
-    end);
-//  end);
-end;
-
-procedure TDlgUpdateDatabase.FImportCSV(SqlConnection: TFDConnection; const FileName, TableName: String; TableLabel: TListItem);
-begin
-  //get
-  var ExeName := Application.ExeName;
-  var SQLitePath := TPath.Combine(IncludeTrailingPathDelimiter(TPath.GetDirectoryName(ExeName)), 'SQLite3.exe');
-  var cmdToRun := Format('"%s" "%s" ".mode csv" ".import --skip 1 ''%s'' %s"', [SQLitePath, FConfig.DbasePath, FileName, TableName]);
-  //'"E:\Projects\Delphi\BrickStack\Bin\Win64\Debug\SQLite3.exe" "E:\Projects\Delphi\BrickStack\Bin\Win64\Debug\DBase\BrickStack.db" ".mode csv" ".import --skip 1 ''E:\Projects\Delphi\BrickStack\Bin\Win64\Debug\Import\themes.csv'' themes"'
-  //todo: how to insert single quote
-//  var cmdToRun := 'sqlite3.exe .\dbase\BrickStack.db ".mode csv" ".import --skip 1 .\Import\themes.csv themes"';
-  FRunCommandAsync(cmdToRun, TableLabel);
-
-// Also works:
-//  FRunCommandAsync('DoImport.bat', TableLabel);
-
-// Works but causes ugly and sus dos box popup
-//  ShellExecute(0, 'open', PChar('DoImport.bat'), nil, nil, SW_SHOWNORMAL);
-
-  //WinExec(pansichar(cmdToRun), 0);
-
-{
-  WinExec Function:
-    Although it is an older API, WinExec can be used for simple command execution. It’s not recommended for newer projects due to lack of control over the process.
-  ShellExecute and ShellExecuteEx Functions:
-    These are more powerful and versatile, used to run executables or open documents, URLs, and more. They provide more parameters to control the execution.
-  CreateProcess Function:
-    This function gives you extensive control over the newly created process, including its input/output streams, security attributes, and execution parameters.
-  TProcess Component (from the System.SysUtils and System.Classes units):
-    In more recent versions of Delphi, TProcess is a higher-level wrapper around the Windows API functions to create and control processes. It provides a more object-oriented approach.
-}
-
-  //SQLite3.exe ".\dbase\brickstack.db" ".mode csv" ".import --skip 1 '.\import\themes.csv' themes"
-  //WinExec();
-//  SqlConnection.ExecSQL(Format('IMPORT "%s" INTO %s;', [FileName, 'inventories']));
+  //start timer that checks whether progress is complete to 100%
+  // once progress done, enable next button.
+  Timer1.Enabled := True;
 end;
 
 procedure TDlgUpdateDatabase.FDoImportCSV;
+
+  procedure FRunCommandAsync(const Command: string; Item: TListItem);
+  begin
+    TTask.Run(
+      procedure
+      var
+        StartInfo: TStartupInfo;
+        ProcInfo: TProcessInformation;
+        CmdLine: string;
+        Success: Boolean;
+      begin
+        ZeroMemory(@StartInfo, SizeOf(StartInfo));
+        StartInfo.cb := SizeOf(StartInfo);
+        CmdLine := 'cmd.exe /C ' + Command;
+        Success := False;
+        if CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_NO_WINDOW, nil, nil, StartInfo, ProcInfo) then begin
+          WaitForSingleObject(ProcInfo.hProcess, INFINITE);
+          CloseHandle(ProcInfo.hProcess);
+          CloseHandle(ProcInfo.hThread);
+          Success := True;
+        end;
+
+        TThread.Queue(nil,
+          procedure
+          begin
+            if Success then begin
+              Item.Caption := '100';
+              Item.SubItems[1] := 'Done';
+            end else begin
+              Item.SubItems[1] := 'Error';
+            end;
+          end
+        );
+      end
+    );
+  end;
+
+const
+  sqliteCSVImportString = 'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\%s.csv %s" ".quit"';
 begin
   FCurrentStep := stepImport;
-  
-  //todo: Truncate these tables first.
 
-//use: ImportFileNames
-{
-  .import .\import\inventories.csv inventories
-  .import .\import\inventory_parts.csv inventory_parts
-  .import .\import\inventory_minifigs.csv inventory_minifigs
-  .import .\import\inventory_sets.csv inventory_sets
-  .import .\import\part_categories.csv part_categories
-  .import .\import\parts.csv parts
-  .import .\import\colors.csv colors
-  .import .\import\minifigs.csv minifigs
-  .import .\import\sets.csv sets
-  .import .\import\part_relationships.csv part_relationships
-  .import .\import\elements.csv elements
-  .import .\import\themes.csv themes
-}
-  var SqlConnection := FrmMain.AcquireConnection;
+  LvResults.Clear;
+  LvResults.Items.BeginUpdate;
   try
-    // Set up connection parameters
-    SqlConnection.DriverName := 'SQLite';
-    SqlConnection.Params.Database := FConfig.DbasePath;
-    SqlConnection.Params.Add('LockingMode=Normal');
-    SqlConnection.Params.Add('Synchronous=Full');
-    // Open the connection and create the database file
-
-    SqlConnection.Connected := True;
-
-    // do stuff
-//  AConnection.ExecSQL(Format('IMPORT "%s" INTO %s;', [ACSVFile, ATableName]));
-    LvResults.Clear;
-
-    for var FileToImport in ImportFileNames do begin
+    for var FileName in ImportTableNames do begin
       var Item := LvResults.Items.Add;
       Item.Caption := '0';
-      Item.SubItems.Add(FileToImport);
-      Item.SubItems.Add('Updating');
-      Item.SubItems.Add('currentdate'); //todo now - to string
+      Item.SubItems.Add(FileName);
+      Item.SubItems.Add('Importing');
+      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
 
-      try
-        var LocalFileName := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileToImport);
-        var TableName := ChangeFileExt(FileToImport, '');
-        FImportCSV(SqlConnection, LocalFileName, TableName, Item);
-
-        Item.Caption := '100';
-        Item.SubItems[1] := 'Updated';
-      except
-        Item.SubItems[1] := 'Error';
-      end;
-
-      //just one for now:
-//      exit;
+      FRunCommandAsync(Format(sqliteCSVImportString, [FileName, FileName]), Item);
     end;
-
   finally
-    FrmMain.ReleaseConnection(SqlConnection);
+    LvResults.Items.EndUpdate;
   end;
+
+  //start timer that checks whether progress is complete to 100%
+  // once progress done, enable next button.
+  Timer1.Enabled := True;
 end;
 
 procedure TDlgUpdateDatabase.FDoCleanup;
 begin
   FCurrentStep := stepCleanup;
-//Delete ImportFileNames
-//Delete ImportFileNames.gz
+
+  LvResults.Clear;
+  LvResults.Items.BeginUpdate;
+  try
+    for var FileName in DownloadFileNames do begin
+      var Item := LvResults.Items.Add;
+      Item.Caption := '0';
+      Item.SubItems.Add(FileName);
+      Item.SubItems.Add('Deleting');
+      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
+
+      var Deleted := 0;
+      var FilePath := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileName);
+      var ExtractedFile := TPath.ChangeExtension(FilePath, '');
+      if (ExtractedFile.Length > 1) and ExtractedFile.EndsWith('.') then
+        SetLength(ExtractedFile, Length(ExtractedFile) - 1);
+
+      try
+        if TFile.Exists(FilePath) then begin
+          TFile.Delete(FilePath);
+          Inc(Deleted);
+        end;
+
+        if TFile.Exists(ExtractedFile) then begin
+          TFile.Delete(ExtractedFile);
+          Inc(Deleted);
+        end;
+      except
+        //
+      end;
+
+      if Deleted > 0 then
+        Item.SubItems[1] := Format('Deleted %d/2', [Deleted])
+      else
+        Item.SubItems[1] := 'Not found';
+      Item.Caption := '100';
+    end;
+  finally
+    LvResults.Items.EndUpdate;
+  end;
+
+  // Start timer to check for completion and enable next step
+  Timer1.Enabled := True;
 end;
 
 procedure TDlgUpdateDatabase.Timer1Timer(Sender: TObject);
@@ -707,32 +652,35 @@ begin
   //  LblDownloadState.Caption := Format('In progress (%d/%d)', [Done, ListView1.Items.Count]);
   case FCurrentStep of
     stepDatabase:
-    begin
-      if FIsStepDone then
-        BtnDownloadFilesClick(Sender);
-    end;
-    stepDownload:
-    begin
-      if FIsStepDone then
-        BtnExtractFilesClick(Sender);
-    end;
-    stepExtract:
-    begin
-//      if FIsStepDone then
-//        BtnImportCSVClick(Sender);
-    end;
-    stepImport:
-    begin
-      if FIsStepDone then
-        BtnCleanupImportClick(Sender);
-    end;
-    stepCleanup:
-    begin
-      // show results and disable timer
-      //todo: or FUpdateCancelled.
-      if FIsStepDone then
+      if FIsStepDone then begin
         Timer1.Enabled := False;
-    end;
+        FDoDownloadFiles;
+      end;
+    stepDownload:
+      if FIsStepDone then begin
+        Timer1.Enabled := False;
+        FDoExtractFiles;
+      end;
+    stepExtract:
+      if FIsStepDone then begin
+        Timer1.Enabled := False;
+        FDoImportCSV;
+      end;
+    stepImport:
+      if FIsStepDone then begin
+        Timer1.Enabled := False;
+        FDoCleanup;
+      end;
+    stepCleanup:
+      if FIsStepDone then begin
+        Timer1.Enabled := False;
+        // show results and disable timer
+        //todo: or FUpdateCancelled.
+        //close dialog
+        //show message good luck
+        MessageDlg(StrMsgDataBaseUpdateComplete, mtInformation, [mbOK], 0);
+        ModalResult := mrOk;
+      end;
     //stepStart:
       // Should not happen.
   end;
@@ -741,6 +689,7 @@ end;
 procedure TDlgUpdateDatabase.BtnOKClick(Sender: TObject);
 begin
   BtnOK.Enabled := False;
+  BtnCancel.Enabled := False;
   BtnOK.Caption := 'Next';
   LblProgress.Caption := 'Creating database tables';
 
@@ -753,42 +702,18 @@ begin
   begin
     // Background task
     try
-      BtnCreateDBClick(Sender);
+      FDoCreateDatabaseAndTables
     except
       //
     end;
   end);
 end;
 
-procedure TDlgUpdateDatabase.BtnCreateDBClick(Sender: TObject);
-begin
-  FDoCreateDatabaseAndTables;
-end;
-
-procedure TDlgUpdateDatabase.BtnDownloadFilesClick(Sender: TObject);
-begin
-  FDoDownloadFiles;
-end;
-
-procedure TDlgUpdateDatabase.BtnImportCSVClick(Sender: TObject);
-begin
-  FDoImportCSV;
-end;
-
-procedure TDlgUpdateDatabase.BtnExtractFilesClick(Sender: TObject);
-begin
-  FDoExtractFiles;
-end;
-
 procedure TDlgUpdateDatabase.BtnCancelClick(Sender: TObject);
 begin
   //todo: cancel and close everything. make sure all tasks are ended before closing
+  // or at least halted somehow.
   ModalResult := mrCancel;
-end;
-
-procedure TDlgUpdateDatabase.BtnCleanupImportClick(Sender: TObject);
-begin
-  FDoCleanup;
 end;
 
 end.
