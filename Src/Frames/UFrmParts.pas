@@ -251,12 +251,17 @@ begin
   if MaxVersion > 1 then begin
     CbxInventoryVersion.Items.BeginUpdate;
     try
-      for var I := 2 to MaxVersion do
+      CbxInventoryVersion.Items.Clear;
+      for var I := 1 to MaxVersion do
         CbxInventoryVersion.Items.Add(I.ToString);
     finally
       CbxInventoryVersion.Items.EndUpdate;
     end;
   end;
+
+  // Hide the inventory version display if there's only one version.
+  LblInventoryVersion.Visible := MaxVersion > 1;
+  CbxInventoryVersion.visible := MaxVersion > 1;
 end;
 
 procedure TFrmParts.ActSortByCategoryExecute(Sender: TObject);
@@ -558,16 +563,6 @@ begin
 
   FSetNum := set_num;
   Self.Caption := 'Lego set: ' + set_num; // + set name
-
-  // Always assume version 1 is available. See: FHandleQueryAndHandleSetInventoryVersion
-  CbxInventoryVersion.Items.BeginUpdate;
-  try
-    CbxInventoryVersion.Clear;
-    CbxInventoryVersion.Items.Add('1');
-    CbxInventoryVersion.ItemIndex := 0;
-  finally
-    CbxInventoryVersion.Items.EndUpdate;
-  end;
 
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
