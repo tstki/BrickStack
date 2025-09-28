@@ -162,6 +162,9 @@
             <Form>FrmSet</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Src\Frames\UFrmParts.pas">
+            <Form>FrmParts</Form>
+        </DCCReference>
         <DCCReference Include="Src\Dialogs\UDlgLogin.pas">
             <Form>DlgLogin</Form>
         </DCCReference>
@@ -189,30 +192,25 @@
         <DCCReference Include="Src\Dialogs\UDlgAddToSetList.pas">
             <Form>DlgAddToSetList</Form>
         </DCCReference>
-        <DCCReference Include="Src\URebrickableJson.pas"/>
-        <DCCReference Include="Src\UStrings.pas"/>
-        <DCCReference Include="Src\UConfig.pas"/>
-        <DCCReference Include="Src\USetList.pas"/>
-        <DCCReference Include="Src\USet.pas"/>
-        <DCCReference Include="Src\UImageCache.pas"/>
-        <DCCReference Include="Src\UPostMessage.pas"/>
-        <DCCReference Include="Src\USqLiteConnection.pas"/>
-        <DCCReference Include="Src\UGetImageThread.pas"/>
-        <DCCReference Include="Src\USqlThread.pas"/>
-        <DCCReference Include="Src\UDelayedImage.pas"/>
-        <DCCReference Include="Src\Frames\UFrmParts.pas">
-            <Form>FrmParts</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
-        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
         <DCCReference Include="Src\Dialogs\UDlgExport.pas">
             <Form>DlgExport</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Src\Dialogs\UDlgUpdateDatabase.pas">
             <Form>DlgUpdateDatabase</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Src\Data\USetList.pas"/>
+        <DCCReference Include="Src\Data\USet.pas"/>
+        <DCCReference Include="Src\Data\UPart.pas"/>
+        <DCCReference Include="Src\UStrings.pas"/>
+        <DCCReference Include="Src\UConfig.pas"/>
+        <DCCReference Include="Src\UImageCache.pas"/>
+        <DCCReference Include="Src\UPostMessage.pas"/>
+        <DCCReference Include="Src\URebrickableJson.pas"/>
+        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
+        <DCCReference Include="Src\USqLiteConnection.pas"/>
+        <DCCReference Include="Src\USqlThread.pas"/>
+        <DCCReference Include="Src\UDelayedImage.pas"/>
+        <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\UDownloadThread.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

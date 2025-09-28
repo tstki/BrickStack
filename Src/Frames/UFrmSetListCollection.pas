@@ -151,21 +151,26 @@ begin
   // Research this more later - mdi child anchors are weird.
   Width := 450;
 
-  FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
+  CbxFilter.Items.BeginUpdate;
+  try
+    CbxFilter.Items.Clear;
+    CbxFilter.Items.Add(StrSetListFillterShowAll);
+    CbxFilter.Items.Add(StrSetListFillterShowLocal);
+    CbxFilter.Items.Add(StrSetListFillterShowRebrickable);
+    CbxFilter.Items.Add(StrSetListFillterShowSets);
+    CbxFilter.Items.Add(StrSetListFillterShowNoSets);
+    //CbxFilter.Items.Add('Imported from ...');
+    //Perform query, get possible custom tags for setlistcollections
+    //And custom tags from setlists type:
+    //CbxFilter.Items.Add('Custom tag 1');
+    //CbxFilter.Items.Add('Custom tag 2');
+    //CbxFilter.Items.Add('Custom tag 3');
+    CbxFilter.ItemIndex := 0;
+  finally
+    CbxFilter.Items.EndUpdate;
+  end;
 
-  CbxFilter.Items.Clear;
-  CbxFilter.Items.Add(StrSetListFillterShowAll);
-  CbxFilter.Items.Add(StrSetListFillterShowLocal);
-  CbxFilter.Items.Add(StrSetListFillterShowRebrickable);
-  CbxFilter.Items.Add(StrSetListFillterShowSets);
-  CbxFilter.Items.Add(StrSetListFillterShowNoSets);
-  //CbxFilter.Items.Add('Imported from ...');
-  //Perform query, get possible custom tags for setlistcollections
-  //And custom tags from setlists type:
-  //CbxFilter.Items.Add('Custom tag 1');
-  //CbxFilter.Items.Add('Custom tag 2');
-  //CbxFilter.Items.Add('Custom tag 3');
-  CbxFilter.ItemIndex := 0;
+  FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
 
   var SqlConnection := FrmMain.AcquireConnection;
   var FDQuery := TFDQuery.Create(nil);
@@ -181,7 +186,7 @@ begin
     FrmMain.ReleaseConnection(SqlConnection);
   end;
 
-  if FSetListObjectList.Count > 0 then
+//  if FSetListObjectList.Count > 0 then
     RebuildListView;
 
   CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);

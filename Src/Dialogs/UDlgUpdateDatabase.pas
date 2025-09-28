@@ -77,6 +77,11 @@ uses
   System.RegularExpressions;
 
 const
+  // Database version and changes:
+  dbVERSION = 1;
+  // 0 -> 1: Parts.part_num int -> text(20), .name(200) -> 250, table BSDBPartsInventory, index BSDBVersions
+  // 0: Initial version
+
   // Wizard steps:
   stepStart = 0;
   stepDatabase = 1;
@@ -146,7 +151,7 @@ const
     'inventory_minifigs');
 
   //2D Array: TableName, SQL
-  CreateTableSQL: array[0..15, 0..1] of String = (
+  CreateTableSQL: array[0..16, 0..1] of String = (
     ('BSSetLists', 'CREATE TABLE IF NOT EXISTS BSSetLists (' +
                     '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
                     '	Name TEXT(128),' +
@@ -179,7 +184,17 @@ const
                       '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
                       '	DBVersion INTEGER,' +       // Database structure version
                       '	DRebrickableCSV INTEGER);' +  // Date of import
-                      'CREATE INDEX IF NOT EXISTS DBVersions_ID_IDX ON BSCustomTags (ID);'),
+                      'CREATE INDEX IF NOT EXISTS DBVersions_ID_IDX ON BSDBVersions (ID);'),
+    ('BSDBPartsInventory', 'CREATE TABLE IF NOT EXISTS BSDBPartsInventory (' +
+                            ' ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' + // You may own multiple of the same set, this way you can link to it's unique inventory
+                            ' InventoryID INTEGER,' +   // These 4 items are used to link to the inventory_parts
+                            ' Part_num TEXT(20),' +     // ^
+                            ' color_id INTEGER,' +      // ^
+                            ' is_spare INTEGER,' +      // ^
+                            ' cur_quantity INTEGER,' +  // How many do you have
+                            ' inv_quantity INTEGER);' + // How many does the set need
+                            'CREATE INDEX IF NOT EXISTS BSDBVersions_ID_IDX ON BSDBPartsInventory (ID)' +
+                            'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num)'),
     ('Inventories', 'CREATE TABLE IF NOT EXISTS inventories (' +
                     '	id INTEGER NOT NULL PRIMARY KEY,' +
                     '	version INTEGER,' +
@@ -211,8 +226,8 @@ const
                         '	name TEXT(200));' +
                         'CREATE INDEX IF NOT EXISTS part_categories_id_IDX ON part_categories (id);'),
     ('Parts', 'CREATE TABLE IF NOT EXISTS parts (' +
-              '	part_num INTEGER NOT NULL PRIMARY KEY,' +
-              '	name TEXT(200),' +
+              '	part_num TEXT(20) NOT NULL PRIMARY KEY,' +
+              '	name TEXT(250),' +
               '	part_cat_id INTEGER,' +
               '	part_material TEXT(20));' +
               'CREATE INDEX IF NOT EXISTS parts_part_num_IDX ON parts (part_num);' +
@@ -383,7 +398,7 @@ procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables;
       TThread.Queue(nil, procedure
       begin
         // Update main UI
-        Item.SubItems[1] := IfThen(ExecResult, 'Imported', 'Error');
+        Item.SubItems[1] := IfThen(ExecResult, 'Created', 'Error');
         Item.Caption := '100';
       end);
     end);

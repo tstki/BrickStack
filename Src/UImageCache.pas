@@ -41,6 +41,7 @@ type
   //Keep up to X images in memory. Currently no limit - observe how bad this gets first.
   //Fix WImage issues.
   //improve error handling
+  //convert to bmp for faster drawing
 var
   CriticalSection: TCriticalSection;
 
@@ -150,6 +151,9 @@ end;
 
 function TImageCache.GetImage(const Url: string): TPicture;
 begin
+  // todo: add width/height param.
+  // parse URL to get thumbnail instead of full size image.
+
   CriticalSection.Enter;
   try
     try
@@ -158,7 +162,7 @@ begin
       else if FGetFromDisk(Url, Result) then begin
         AddImage(Url, Result);
         Exit;
-      end else if FGetFromUrl(Url, Result) then begin
+      end else if FGetFromUrl(Url, Result) then begin // May raise if image is not found.
         SaveImage(Url, Result);
         AddImage(Url, Result);
         Exit;

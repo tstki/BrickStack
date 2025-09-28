@@ -129,11 +129,11 @@ begin
 //start transaction?
 
   for var SetListObject in Self do begin
-    if not SetListObject.Dirty then
+    if not SetListObject.FDirty then
       Continue;
     
-    if SetListObject.ID <> 0 then begin
-      if SetListObject.DoDelete then begin
+    if SetListObject.FID <> 0 then begin
+      if SetListObject.FDoDelete then begin
       //delete
       end else begin
       //update

@@ -50,7 +50,8 @@ Optimizations:
 Images:
 - Delayed image has thread issues with spare parts, fix.
 - Slider to control part/image size.
-- Image processor - to reduce image size if no big image is needed. Rebrickable only serves one size and it's WAY bigger than needed in most cases.
+- You can ask the image size you need with a suffix: https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg
+-- Limits are no smaller than 2x2, no bigger than 1000x1000, anything in between is accepted.
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)
@@ -88,6 +89,12 @@ Collection window:
 - Export parts.
 - Export parts lists across multiple sets or inventories. so you can easily order what you need.
 - Invert selection - so you can select what you are missing and then invert.
+
+Parts window:
+- left click to add
+- right click to remove
+- checkbox to select all or remove all.
+- Implement display filters
 
 Settings:
 - Add option to show/hide columns for collection.

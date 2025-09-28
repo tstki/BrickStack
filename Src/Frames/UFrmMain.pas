@@ -212,7 +212,11 @@ begin
 
   var DbasePath := FConfig.DbasePath;
   if not FileExists(DbasePath) then
-    ActUpdateDatabaseExecute(Self);
+    ActUpdateDatabaseExecute(Self)
+  else begin // Newly created databases are already up to date, so only needed on normal startup:
+//    ActCheckDatabaseVersionUpdate(Self);  // Can force an import update
+//    ActCheckDatabaseImportVersions(Self); // Based on setting, see how often we need to check for import versions.
+  end;
 
   // Check if the user created the database
   if FileExists(DbasePath) then begin
@@ -278,6 +282,7 @@ begin
       var Child := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Child) then begin
         var FrmSet := TFrmSet(Child);
+        FrmSet.ImageCache := FImageCache;
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
     end;
     end;
@@ -294,6 +299,7 @@ begin
       var Child := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Child) then begin
         var FrmParts := TFrmParts(Child);
+        FrmParts.ImageCache := FImageCache;
         FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
       end;
     end;
@@ -310,6 +316,7 @@ begin
       var Child := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Child) then begin
         var FrmSetList := TFrmSetList(Child);
+        //FrmSetList.ImageCache := FImageCache;
         FrmSetList.SetListID := MsgData.SetListID; // - multithreaded load
       end;
     end;
