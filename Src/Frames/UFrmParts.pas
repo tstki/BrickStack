@@ -196,25 +196,30 @@ begin
 
   // todo: We can add a slider to scale this up later, or a popup window to zoom in on the image.
   // Just make it exist first.
-  DgSetParts.DefaultColWidth := 64;
-  DgSetParts.DefaultRowHeight := 104; // 64 + 20 + 20 //todo: make extra info rows optional
+  DgSetParts.DefaultColWidth := TbGridSize.Position;
+  DgSetParts.DefaultRowHeight := TbGridSize.Position + 40; // 64 + 20 + 20 //todo: make extra info rows optional
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
 
   FAdjustGrid;
-
-//  SbSetParts.UseWheelForScrolling := True;
 end;
 
 procedure TFrmParts.FAdjustGrid();
 begin
   // recalculate visible column and rowcount for DgSetParts
-  DgSetParts.ColCount := Max(1, Floor(DgSetParts.ClientWidth div (DgSetParts.DefaultColWidth+1)));
+  if FPartObjectList.Count = 0 then begin
+    DgSetParts.ColCount := 0;
+    DgSetParts.RowCount := 0;
+  end else
+    DgSetParts.ColCount := Max(1, Floor(DgSetParts.ClientWidth div (DgSetParts.DefaultColWidth+1)));
+
   if DgSetParts.ColCount <> FLastMaxCols then begin
     DgSetParts.RowCount := Ceil(FPartObjectList.Count / DgSetParts.ColCount);
     FLastMaxCols := DgSetParts.ColCount;
     DgSetParts.Invalidate;
   end;
+
+  FLastMaxCols := DgSetParts.ColCount;
 end;
 
 procedure TFrmParts.FormResize(Sender: TObject);
@@ -383,7 +388,7 @@ procedure TFrmParts.DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rec
 
   function FGetIndexByRowAndCol(): Integer;
   begin
-    // Get the index of the visible item in FPartObjectList.
+    // Get the index of the visible item in the bjectList.
     Result := (ARow * DgSetParts.ColCount) + ACol;
   end;
 

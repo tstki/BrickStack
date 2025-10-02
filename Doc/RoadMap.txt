@@ -48,8 +48,6 @@ Optimizations:
 - Cleanup unused functions to keep the .exe smaller
 
 Images:
-- Delayed image has thread issues with spare parts, fix.
-- Slider to control part/image size.
 - You can ask the image size you need with a suffix: https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg
 -- Limits are no smaller than 2x2, no bigger than 1000x1000, anything in between is accepted.
 
@@ -58,6 +56,7 @@ Add config dialog to enter:
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
 - Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
+- Sliders for default image quality for parts / sets / other.
 
 Get user's inventory
 - ability to export inventory per group to rebrickable csv/xml
@@ -158,3 +157,6 @@ Search parts in:
 Analytics:
 - Show graphs of each theme / year / part count of sets you own
 - Maybe some external api that we can call to get set values
+
+Known issues:
+- Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.

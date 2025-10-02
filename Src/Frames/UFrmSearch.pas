@@ -9,21 +9,10 @@ uses
   Contnrs, USet,
   FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
-  UImageCache;
+  UImageCache, Vcl.Grids, Vcl.Menus, System.Actions, Vcl.ActnList;
 
 type
   TFrmSearch = class(TForm)
-    SbSearchResults: TScrollBox;
-    PnlTemplateResult: TPanel;
-    ImgTemplateSetImage: TImage;
-    ImgAddSet: TImage;
-    ImgShowSet: TImage;
-    LblTemplateSetNum: TLabel;
-    LblTemplateTheme: TLabel;
-    LblTemplateYear: TLabel;
-    LblTemplatePart: TLabel;
-    LblTemplateName: TLabel;
-    TmrRefresh: TTimer;
     PnlSearchOptions: TPanel;
     Year: TLabel;
     TrackYearFrom: TTrackBar;
@@ -39,17 +28,61 @@ type
     BtnExpandOptions: TButton;
     CbxSearchStyle: TComboBox;
     CbxSearchWhat: TComboBox;
-    CbxThemes: TComboBox;
     EditSearchText: TEdit;
     ImgSearch: TImage;
-    Label1: TLabel;
     Label6: TLabel;
     Label7: TLabel;
     LblSearch: TLabel;
     LblTrackResultLimit: TLabel;
     TrackResultLimit: TTrackBar;
     Label2: TLabel;
-    StatusBar1: TStatusBar;
+    SbResults: TStatusBar;
+    DgSets: TDrawGrid;
+    BtnFilter: TButton;
+    ImageList1: TImageList;
+    CbxThemes: TComboBox;
+    Label1: TLabel;
+    Label8: TLabel;
+    TbGridSize: TTrackBar;
+    ActionList1: TActionList;
+    ActToggleIncludeSpareParts: TAction;
+    ActToggleAscending: TAction;
+    ActSortByTheme: TAction;
+    ActSortBySetNum: TAction;
+    ActSortByPartCount: TAction;
+    ActSortByYear: TAction;
+    ActViewPartExternal: TAction;
+    ActViewSetExternal: TAction;
+    PopPartsFilter: TPopupMenu;
+    Sort1: TMenuItem;
+    Ascending1: TMenuItem;
+    N1: TMenuItem;
+    Sort2: TMenuItem;
+    Hue1: TMenuItem;
+    Part1: TMenuItem;
+    Category1: TMenuItem;
+    ShowSetNum: TMenuItem;
+    ActSortByName: TAction;
+    Name1: TMenuItem;
+    ActShowSetName: TAction;
+    ActShowSetNum: TAction;
+    ActShowIcons: TAction;
+    ActShowTheme: TAction;
+    ActShowYear: TAction;
+    ActShowYear1: TMenuItem;
+    ActShowIcons1: TMenuItem;
+    Setname1: TMenuItem;
+    heme1: TMenuItem;
+    ImageList2: TImageList;
+    PopGridRightClick: TPopupMenu;
+    Viewsetexternally1: TMenuItem;
+    ActViewSet: TAction;
+    Viewset1: TMenuItem;
+    ActAddSetToCollection: TAction;
+    ActAddSetToCollection1: TMenuItem;
+    N2: TMenuItem;
+    ActViewParts: TAction;
+    Viewparts1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -58,24 +91,34 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure ImgShowSetClick(Sender: TObject);
     procedure ImgAddSetClick(Sender: TObject);
-    procedure SbSearchResultsResize(Sender: TObject);
     procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
-    procedure TmrRefreshTimer(Sender: TObject);
     procedure TrackChange(Sender: TObject);
     procedure BtnExpandOptionsClick(Sender: TObject);
+    procedure DgSetsClick(Sender: TObject);
+    procedure DgSetsDblClick(Sender: TObject);
+    procedure DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+    procedure DgSetsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure FormResize(Sender: TObject);
+    procedure TbGridSizeChange(Sender: TObject);
+    procedure DgSetsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure DgSetsMouseLeave(Sender: TObject);
+    procedure DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
+    procedure ActViewSetExecute(Sender: TObject);
   private
     { Private declarations }
-    FSetObjects: TSetObjectList; // Stored locally from query result.
+    FSetObjectList: TSetObjectList; // Stored locally from query result.
     FResultPanels: TObjectList;
     FImageCache: TImageCache;
     FCurMaxCols: Integer;
+    FLastMaxCols: Integer;
     procedure FDoSearch;
     function FGetFromYear(): Integer;
     function FGetToYear(): Integer;
     function FGetFromParts(): Integer;
     function FGetToParts(): Integer;
-    function FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+    procedure FAdjustGrid();
+    function FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -86,7 +129,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Math, Diagnostics,
+  Math, Diagnostics, System.Types,
   Data.DB,
   StrUtils,
   FireDAC.Comp.Client,
@@ -143,8 +186,8 @@ begin
   CbxSearchType.ItemIndex := 0;    }
 
   // Template used for other results:
-  PnlTemplateResult.Parent := nil;
-  PnlTemplateResult.Visible := False;
+  //PnlTemplateResult.Parent := nil;
+//  PnlTemplateResult.Visible := False;
 
 //  EditPartsFrom.Text := '0';
 //  EditPartsTo.Text := '9000';
@@ -160,16 +203,24 @@ begin
   FResultPanels := TObjectList.Create;
   FResultPanels.OwnsObjects := True;
 
-  FSetObjects := TSetObjectList.Create;
+  FSetObjectList := TSetObjectList.Create;
 
-  SbSearchResults.UseWheelForScrolling := True;
+//  SbSearchResults.UseWheelForScrolling := True;
   BtnExpandOptionsClick(Self);
+
+  DgSets.DefaultColWidth := TbGridSize.Position;
+  DgSets.DefaultRowHeight := TbGridSize.Position + 40; // 64 + 20 + 20 //todo: make extra info rows optional
+  DgSets.FixedCols := 0;
+  DgSets.FixedRows := 0;
+
+  FLastMaxCols := -1;
+  FAdjustGrid;
 end;
 
 procedure TFrmSearch.FormDestroy(Sender: TObject);
 begin
   FResultPanels.Free;
-  FSetObjects.Free;
+  FSetObjectList.Free;
 
   inherited;
 end;
@@ -188,13 +239,9 @@ begin
   // Research this more later - mdi child anchors are weird.
   Width := 640;
   Height := 480;
-  SbSearchResults.Anchors := [TAnchorKind.akLeft,TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
+  DgSets.Anchors := [TAnchorKind.akLeft, TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
 
   TrackChange(Self);
-
-  var CurWidth := SbSearchResults.ClientWidth;
-  var MinimumPanelWidth := PnlTemplateResult.Width;
-  FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
 
   // Fill the theme pulldown - just main themes for now. No sub themes.
   var SqlConnection := FrmMain.AcquireConnection;
@@ -236,111 +283,148 @@ begin
   CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
 end;
 
+procedure TFrmSearch.FAdjustGrid();
+begin
+  // recalculate visible column and rowcount for DgSetParts
+  if FSetObjectList.Count = 0 then begin
+    DgSets.ColCount := 0;
+    DgSets.RowCount := 0;
+  end else
+    DgSets.ColCount := Max(1, Floor(DgSets.ClientWidth div (DgSets.DefaultColWidth+1)));
+
+  if DgSets.ColCount <> FLastMaxCols then begin
+    DgSets.RowCount := Ceil(FSetObjectList.Count / DgSets.ColCount);
+    FLastMaxCols := DgSets.ColCount;
+    DgSets.Invalidate;
+  end;
+
+  FLastMaxCols := DgSets.ColCount;
+end;
+
+procedure TFrmSearch.FormResize(Sender: TObject);
+begin
+  FAdjustGrid;
+end;
+
+procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
+begin
+  DgSets.DefaultColWidth := TbGridSize.Position;
+  DgSets.DefaultRowHeight := TbGridSize.Position + 40;
+  FAdjustGrid;
+end;
+
 procedure TFrmSearch.BtnExpandOptionsClick(Sender: TObject);
 begin
-  var OldTop := SbSearchResults.Top;
+  var OldTop := DgSets.Top;
   PnlSearchOptions.Visible := not PnlSearchOptions.Visible;
   if PnlSearchOptions.Visible then begin
-    SbSearchResults.Top := PnlSearchOptions.Top + PnlSearchOptions.Height + 2;
-    SbSearchResults.Height := SbSearchResults.Height - (SbSearchResults.Top-OldTop);
+    DgSets.Top := PnlSearchOptions.Top + PnlSearchOptions.Height + 2;
+    DgSets.Height := DgSets.Height - (DgSets.Top-OldTop);
   end else begin
-    SbSearchResults.Top := PnlSearchOptions.Top;
-    SbSearchResults.Height := SbSearchResults.Height + (OldTop-SbSearchResults.Top);
+    DgSets.Top := PnlSearchOptions.Top;
+    DgSets.Height := DgSets.Height + (OldTop-DgSets.Top);
   end;
 end;
 
-function TFrmSearch.FCreateNewResultPanel(const SetObject: TSetObject; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+procedure TFrmSearch.DgSetsClick(Sender: TObject);
 begin
-  Result := TPanel.Create(AOwner);
-  Result.Width := PnlTemplateResult.Width;
-  Result.Height := PnlTemplateResult.Height;
-  Result.Top := 0 + PnlTemplateResult.Height * RowIndex;
-  Result.Left := 0 + PnlTemplateResult.Width * ColIndex;
+//determine if special buttons are active, and where they are shown.
+end;
 
-  for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
-    var Control: TObject;
-    if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplateSetImage') then
-      Control := TDelayedImage.Create(Self)
-    else
-      Control := PnlTemplateResult.Controls[i].ClassType.Create;
+function TFrmSearch.FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
+begin
+  // Get the index of the visible item in the bjectList.
+  Result := (ARow * DgSets.ColCount) + ACol;
+end;
 
-    //TComponent(Control).Name;
+procedure TFrmSearch.DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+var
+//  SquareRect: TRect;
+  ExampleText: String;
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    var ImageUrl := SetObject.SetImgUrl;
 
-    // Copy other properties as needed
-    if Control.ClassType = TLabel then begin
-      var TemplateLabel := TLabel(PnlTemplateResult.Controls[i]);
-      var NewLabel := TLabel.Create(Result);
-
-      NewLabel.Parent := Result;
-      NewLabel.Top := TemplateLabel.Top;
-      NewLabel.Left := TemplateLabel.Left;
-      NewLabel.Width := TemplateLabel.Width;
-      NewLabel.Height := TemplateLabel.Height;
-
-      if SameText(TemplateLabel.Name, 'LblTemplateSetNum') then
-        NewLabel.Caption := SetObject.SetNum
-      //else if SameText(TemplateLabel.Name, 'LblTemplateTheme') then
-        //NewLabel.Caption := SetObject.ThemeID
-      else if SameText(TemplateLabel.Name, 'LblTemplateYear') then
-        NewLabel.Caption := IntToStr(SetObject.SetYear)
-      else if SameText(TemplateLabel.Name, 'LblTemplatePart') then
-        NewLabel.Caption := 'p: ' + IntToStr(SetObject.SetNumParts)
-      else if SameText(TemplateLabel.Name, 'LblTemplateName') then
-        NewLabel.Caption := SetObject.SetName //Query.FieldByName('name').AsString
-      else
-        NewLabel.Caption := TemplateLabel.Caption;
-
-    end else if Control.ClassType = TDelayedImage then begin
-      // Special handling for bigger images
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TDelayedImage.Create(Result);
-
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
-
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(SetObject.SetNum, '-', '_', [rfReplaceAll]);
+    //TPicture
+    if FImageCache <> nil then begin
+      var Picture := FImageCache.GetImage(ImageUrl);
+      if Assigned(Picture) and Assigned(Picture.Graphic) then begin
+        // Center the image in the cell (optional)
+  //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
+  //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
+        var ImageRect := Rect;
+        ImageRect.Bottom := ImageRect.Bottom - 40; // 64 -20 -20
+        DgSets.Canvas.StretchDraw(ImageRect, Picture.Graphic);
+  //      DgSetParts.Canvas.StretchDraw(Rect, Picture.Graphic);
       end;
-
-      NewImage.ImageCache := FImageCache;
-      NewImage.Url := SetObject.SetImgUrl;
-      NewImage.LoadState := LSNone;
-    end else if Control.ClassType = TImage then begin
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TImage.Create(Result);
-
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
-
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(SetObject.SetNum, '-', '_', [rfReplaceAll]);
-      end;
-
-      NewImage.Picture := TemplateImage.Picture;
     end;
-    //end else if Control is TButton then begin
-      //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
-    //end else if Control is TEdit then begin
-      //TEdit(Control).Text := TEdit(PnlTemplateResult.Controls[i]).Text; // Copy text
-    //end;
-    // Add handling for other control types as needed
+
+    DgSets.Canvas.Brush.Style := bsClear;
+    //ExampleText := Format('Cell %d,%d', [ACol, ARow]);
+{    if SetObject.IsSpare then
+      ExampleText := Format('%dx*', [SetObject.Quantity])
+    else
+      ExampleText := Format('%dx', [SetObject.Quantity]); // todo: 999/999
+}
+
+    if DgSets.DefaultColWidth > 32 then begin
+      // "More info" icon
+      ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
+    end;
+
+    DgSets.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, ExampleText);
+
+    // Inforow 2
+    DgSets.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, SetObject.SetNum);
   end;
+end;
+
+procedure TFrmSearch.DgSetsMouseLeave(Sender: TObject);
+begin
+// reset cursor
+end;
+
+procedure TFrmSearch.DgSetsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+begin
+// check where mouse is, and change cursor if needed
+end;
+
+procedure TFrmSearch.DgSetsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if Button = mbRight then begin
+    // select row/col - because the default menu handler doesn't do this
+    var Col, Row: Integer;
+    DgSets.MouseToCell(X, Y, Col, Row);
+    if (Col >= 0) and (Row >= 0) then
+      DgSets.Selection := TGridRect(Rect(Col, Row, Col, Row));
+
+    // show context menu:
+    var Pt := Point(X, Y);
+    Pt := DgSets.ClientToScreen(Pt);
+    PopGridRightClick.Popup(Pt.X, Pt.Y);
+    // open / add to set list / force reload graphic / find in your sets.
+  end;
+
+  //    HandleClick(caRightClick, Sender);
+end;
+
+procedure TFrmSearch.DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    //"40211-1 (partcount), This is a set name (Year) - Theme name"
+    var NumParts := '';
+    If SetObject.SetNumParts <> 0 then
+      NumParts := Format(' (%d)', [SetObject.SetNumParts]);
+    var Year := '';
+    If SetObject.SetYear <> 0 then
+      Year := Format(' (%d)', [SetObject.SetYear]);
+    SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IFThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName]);
+  end else
+    SbResults.Panels[1].Text := '';
 end;
 
 procedure TFrmSearch.FDoSearch;
@@ -349,13 +433,13 @@ begin
     Exit;
 
   // Hide scrollbox while drawing
-  SbSearchResults.Visible := False;
+//  SbSearchResults.Visible := False;
   try
     // Clean up the list before adding new results
     for var I:=FResultPanels.Count-1 downto 0 do
       FResultPanels.Delete(I);
 
-    FSetObjects.Clear;
+    FSetObjectList.Clear;
 
     //Get tickcount for performance monitoring.
     //var Stopwatch := TStopWatch.Create;
@@ -418,51 +502,15 @@ begin
         if ThemeID > 0 then
           Params.ParamByName('themeid').AsInteger := ThemeID;
 
-        FDQuery.Open;
+        FSetObjectList.LoadFromQuery(FDQuery);
 
-        while not FDQuery.Eof do begin
-          // Fill with TSetObject (not all fields are used) so we can close the query sooner and fill the panels in a thread.
-          var SetObject := TSetObject.Create;
-          SetObject.SetNum := FDQuery.FieldByName('set_num').AsString;
-          SetObject.SetName := FDQuery.FieldByName('name').AsString;
-          SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
-          //SetObject.SetThemeID := FDQuery.FieldByName('theme_id').AsString;
-          //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
-          SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
-          SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
-          //SetObject.Quantity := FDQuery.FieldByName('name_1').AsString;
-          //SetObject.IncludeSpares := FDQuery.FieldByName('includespares').AsString;
-          //SetObject.Built := FDQuery.FieldByName('built').AsString;
-          //SetObject.Note := FDQuery.FieldByName('note').AsString;
-          FSetObjects.Add(SetObject);
+        FLastMaxCols := -1; // Force an invalidate
+        FAdjustGrid;
 
-          FDQuery.Next; // Move to the next row
-        end;
+        SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSetObjectList.Count);
       finally
         FDQuery.Free;
         FrmMain.ReleaseConnection(SqlConnection);
-      end;
-
-      var RowIndex := 0;
-      var ColIndex := 0;
-
-      // Hide object, and show it when done - so we only draw once.
-      SbSearchResults.Visible := False;
-      try
-        for var SetObject in FSetObjects do begin
-          var ResultPanel := FCreateNewResultPanel(SetObject, SbSearchResults, SbSearchResults, RowIndex, ColIndex);
-          ResultPanel.Parent := SbSearchResults;
-
-          FResultPanels.Add(ResultPanel);
-
-          Inc(ColIndex);
-          if ColIndex >= FCurMaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-        end;
-      finally
-        SbSearchResults.Visible := True; // Only draw once
       end;
     finally
       begin
@@ -472,7 +520,7 @@ begin
       end;
     end;
   finally
-    SbSearchResults.Visible := True;
+//    SbSearchResults.Visible := True;
   end;
 end;
 
@@ -521,6 +569,22 @@ begin
   end;
 end;
 
+procedure TFrmSearch.ActViewSetExecute(Sender: TObject);
+begin
+  // Open set
+  var sel := DgSets.Selection;
+  var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    TFrmMain.ShowSetWindow(SetObject.SetNum);
+  end;
+end;
+
+procedure TFrmSearch.DgSetsDblClick(Sender: TObject);
+begin
+  ActViewSet.Execute;
+end;
+
 procedure TFrmSearch.ImgShowSetClick(Sender: TObject);
 begin
   var SetNum := GetSetNumByComponentName(TImage(Sender).Name);
@@ -529,60 +593,12 @@ end;
 
 procedure TFrmSearch.SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
- SbSearchResults.UseWheelForScrolling := True;//then
+// SbSearchResults.UseWheelForScrolling := True;//then
 end;
 
 procedure TFrmSearch.SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
 //
-end;
-
-procedure TFrmSearch.SbSearchResultsResize(Sender: TObject);
-begin
-  TmrRefresh.Enabled := False;
-  TmrRefresh.Enabled := True;
-end;
-
-procedure TFrmSearch.TmrRefreshTimer(Sender: TObject);
-begin
-  // Don't redraw until mouse is up
-  if (GetKeyState(VK_LBUTTON) and $8000) = 0 then begin
-    TmrRefresh.Enabled := False;
-    // Get the size without scrollbars
-    var CurWidth := SbSearchResults.ClientWidth;
-
-    var MinimumPanelWidth := PnlTemplateResult.Width;
-    var MaxCols := Floor(CurWidth/MinimumPanelWidth);
-    //FCurMaxCols should be calculated on formShow, make it -1 for now.
-    if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
-
-      SendMessage(SbSearchResults.Handle, WM_SETREDRAW, 0, 0);
-      try
-        // Move stuff around a lot
-        var RowIndex := 0;
-        var ColIndex := 0;
-        for var ResultPanel:TPanel in FResultPanels do begin
-          //
-          ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
-          ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
-
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-        end;
-      finally
-        SendMessage(SbSearchResults.Handle, WM_SETREDRAW, 1, 0);
-        RedrawWindow(SbSearchResults.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
-      end;
-
-      // Update the current value to reduce unneeded dialog redrawing
-      FCurMaxCols := MaxCols;
-    end else begin
-      // See if we can widen the existing cols a little.
-    end;
-  end;
 end;
 
 function TFrmSearch.FGetFromYear(): Integer;

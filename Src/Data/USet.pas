@@ -3,6 +3,7 @@ unit USet;
 interface
 
 uses
+  FireDAC.Comp.Client,
   System.Classes, Generics.Collections;
 
 type
@@ -26,6 +27,8 @@ type
 
     //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
   public
+    procedure LoadFromQuery(FDQuery: TFDQuery);
+
     { Public declarations }
     property BSSetID: Integer read FBSSetID write FBSSetID;
     property SetNum: String read FSetNum write FSetNum;
@@ -41,8 +44,44 @@ type
     property Note: String read FNote write FNote;
   end;
 
-  TSetObjectList = TObjectList<TSetObject>;
+  TSetObjectList = class(TObjectList<TSetObject>)
+  public
+    procedure LoadFromQuery(FDQuery: TFDQuery);
+    //procedure LoadFromExternal;
+    //procedure LoadFromFile;
+    //procedure SaveToFile(ReWrite: Boolean);
+    //procedure SaveToSQL(SqlConnection: TFDConnection);
+  end;
 
 implementation
+
+procedure TSetObject.LoadFromQuery(FDQuery: TFDQuery);
+begin
+  Self.SetNum := FDQuery.FieldByName('set_num').AsString;
+  Self.SetName := FDQuery.FieldByName('name').AsString;
+  Self.SetYear := FDQuery.FieldByName('year').AsInteger;
+  //Self.SetThemeID := FDQuery.FieldByName('theme_id').AsString;
+  //Self.SetThemeName := FDQuery.FieldByName('name_1').AsString;
+  Self.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
+  Self.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+  //Self.Quantity := FDQuery.FieldByName('name_1').AsString;
+  //Self.IncludeSpares := FDQuery.FieldByName('includespares').AsString;
+  //Self.Built := FDQuery.FieldByName('built').AsString;
+  //Self.Note := FDQuery.FieldByName('note').AsString;
+end;
+
+procedure TSetObjectList.LoadFromQuery(FDQuery: TFDQuery);
+begin
+  FDQuery.Open;
+
+  while not FDQuery.Eof do begin
+    var SetObject := TSetObject.Create;
+    SetObject.LoadFromQuery(FDQuery);
+
+    Self.Add(SetObject);
+
+    FDQuery.Next;
+  end;
+end;
 
 end.
