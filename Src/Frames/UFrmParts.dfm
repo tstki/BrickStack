@@ -173,12 +173,19 @@ object FrmParts: TFrmParts
       Stretch = True
       ExplicitLeft = 407
     end
-    object Label1: TLabel
+    object LblPartsGridSize: TLabel
       Left = 96
       Top = 13
-      Width = 68
+      Width = 44
       Height = 15
-      Caption = 'Grid size (px)'
+      Caption = 'Grid size'
+    end
+    object LblPartsGridSizePx: TLabel
+      Left = 264
+      Top = 13
+      Width = 13
+      Height = 15
+      Caption = 'px'
     end
     object CbxInventoryVersion: TComboBox
       Left = 559
@@ -201,7 +208,7 @@ object FrmParts: TFrmParts
       OnClick = BtnFilterClick
     end
     object TbGridSize: TTrackBar
-      Left = 170
+      Left = 146
       Top = 7
       Width = 119
       Height = 27
@@ -214,14 +221,17 @@ object FrmParts: TFrmParts
       OnChange = TbGridSizeChange
     end
   end
-  object StatusBar1: TStatusBar
+  object SbResults: TStatusBar
     Left = 0
     Top = 423
     Width = 628
     Height = 19
     Panels = <
       item
-        Width = 50
+        Width = 100
+      end
+      item
+        Width = 200
       end>
   end
   object DgSetParts: TDrawGrid
@@ -245,6 +255,7 @@ object FrmParts: TFrmParts
     OnDblClick = DgSetPartsDblClick
     OnDrawCell = DgSetPartsDrawCell
     OnMouseUp = DgSetPartsMouseUp
+    OnSelectCell = DgSetPartsSelectCell
   end
   object PopPartsFilter: TPopupMenu
     Left = 280

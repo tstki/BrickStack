@@ -45,12 +45,13 @@ type
     ImageList1: TImageList;
     ImgPrinter: TImage;
     ImgExport: TImage;
-    StatusBar1: TStatusBar;
-    Label1: TLabel;
+    SbResults: TStatusBar;
+    LblPartsGridSize: TLabel;
     DgSetParts: TDrawGrid;
     TbGridSize: TTrackBar;
     ShowPartCountAndLink: TMenuItem;
     ShowPartnum: TMenuItem;
+    LblPartsGridSizePx: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
@@ -71,6 +72,8 @@ type
     procedure HandleClick(CellAction: TCellAction; Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure TbGridSizeChange(Sender: TObject);
+    procedure DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt;
+      var CanSelect: Boolean);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -85,6 +88,7 @@ type
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
 //    procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
     procedure FAdjustGrid();
+    function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -197,11 +201,18 @@ begin
   // todo: We can add a slider to scale this up later, or a popup window to zoom in on the image.
   // Just make it exist first.
   DgSetParts.DefaultColWidth := TbGridSize.Position;
-  DgSetParts.DefaultRowHeight := TbGridSize.Position + 40; // 64 + 20 + 20 //todo: make extra info rows optional
+  if DgSetParts.DefaultColWidth >= 64 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+  else
+    DgSetParts.DefaultRowHeight := TbGridSize.Position;
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
 
   FAdjustGrid;
+
+  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
 end;
 
 procedure TFrmParts.FAdjustGrid();
@@ -230,8 +241,15 @@ end;
 procedure TFrmParts.TbGridSizeChange(Sender: TObject);
 begin
   DgSetParts.DefaultColWidth := TbGridSize.Position;
-  DgSetParts.DefaultRowHeight := TbGridSize.Position + 40;
+  if DgSetParts.DefaultColWidth >= 64 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+  else
+    DgSetParts.DefaultRowHeight := TbGridSize.Position;
   FAdjustGrid;
+
+  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px'
 end;
 
 procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
@@ -379,24 +397,35 @@ begin
 //    HandleClick(caRightClick, Sender);
 end;
 
+procedure TFrmParts.DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
+    var PartObject := FPartObjectList[Idx];
+    //"40211 (partcount*), This is a part description"
+    var NumParts := '';
+    If PartObject.Quantity <> 0 then
+      NumParts := Format(' (%d%s)', [PartObject.Quantity, IfThen(PartObject.IsSpare, '*','')]);
+    var Year := '';
+    SbResults.Panels[1].Text := Format('%s%s, %s', [PartObject.PartNum, NumParts, PartObject.PartName]);
+  end else
+    SbResults.Panels[1].Text := '';
+end;
+
 procedure TFrmParts.DgSetPartsDblClick(Sender: TObject);
 begin
 //  HandleClick(caDoubleClick, Sender);
 end;
 
-procedure TFrmParts.DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
-
-  function FGetIndexByRowAndCol(): Integer;
-  begin
-    // Get the index of the visible item in the bjectList.
-    Result := (ARow * DgSetParts.ColCount) + ACol;
-  end;
-
-var
-//  SquareRect: TRect;
-  ExampleText: String;
+function TFrmParts.FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
 begin
-  var Idx := FGetIndexByRowAndCol();
+  // Get the index of the visible item in the bjectList.
+  Result := (ARow * DgSetParts.ColCount) + ACol;
+end;
+
+procedure TFrmParts.DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
   if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
     var PartObject := FPartObjectList[Idx];
     var ImageUrl := PartObject.ImgUrl;
@@ -410,9 +439,11 @@ begin
   //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
   //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
         var ImageRect := Rect;
-        ImageRect.Bottom := ImageRect.Bottom - 40; // 64 -20 -20
+        if DgSetParts.DefaultColWidth >= 64 then
+          ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
+        else if DgSetParts.DefaultColWidth >= 48 then
+          ImageRect.Bottom := ImageRect.Bottom - 20;
         DgSetParts.Canvas.StretchDraw(ImageRect, Picture.Graphic);
-  //      DgSetParts.Canvas.StretchDraw(Rect, Picture.Graphic);
       end;
     end;
 
@@ -446,20 +477,23 @@ begin
     // Draw example text next to the square
     DgSetParts.Canvas.Brush.Style := bsClear;
     //ExampleText := Format('Cell %d,%d', [ACol, ARow]);
-    if PartObject.IsSpare then
-      ExampleText := Format('%dx*', [PartObject.Quantity])
-    else
-      ExampleText := Format('%dx', [PartObject.Quantity]); // todo: 999/999
 
-    if DgSetParts.DefaultColWidth > 32 then begin
-      // "More info" icon
-      ImageList1.Draw(DgSetParts.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
+    if DgSetParts.DefaultColWidth >= 64 then
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum);
+
+    if DgSetParts.DefaultColWidth >= 48 then begin
+      var PartCount := '';
+      if PartObject.IsSpare then
+        PartCount := Format('%dx*', [PartObject.Quantity])
+      else
+        PartCount := Format('%dx', [PartObject.Quantity]); // todo: 999/999
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartCount);
     end;
 
-    DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, ExampleText);
-
-    // Inforow 2
-    DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
+    {if DgSetParts.DefaultColWidth > 32 then begin
+      // "More info" icon
+      ImageList1.Draw(DgSetParts.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
+    end;}
   end;
 end;
 
@@ -554,6 +588,8 @@ begin
       Params.ParamByName('Param2').AsInteger := InventoryVersion;
 
       FPartObjectList.LoadFromQuery(FDQuery);
+
+      SbResults.Panels[0].Text := 'Results: ' + IntToStr(FPartObjectList.Count);
 
       FLastMaxCols := -1; // Force an invalidate
       FAdjustGrid;

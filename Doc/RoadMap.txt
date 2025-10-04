@@ -75,7 +75,6 @@ Collection window:
 - Give custom tags a user selectable icon
 - Option to open selected collections in the same window, or a new window for each. (extra work for saving dialog dimensions)
 - Right click or drag n drop (+shift) to move / add set to collection.
-- Sub-setlists, in collections screen.
 - Right click mark as built
 - Add "all your sets" table entry to view your collection and filter from there.
 - Remember column widths
@@ -83,11 +82,12 @@ Collection window:
 - Support adding figures
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
-- Select parts.
-- Remember parts.
 - Export parts.
 - Export parts lists across multiple sets or inventories. so you can easily order what you need.
 - Invert selection - so you can select what you are missing and then invert.
+- Show owned sets. Show > in front of owned sets in case of multiple, and open as tree view.
+-- Sub-setlists, in collections screen.
+- Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
 
 Parts window:
 - left click to add
@@ -119,7 +119,7 @@ Windows:
 - Helpfile / tutorial / common shortcuts
 - Choose UI elements in search results / parts (several template layouts, with example)
 -- Scale options.
-- Sorting tables
+- Sorting tables and grids
 
 Export collection:
 - Choose format

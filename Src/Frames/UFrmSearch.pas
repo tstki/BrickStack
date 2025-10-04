@@ -51,7 +51,6 @@ type
     ActSortBySetNum: TAction;
     ActSortByPartCount: TAction;
     ActSortByYear: TAction;
-    ActViewPartExternal: TAction;
     ActViewSetExternal: TAction;
     PopPartsFilter: TPopupMenu;
     Sort1: TMenuItem;
@@ -83,14 +82,16 @@ type
     N2: TMenuItem;
     ActViewParts: TAction;
     Viewparts1: TMenuItem;
+    N3: TMenuItem;
+    TbGridSizePx: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ImgSearchClick(Sender: TObject);
     procedure HandleKeyPress(Sender: TObject; var Key: Char);
     procedure FormDestroy(Sender: TObject);
-    procedure ImgShowSetClick(Sender: TObject);
-    procedure ImgAddSetClick(Sender: TObject);
+    //procedure ImgShowSetClick(Sender: TObject);
+//    procedure ImgAddSetClick(Sender: TObject);
     procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure TrackChange(Sender: TObject);
@@ -105,6 +106,9 @@ type
     procedure DgSetsMouseLeave(Sender: TObject);
     procedure DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
     procedure ActViewSetExecute(Sender: TObject);
+    procedure ActViewPartsExecute(Sender: TObject);
+    procedure ActViewSetExternalExecute(Sender: TObject);
+    procedure ActAddSetToCollectionExecute(Sender: TObject);
   private
     { Private declarations }
     FSetObjectList: TSetObjectList; // Stored locally from query result.
@@ -148,6 +152,11 @@ const
   cDatabaseParts = 5;    // Parts in the database                     //
   cYourMinifigs = 6;     // Your minifigs / minifigs in your sets     // Minifig search
   cDatabaseMinifigs = 7; // Minifigs in the database                  //
+
+  //View External types:
+  cTYPESET = 0;
+  cTYPEPART = 1;
+  //cTYPEMINIFIG = 2; //Not used yet
 
   // Search what
   cSetNum = 0;
@@ -209,9 +218,17 @@ begin
   BtnExpandOptionsClick(Self);
 
   DgSets.DefaultColWidth := TbGridSize.Position;
-  DgSets.DefaultRowHeight := TbGridSize.Position + 40; // 64 + 20 + 20 //todo: make extra info rows optional
+  if DgSets.DefaultColWidth >= 64 then begin
+    if PnlSearchOptions.Visible then
+      DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    else
+      DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+  end else
+    DgSets.DefaultRowHeight := TbGridSize.Position;
   DgSets.FixedCols := 0;
   DgSets.FixedRows := 0;
+
+  TbGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
 
   FLastMaxCols := -1;
   FAdjustGrid;
@@ -309,8 +326,16 @@ end;
 procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
 begin
   DgSets.DefaultColWidth := TbGridSize.Position;
-  DgSets.DefaultRowHeight := TbGridSize.Position + 40;
+  if DgSets.DefaultColWidth >= 64 then begin
+    if PnlSearchOptions.Visible then
+      DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    else
+      DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+  end else
+    DgSets.DefaultRowHeight := TbGridSize.Position;
   FAdjustGrid;
+
+  TbGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
 end;
 
 procedure TFrmSearch.BtnExpandOptionsClick(Sender: TObject);
@@ -324,11 +349,18 @@ begin
     DgSets.Top := PnlSearchOptions.Top;
     DgSets.Height := DgSets.Height + (OldTop-DgSets.Top);
   end;
+
+  if PnlSearchOptions.Visible then
+    DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else
+    DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+
+  DgSets.Invalidate;
 end;
 
 procedure TFrmSearch.DgSetsClick(Sender: TObject);
 begin
-//determine if special buttons are active, and where they are shown.
+  //determine if special buttons are active, and where they are shown.
 end;
 
 function TFrmSearch.FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
@@ -355,7 +387,12 @@ begin
   //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
   //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
         var ImageRect := Rect;
-        ImageRect.Bottom := ImageRect.Bottom - 40; // 64 -20 -20
+        if DgSets.DefaultColWidth >= 64 then begin
+          if PnlSearchOptions.Visible then
+            ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
+          else
+            ImageRect.Bottom := ImageRect.Bottom - 20;
+        end;
         DgSets.Canvas.StretchDraw(ImageRect, Picture.Graphic);
   //      DgSetParts.Canvas.StretchDraw(Rect, Picture.Graphic);
       end;
@@ -369,15 +406,29 @@ begin
       ExampleText := Format('%dx', [SetObject.Quantity]); // todo: 999/999
 }
 
-    if DgSets.DefaultColWidth > 32 then begin
-      // "More info" icon
-      ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
+    if DgSets.DefaultColWidth >= 64 then begin    
+      if PnlSearchOptions.Visible then
+        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 38, SetObject.SetNum)
+      else
+        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 18, SetObject.SetNum);
     end;
 
-    DgSets.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, ExampleText);
+    if DgSets.DefaultColWidth >= 32 then begin
+      // "More info" icon
+      //ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 18, 1, True);
+    end;
 
     // Inforow 2
-    DgSets.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, SetObject.SetNum);
+    if PnlSearchOptions.Visible then begin
+      if DgSets.DefaultColWidth >= 48 then begin
+        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 18, IntToStr(SetObject.SetYear));
+        if DgSets.DefaultColWidth >= 64 then begin
+          var SetNumPartsText := IntToStr(SetObject.SetNumParts);
+          var TextWidth := DgSets.Canvas.TextWidth(SetNumPartsText);
+          DgSets.Canvas.TextOut(Rect.Right-TextWidth-2, Rect.Bottom - 18, SetNumPartsText);
+        end;
+      end;
+    end;
   end;
 end;
 
@@ -400,11 +451,14 @@ begin
     if (Col >= 0) and (Row >= 0) then
       DgSets.Selection := TGridRect(Rect(Col, Row, Col, Row));
 
-    // show context menu:
-    var Pt := Point(X, Y);
-    Pt := DgSets.ClientToScreen(Pt);
-    PopGridRightClick.Popup(Pt.X, Pt.Y);
-    // open / add to set list / force reload graphic / find in your sets.
+    var Idx := FGetIndexByRowAndCol(Col, Row);
+    if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+      // show context menu:
+      var Pt := Point(X, Y);
+      Pt := DgSets.ClientToScreen(Pt);
+      PopGridRightClick.Popup(Pt.X, Pt.Y);
+      // open / add to set list / force reload graphic / find in your sets.
+    end;
   end;
 
   //    HandleClick(caRightClick, Sender);
@@ -534,7 +588,7 @@ procedure TFrmSearch.ImgSearchClick(Sender: TObject);
 begin
   FDoSearch;
 end;
-
+           {
 function GetSetNumByComponentName(ComponentName: String): String;
 begin
   //move this to a utility class / generic function
@@ -567,6 +621,45 @@ begin
   finally
     DlgAddToSetList.Free;
   end;
+end;  }
+
+procedure TFrmSearch.ActAddSetToCollectionExecute(Sender: TObject);
+begin
+  var sel := DgSets.Selection;
+  var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    var DlgAddToSetList := TDlgAddToSetList.Create(Self);
+    try
+      DlgAddToSetList.SetNum := SetObject.SetNum;
+      if DlgAddToSetList.ShowModal = mrOK then begin
+        //Do add to BSSets
+      end;
+    finally
+      DlgAddToSetList.Free;
+    end;
+  end;
+end;
+
+procedure TFrmSearch.ActViewSetExternalExecute(Sender: TObject);
+begin
+  var sel := DgSets.Selection;
+  var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
+  end;
+end;
+
+procedure TFrmSearch.ActViewPartsExecute(Sender: TObject);
+begin
+  // Open parts window
+  var sel := DgSets.Selection;
+  var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
+  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    var SetObject := FSetObjectList[Idx];
+    TFrmMain.ShowPartsWindow(SetObject.SetNum);
+  end;
 end;
 
 procedure TFrmSearch.ActViewSetExecute(Sender: TObject);
@@ -584,12 +677,12 @@ procedure TFrmSearch.DgSetsDblClick(Sender: TObject);
 begin
   ActViewSet.Execute;
 end;
-
+{
 procedure TFrmSearch.ImgShowSetClick(Sender: TObject);
 begin
   var SetNum := GetSetNumByComponentName(TImage(Sender).Name);
   TFrmMain.ShowSetWindow(SetNum);
-end;
+end;        }
 
 procedure TFrmSearch.SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
