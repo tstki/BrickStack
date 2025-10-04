@@ -270,7 +270,7 @@ const
               'CREATE INDEX IF NOT EXISTS sets_theme_id_IDX ON sets (theme_id);'),
     ('Themes', 'CREATE TABLE IF NOT EXISTS themes (' +
                 '	id INTEGER NOT NULL PRIMARY KEY,' +
-                '	name TEXT(40),' +
+                '	name TEXT(42),' + // Defined at 40, but some themes use 42 characters.
                 '	parent_id INTEGER);' +
                 'CREATE INDEX IF NOT EXISTS themes_id_IDX ON themes (id);' +
                 'CREATE INDEX IF NOT EXISTS themes_parent_id_IDX ON themes (parent_id);')
