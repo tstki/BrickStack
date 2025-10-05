@@ -193,8 +193,8 @@ const
                             ' is_spare INTEGER,' +      // ^
                             ' cur_quantity INTEGER,' +  // How many do you have
                             ' inv_quantity INTEGER);' + // How many does the set need
-                            'CREATE INDEX IF NOT EXISTS BSDBVersions_ID_IDX ON BSDBPartsInventory (ID)' +
-                            'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num)'),
+                            'CREATE INDEX IF NOT EXISTS BSDBVersions_ID_IDX ON BSDBPartsInventory (ID);' +
+                            'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num);'),
     ('Inventories', 'CREATE TABLE IF NOT EXISTS inventories (' +
                     '	id INTEGER NOT NULL PRIMARY KEY,' +
                     '	version INTEGER,' +
@@ -270,7 +270,7 @@ const
               'CREATE INDEX IF NOT EXISTS sets_theme_id_IDX ON sets (theme_id);'),
     ('Themes', 'CREATE TABLE IF NOT EXISTS themes (' +
                 '	id INTEGER NOT NULL PRIMARY KEY,' +
-                '	name TEXT(42),' + // Defined at 40, but some themes use 42 characters.
+                '	name TEXT(42),' + // Was defined at 40, but some themes use 42 characters.
                 '	parent_id INTEGER);' +
                 'CREATE INDEX IF NOT EXISTS themes_id_IDX ON themes (id);' +
                 'CREATE INDEX IF NOT EXISTS themes_parent_id_IDX ON themes (parent_id);')
