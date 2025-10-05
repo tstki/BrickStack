@@ -48,15 +48,15 @@ Optimizations:
 - Cleanup unused functions to keep the .exe smaller
 
 Images:
-- Delayed image has thread issues with spare parts, fix.
-- Slider to control part/image size.
-- Image processor - to reduce image size if no big image is needed. Rebrickable only serves one size and it's WAY bigger than needed in most cases.
+- You can ask the image size you need with a suffix: https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg
+-- Limits are no smaller than 2x2, no bigger than 1000x1000, anything in between is accepted.
 
 Add config dialog to enter:
 - Default import / export path (just remember last used)
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
 - Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
+- Sliders for default image quality for parts / sets / other.
 
 Get user's inventory
 - ability to export inventory per group to rebrickable csv/xml
@@ -75,7 +75,6 @@ Collection window:
 - Give custom tags a user selectable icon
 - Option to open selected collections in the same window, or a new window for each. (extra work for saving dialog dimensions)
 - Right click or drag n drop (+shift) to move / add set to collection.
-- Sub-setlists, in collections screen.
 - Right click mark as built
 - Add "all your sets" table entry to view your collection and filter from there.
 - Remember column widths
@@ -83,11 +82,18 @@ Collection window:
 - Support adding figures
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
-- Select parts.
-- Remember parts.
 - Export parts.
 - Export parts lists across multiple sets or inventories. so you can easily order what you need.
 - Invert selection - so you can select what you are missing and then invert.
+- Show owned sets. Show > in front of owned sets in case of multiple, and open as tree view.
+-- Sub-setlists, in collections screen.
+- Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
+
+Parts window:
+- left click to add
+- right click to remove
+- checkbox to select all or remove all.
+- Implement display filters
 
 Settings:
 - Add option to show/hide columns for collection.
@@ -113,7 +119,7 @@ Windows:
 - Helpfile / tutorial / common shortcuts
 - Choose UI elements in search results / parts (several template layouts, with example)
 -- Scale options.
-- Sorting tables
+- Sorting tables and grids
 
 Export collection:
 - Choose format
@@ -151,3 +157,6 @@ Search parts in:
 Analytics:
 - Show graphs of each theme / year / part count of sets you own
 - Maybe some external api that we can call to get set values
+
+Known issues:
+- Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.

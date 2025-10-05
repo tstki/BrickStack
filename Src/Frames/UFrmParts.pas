@@ -1,4 +1,4 @@
-unit UFrmParts;
+﻿unit UFrmParts;
 
 interface
 
@@ -8,15 +8,17 @@ uses
   Contnrs, UDelayedImage,
   FireDAC.Comp.Client, FireDAC.Stan.Param,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
-  System.ImageList, Vcl.ImgList;
+  UPart,
+  System.ImageList, Vcl.ImgList, Vcl.Grids;
 
 type
+  TCellAction = (caNone, caClick, caDoubleClick, caRightClick);
+
   TFrmParts = class(TForm)
     Panel1: TPanel;
     LblInventoryVersion: TLabel;
     CbxInventoryVersion: TComboBox;
     BtnFilter: TButton;
-    TmrRefresh: TTimer;
     PopPartsFilter: TPopupMenu;
     Sort1: TMenuItem;
     Ascending1: TMenuItem;
@@ -26,7 +28,7 @@ type
     Part1: TMenuItem;
     Category1: TMenuItem;
     Quantity1: TMenuItem;
-    Includespareparts1: TMenuItem;
+    IncludeSpareParts: TMenuItem;
     ActionList1: TActionList;
     ActPrintParts: TAction;
     ActExport: TAction;
@@ -43,17 +45,16 @@ type
     ImageList1: TImageList;
     ImgPrinter: TImage;
     ImgExport: TImage;
-    StatusBar1: TStatusBar;
-    SbSetParts: TScrollBox;
-    PnlTemplateResult: TPanel;
-    ImgTemplatePartImage: TImage;
-    ImgTemplateShowPart: TImage;
-    LblTemplateName: TLabel;
-    CbxTemplateCheck: TCheckBox;
-    procedure FormShow(Sender: TObject);
+    SbResults: TStatusBar;
+    LblPartsGridSize: TLabel;
+    DgSetParts: TDrawGrid;
+    TbGridSize: TTrackBar;
+    ShowPartCountAndLink: TMenuItem;
+    ShowPartnum: TMenuItem;
+    LblPartsGridSizePx: TLabel;
+    PopGridRightClick: TPopupMenu;
+    Viewpartexternally1: TMenuItem;
     procedure FormCreate(Sender: TObject);
-    procedure SbSetPartsResize(Sender: TObject);
-    procedure TmrRefreshTimer(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -66,16 +67,31 @@ type
     procedure ActSortByQuantityExecute(Sender: TObject);
     procedure ActToggleIncludeSparePartsExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
+    procedure DgSetPartsClick(Sender: TObject);
+    procedure DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+    procedure DgSetPartsDblClick(Sender: TObject);
+    procedure DgSetPartsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure HandleClick(CellAction: TCellAction; Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure TbGridSizeChange(Sender: TObject);
+    procedure DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt;
+      var CanSelect: Boolean);
+    procedure ActViewPartExternalExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
     FImageCache: TImageCache;
     FInventoryPanels: TObjectList;
-    FCurMaxCols: Integer;
+    FPartObjectList: TPartObjectList;
+//    FCurMaxCols: Integer;
     FSetNum: String;
     FCheckboxMode: Boolean;
+    FLastMaxCols: Integer;
+//    FLastCellAction: TCellAction;
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
-    function FCreateNewResultPanel(Query: TFDQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+//    procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
+    procedure FAdjustGrid();
+    function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -88,7 +104,7 @@ implementation
 
 {$R *.dfm}
 uses
-  ShellAPI, Printers,
+  ShellAPI, Printers, CommCtrl,
   UFrmMain,
   USQLiteConnection,
   Math, Diagnostics, Data.DB, StrUtils,
@@ -165,12 +181,15 @@ begin
   // Note: Printing is broken - probably due to the deferred images.
 
   // get parts view, print
-  PrintScrollBoxContents3(SbSetParts);
+//  PrintScrollBoxContents3(DgSetParts);
 end;
 
 procedure TFrmParts.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
+
+  FPartObjectList.Free;
+
   inherited;
 end;
 
@@ -180,74 +199,71 @@ begin
   FInventoryPanels := TObjectList.Create;
   FInventoryPanels.OwnsObjects := True;
 
-  SbSetParts.UseWheelForScrolling := True;
+  FPartObjectList := TPartObjectList.Create;
+
+  // todo: We can add a slider to scale this up later, or a popup window to zoom in on the image.
+  // Just make it exist first.
+  DgSetParts.DefaultColWidth := TbGridSize.Position;
+  if DgSetParts.DefaultColWidth >= 64 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+  else
+    DgSetParts.DefaultRowHeight := TbGridSize.Position;
+  DgSetParts.FixedCols := 0;
+  DgSetParts.FixedRows := 0;
+
+  FAdjustGrid;
+
+  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
 end;
 
-procedure TFrmParts.FormShow(Sender: TObject);
+procedure TFrmParts.FAdjustGrid();
 begin
-  var CurWidth := SbSetParts.ClientWidth;
-  var MinimumPanelWidth := PnlTemplateResult.Width;
-  FCurMaxCols := Floor(CurWidth/MinimumPanelWidth);
-  inherited;
-end;
+  // recalculate visible column and rowcount for DgSetParts
+  if FPartObjectList.Count = 0 then begin
+    DgSetParts.ColCount := 0;
+    DgSetParts.RowCount := 0;
+  end else
+    DgSetParts.ColCount := Max(1, Floor(DgSetParts.ClientWidth div (DgSetParts.DefaultColWidth+1)));
 
-procedure TFrmParts.SbSetPartsResize(Sender: TObject);
-begin
-  TmrRefresh.Enabled := False;
-  TmrRefresh.Enabled := True;
-end;
-
-procedure TFrmParts.TmrRefreshTimer(Sender: TObject);
-begin
-  // Don't redraw until mouse is up
-  if (GetKeyState(VK_LBUTTON) and $8000) = 0 then begin
-    TmrRefresh.Enabled := False;
-
-    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
-    try
-      // add controls to scrollbox
-      // set scrollbox height
-
-      // Get the size without scrollbars
-      var CurWidth := SbSetParts.ClientWidth;
-
-      var MinimumPanelWidth := PnlTemplateResult.Width;
-      var MaxCols := Floor(CurWidth/MinimumPanelWidth);
-      //FCurMaxCols should be calculated on formShow, make it -1 for now.
-      if (FCurMaxCols = -1) or (FCurMaxCols <> MaxCols) then begin
-        // Scroll to 0,0 first
-        SbSetParts.HorzScrollBar.Position := 0;
-        SbSetParts.VertScrollBar.Position := 0;
-
-        // Move stuff around a lot
-        var RowIndex := 0;
-        var ColIndex := 0;
-        for var ResultPanel:TPanel in FInventoryPanels do begin
-          ResultPanel.Top := 0 + PnlTemplateResult.Height * RowIndex;
-          ResultPanel.Left := 0 + PnlTemplateResult.Width * ColIndex;
-
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-        end;
-
-        // Update the current value to reduce unneeded dialog redrawing
-        FCurMaxCols := MaxCols;
-      end else begin
-        // See if we can widen the existing cols a little.
-      end;
-    finally
-      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
-      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
-    end;
+  if DgSetParts.ColCount <> FLastMaxCols then begin
+    DgSetParts.RowCount := Ceil(FPartObjectList.Count / DgSetParts.ColCount);
+    FLastMaxCols := DgSetParts.ColCount;
+    DgSetParts.Invalidate;
   end;
+
+  FLastMaxCols := DgSetParts.ColCount;
+end;
+
+procedure TFrmParts.FormResize(Sender: TObject);
+begin
+  FAdjustGrid;
+end;
+
+procedure TFrmParts.TbGridSizeChange(Sender: TObject);
+begin
+  DgSetParts.DefaultColWidth := TbGridSize.Position;
+  if DgSetParts.DefaultColWidth >= 64 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+  else
+    DgSetParts.DefaultRowHeight := TbGridSize.Position;
+  FAdjustGrid;
+
+  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px'
 end;
 
 procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
 begin
-  var MaxVersion := Query.FieldByName('max(version)').AsInteger;
+  var MaxVersion := 1;
+  try
+    MaxVersion := Query.FieldByName('max(version)').AsInteger;
+  except
+    // Something wrong.
+  end;
+
   if MaxVersion > 1 then begin
     CbxInventoryVersion.Items.BeginUpdate;
     try
@@ -339,6 +355,11 @@ begin
 //
 end;
 
+procedure TFrmParts.ActViewPartExternalExecute(Sender: TObject);
+begin
+//
+end;
+
 procedure TFrmParts.BtnFilterClick(Sender: TObject);
 begin
   var P := Mouse.CursorPos;
@@ -346,107 +367,141 @@ begin
   PopPartsFilter.Popup(P.X, P.Y);
 end;
 
-function TFrmParts.FCreateNewResultPanel(Query: TFDQuery; AOwner: TComponent; ParentControl: TWinControl; RowIndex, ColIndex: Integer): TPanel;
+//procedure TFrmParts.FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
+//begin
+//  var R := Grid.CellRect(ACol, ARow);
+//  InvalidateRect(Grid.Handle, @R, False);
+//end;
 
-  function FGetLabelOrCheckboxText(): String;
-  begin
-    Result := Query.FieldByName('quantity').AsString +
-              'x' +
-              IfThen(SameText(Query.FieldByName('is_spare').AsString, 't'), '*', '') +
-              Query.FieldByName('part_num').AsString;
-  end;
-
+procedure TFrmParts.HandleClick(CellAction: TCellAction; Sender: TObject);
+//var
+//  Col, Row: Integer;
+//  SquareRect: TRect;
 begin
-  Result := TPanel.Create(AOwner);
-  Result.Parent := ParentControl;
-  Result.Width := PnlTemplateResult.Width;
-  Result.Height := PnlTemplateResult.Height;
-  Result.Top := 0 + PnlTemplateResult.Height * RowIndex;
-  Result.Left := 0 + PnlTemplateResult.Width * ColIndex;
+{  var Pt := DgSetParts.ScreenToClient(Mouse.CursorPos);
+  DgSetParts.MouseToCell(Pt.X, Pt.Y, Col, Row);
 
-  for var i := 0 to PnlTemplateResult.ControlCount - 1 do begin
-    var Control: TObject;
-    if (PnlTemplateResult.Controls[i].ClassType = TImage) and SameText(PnlTemplateResult.Controls[i].Name, 'ImgTemplatePartImage') then
-      Control := TDelayedImage.Create(Self)
-    else
-      Control := PnlTemplateResult.Controls[i].ClassType.Create;
+  var SquareSize := 16;
+  SquareRect := DgSetParts.CellRect(Col, Row);
+  SquareRect.Right := SquareRect.Left + SquareSize;
+  SquareRect.Bottom := SquareRect.Top + SquareSize;
 
-    // Copy other properties as needed
-    if Control.ClassType = TCheckbox then begin
-      var TemplateCheckbox := TCheckbox(PnlTemplateResult.Controls[i]);
-      var NewCheckbox := TCheckbox.Create(Result);
+  if PtInRect(SquareRect, Pt) then begin
+    FLastCellCol := Col;
+    FLastCellRow := Row;
+    FLastCellAction := CellAction;
+    FInvalidateGridCell(DgSetParts, Col, Row);
+  end;   }
+end;
 
-      NewCheckbox.Parent := Result;
-      NewCheckbox.Top := TemplateCheckbox.Top;
-      NewCheckbox.Left := TemplateCheckbox.Left;
-      NewCheckbox.Width := TemplateCheckbox.Width;
-      NewCheckbox.Height := TemplateCheckbox.Height;
+procedure TFrmParts.DgSetPartsClick(Sender: TObject);
+begin
+//  HandleClick(caClick, Sender);
+end;
 
-      NewCheckbox.Caption := FGetLabelOrCheckboxText;
-      NewCheckbox.Visible := FCheckboxMode;
-    end else if Control.ClassType = TLabel then begin
-      var TemplateLabel := TLabel(PnlTemplateResult.Controls[i]);
-      var NewLabel := TLabel.Create(Result);
+procedure TFrmParts.DgSetPartsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+//  if Button = mbRight then
+//    HandleClick(caRightClick, Sender);
+end;
 
-      NewLabel.Parent := Result;
-      NewLabel.Top := TemplateLabel.Top;
-      NewLabel.Left := TemplateLabel.Left;
-      NewLabel.Width := TemplateLabel.Width;
-      NewLabel.Height := TemplateLabel.Height;
+procedure TFrmParts.DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
+    var PartObject := FPartObjectList[Idx];
+    //"40211 (partcount*), This is a part description"
+    var NumParts := '';
+    If PartObject.Quantity <> 0 then
+      NumParts := Format(' (%d%s)', [PartObject.Quantity, IfThen(PartObject.IsSpare, '*','')]);
+    var Year := '';
+    SbResults.Panels[1].Text := Format('%s%s, %s', [PartObject.PartNum, NumParts, PartObject.PartName]);
+  end else
+    SbResults.Panels[1].Text := '';
+end;
 
-      NewLabel.Caption := FGetLabelOrCheckboxText;
-      NewLabel.Visible := not FCheckboxMode;
-    end else if Control.ClassType = TDelayedImage then begin
-      // Special handling for bigger images
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TDelayedImage.Create(Result);
+procedure TFrmParts.DgSetPartsDblClick(Sender: TObject);
+begin
+//  HandleClick(caDoubleClick, Sender);
+end;
 
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
+function TFrmParts.FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
+begin
+  // Get the index of the visible item in the bjectList.
+  Result := (ARow * DgSetParts.ColCount) + ACol;
+end;
 
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
+procedure TFrmParts.DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
+    var PartObject := FPartObjectList[Idx];
+    var ImageUrl := PartObject.ImgUrl;
+
+    //TPicture
+    if FImageCache <> nil then begin
+      var Picture := FImageCache.GetImage(ImageUrl);
+    //  ImageList1.draw
+      if Assigned(Picture) and Assigned(Picture.Graphic) then begin
+        // Center the image in the cell (optional)
+  //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
+  //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
+        var ImageRect := Rect;
+        if DgSetParts.DefaultColWidth >= 64 then
+          ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
+        else if DgSetParts.DefaultColWidth >= 48 then
+          ImageRect.Bottom := ImageRect.Bottom - 20;
+        DgSetParts.Canvas.StretchDraw(ImageRect, Picture.Graphic);
       end;
-
-      NewImage.ImageCache := FImageCache;
-      NewImage.Url := Query.FieldByName('img_url').AsString;
-      NewImage.LoadState := LSNone;
-    end else if Control.ClassType = TImage then begin
-      var TemplateImage := TImage(PnlTemplateResult.Controls[i]);
-      var NewImage := TImage.Create(Result);
-
-      NewImage.Parent := Result;
-      NewImage.Top := TemplateImage.Top;
-      NewImage.Left := TemplateImage.Left;
-      NewImage.Width := TemplateImage.Width;
-      NewImage.Height := TemplateImage.Height;
-
-      // Downloaded images are HUGE, make sure to scale them down so they look better:
-      NewImage.Stretch := True;
-      NewImage.Proportional := True;
-      if Assigned(TemplateImage.OnClick) then begin
-        NewImage.OnClick := TemplateImage.OnClick;
-        //NewImage.Tag := // If we had an ID, this would be a good place to use it
-        NewImage.Name := TemplateImage.Name + '_' + StringReplace(Query.FieldByName('part_num').AsString, '-', '_', [rfReplaceAll]);
-      end;
-
-      NewImage.Picture := TemplateImage.Picture;
-      NewImage.Visible := not FCheckboxMode;
     end;
-    //end else if Control is TButton then begin
-      //TButton(Control).OnClick := TButton(PnlTemplateResult.Controls[i]).OnClick; // Copy event handlers
-    //end else if Control is TEdit then begin
-      //TEdit(Control).Text := TEdit(PnlTemplateResult.Controls[i]).Text; // Copy text
-    //end;
-    // Add handling for other control types as needed
+
+
+{    // Draw cell background (optional, for selection highlight)
+    if gdSelected in State then
+      DgSetParts.Canvas.Brush.Color := clHighlight
+    else
+      DgSetParts.Canvas.Brush.Color := clWindow;
+    DgSetParts.Canvas.FillRect(Rect);    }
+
+    // Determine square color based on last action
+{    var SquareColor := clRed;
+    if (ACol = FLastCellCol) and (ARow = FLastCellRow) then begin
+      case FLastCellAction of
+        caClick:        SquareColor := clGreen;
+        caDoubleClick:  SquareColor := clBlue;
+        caRightClick:   SquareColor := clPurple;
+      end;
+    end;}
+
+    // Draw a small square (e.g., 16x16) in the top-left of the cell
+    {var SquareSize := 16;
+    SquareRect := Rect;
+    SquareRect.Right := SquareRect.Left + SquareSize;
+    SquareRect.Bottom := SquareRect.Top + SquareSize;
+    DgSetParts.Canvas.Brush.Color := SquareColor;
+    DgSetParts.Canvas.FillRect(SquareRect);}
+
+    // Inforow 1
+    // Draw example text next to the square
+    DgSetParts.Canvas.Brush.Style := bsClear;
+    //ExampleText := Format('Cell %d,%d', [ACol, ARow]);
+
+    if DgSetParts.DefaultColWidth >= 64 then
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum);
+
+    if DgSetParts.DefaultColWidth >= 48 then begin
+      var PartCount := '';
+      if PartObject.IsSpare then
+        PartCount := Format('%dx*', [PartObject.Quantity])
+      else
+        PartCount := Format('%dx', [PartObject.Quantity]); // todo: 999/999
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartCount);
+    end;
+
+    {if DgSetParts.DefaultColWidth > 32 then begin
+      // "More info" icon
+      ImageList1.Draw(DgSetParts.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
+    end;}
   end;
 end;
 
@@ -501,61 +556,6 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
     end;
   end;
 
-  procedure FQueryAndHandleSetPartsByVersion(Query: TFDQuery; Version: String);
-  begin
-    var InventoryVersion := StrToIntDef(Version, 1);
-    Query.SQL.Text := 'SELECT * FROM inventories' +
-                      ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
-                      ' LEFT JOIN colors c ON c.id = ip.color_id' +
-                      ' WHERE set_num = :Param1' +
-                      ' AND version = :Param2';
-    try
-      // Always use params to prevent injection and allow sql to reuse queryplans
-      var Params := Query.Params;
-      Params.ParamByName('Param1').AsString := set_num;
-      Params.ParamByName('Param2').AsInteger := InventoryVersion;
-
-      Query.Open; // Open the query to retrieve data
-      try
-        //var Stopwatch := TStopWatch.Create;
-        //Stopwatch.Start;
-
-        Query.First; // Move to the first row of the dataset
-
-        var RowIndex := 0;
-        var ColIndex := 0;
-        var MaxCols := FCurMaxCols;
-
-        // FInventoryPanels.Capacity := FDetermineQueryRowCount(Query); // Tried, did not have significant impact
-
-        // Enable for tickcount performance testing:
-        // Hide object, and show it when done - so we only draw once.
-        while not Query.EOF do begin
-          var ResultPanel := FCreateNewResultPanel(Query, SbSetParts, SbSetParts, RowIndex, ColIndex);
-          ResultPanel.Visible := True;
-
-          FInventoryPanels.Add(ResultPanel);
-
-          Inc(ColIndex);
-          if ColIndex >= MaxCols then begin
-            Inc(RowIndex);
-            ColIndex := 0;
-          end;
-
-          Query.Next; // Move to the next row
-        end;
-
-        //Stopwatch.Stop;
-        //Enable for performance testing:
-        //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
-      finally
-        Query.Close; // Close the query when done
-      end;
-    except
-      //
-    end;
-  end;
-
 begin
   // No point loading the same set as is already being shown.
   if set_num = FSetNum then
@@ -567,37 +567,52 @@ begin
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    SendMessage(SbSetParts.Handle, WM_SETREDRAW, 0, 0);
+    // Clean up the list before adding new results
+    for var I:=FInventoryPanels.Count-1 downto 0 do
+      FInventoryPanels.Delete(I);
+
+    //LvTagData.Clear;
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
     try
-      // Clean up the list before adding new results
-      for var I:=FInventoryPanels.Count-1 downto 0 do
-        FInventoryPanels.Delete(I);
+      // Set up the query
+      FDQuery.Connection := SqlConnection;
 
-      //LvTagData.Clear;
-      var SqlConnection := FrmMain.AcquireConnection;
-      var FDQuery := TFDQuery.Create(nil);
-      try
-        // Set up the query
-        FDQuery.Connection := SqlConnection;
+      FQueryAndHandleSetFields(FDQuery);
+      FQueryAndHandleSetInventoryVersion(FDQuery);
 
-        FQueryAndHandleSetFields(FDQuery);
-        FQueryAndHandleSetInventoryVersion(FDQuery);
-        FQueryAndHandleSetPartsByVersion(FDQuery, CbxInventoryVersion.Text);
-      finally
-        FDQuery.Free;
-        FrmMain.ReleaseConnection(SqlConnection);
-      end;
+      var InventoryVersion := StrToIntDef(CbxInventoryVersion.Text, 1);
+      FDQuery.SQL.Text := 'SELECT ip.part_num, p.name as partname, ip.quantity, CASE WHEN ip.is_spare = ''True'' THEN 1 ELSE 0 END AS is_spare,' +
+                          ' ip.img_url, c.name as colorname, CASE WHEN c.is_trans = ''True'' THEN 1 ELSE 0 END AS is_trans, c.rgb' +
+                          ' FROM inventories' +
+                          ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
+                          ' LEFT JOIN colors c ON c.id = ip.color_id' +
+                          ' LEFT JOIN parts p ON p.part_num = ip.part_num' +
+                          ' WHERE set_num = :Param1' +
+                          ' AND version = :Param2';
+                          //Todo: expand query with join to the parts you selected for this set
+      var Params := FDQuery.Params;
+      Params.ParamByName('Param1').AsString := set_num;
+      Params.ParamByName('Param2').AsInteger := InventoryVersion;
+
+      FPartObjectList.LoadFromQuery(FDQuery);
+
+      SbResults.Panels[0].Text := 'Results: ' + IntToStr(FPartObjectList.Count);
+
+      FLastMaxCols := -1; // Force an invalidate
+      FAdjustGrid;
     finally
-      SendMessage(SbSetParts.Handle, WM_SETREDRAW, 1, 0);
-      RedrawWindow(SbSetParts.Handle, nil, 0, RDW_ERASE or RDW_INVALIDATE or RDW_FRAME or RDW_ALLCHILDREN);
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
     end;
   finally
     begin
       //Stopwatch.Stop;
-      //Enable for performance testing:
+      //Enable for sql performance testing:
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
   end;
 end;
 
 end.
+

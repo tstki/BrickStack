@@ -135,9 +135,9 @@
         <DCC_ExeOutput>.\Bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>.\Bin\$(Platform)\$(Config)</DCC_DcuOutput>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=0.0.0.6;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=0.0.0.7;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=0.0.0.7;Comments=</VerInfo_Keys>
         <VerInfo_MajorVer>0</VerInfo_MajorVer>
-        <VerInfo_Build>6</VerInfo_Build>
+        <VerInfo_Build>7</VerInfo_Build>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -161,6 +161,9 @@
         <DCCReference Include="Src\Frames\UFrmSet.pas">
             <Form>FrmSet</Form>
             <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Src\Frames\UFrmParts.pas">
+            <Form>FrmParts</Form>
         </DCCReference>
         <DCCReference Include="Src\Dialogs\UDlgLogin.pas">
             <Form>DlgLogin</Form>
@@ -189,30 +192,25 @@
         <DCCReference Include="Src\Dialogs\UDlgAddToSetList.pas">
             <Form>DlgAddToSetList</Form>
         </DCCReference>
-        <DCCReference Include="Src\URebrickableJson.pas"/>
-        <DCCReference Include="Src\UStrings.pas"/>
-        <DCCReference Include="Src\UConfig.pas"/>
-        <DCCReference Include="Src\USetList.pas"/>
-        <DCCReference Include="Src\USet.pas"/>
-        <DCCReference Include="Src\UImageCache.pas"/>
-        <DCCReference Include="Src\UPostMessage.pas"/>
-        <DCCReference Include="Src\USqLiteConnection.pas"/>
-        <DCCReference Include="Src\UGetImageThread.pas"/>
-        <DCCReference Include="Src\USqlThread.pas"/>
-        <DCCReference Include="Src\UDelayedImage.pas"/>
-        <DCCReference Include="Src\Frames\UFrmParts.pas">
-            <Form>FrmParts</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
-        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
         <DCCReference Include="Src\Dialogs\UDlgExport.pas">
             <Form>DlgExport</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Src\Dialogs\UDlgUpdateDatabase.pas">
             <Form>DlgUpdateDatabase</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Src\Data\USetList.pas"/>
+        <DCCReference Include="Src\Data\USet.pas"/>
+        <DCCReference Include="Src\Data\UPart.pas"/>
+        <DCCReference Include="Src\UStrings.pas"/>
+        <DCCReference Include="Src\UConfig.pas"/>
+        <DCCReference Include="Src\UImageCache.pas"/>
+        <DCCReference Include="Src\UPostMessage.pas"/>
+        <DCCReference Include="Src\URebrickableJson.pas"/>
+        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
+        <DCCReference Include="Src\USqLiteConnection.pas"/>
+        <DCCReference Include="Src\USqlThread.pas"/>
+        <DCCReference Include="Src\UDelayedImage.pas"/>
+        <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\UDownloadThread.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

@@ -41,6 +41,7 @@ type
   //Keep up to X images in memory. Currently no limit - observe how bad this gets first.
   //Fix WImage issues.
   //improve error handling
+  //convert to bmp for faster drawing
 var
   CriticalSection: TCriticalSection;
 
@@ -97,6 +98,8 @@ begin
       Value := TPicture.Create;
       try
         Value.LoadFromFile(FilePath);
+        // If jpeg error 53 is thrown, this means either a corrupted file - or insufficient memory.
+        // you can try to catch EJPEG error and check for #53 within the message.
         Result := True;
       except
         begin
@@ -118,6 +121,10 @@ begin
 end;
 
 function TImageCache.FGetFromUrl(const Url: String; var Value: TPicture): Boolean;
+const
+  DefaultNoImage = 'https://rebrickable.com/media/thumbs/nil.png/250x250p.png';
+  // Missing minifig default: https://rebrickable.com/static/img/nil_mf.jpg
+  // Missing part default:    https://rebrickable.com/media/thumbs/nil.png/250x250p.png
 begin
   var HTTPClient := THTTPClient.Create;
   try
@@ -126,8 +133,13 @@ begin
       Value := TPicture.Create;
       Value.LoadFromStream(Response.ContentStream);
       Result := True;
-    end else
-      raise Exception.Create('Failed to download image: ' + Response.StatusText);
+    end else begin
+      // Prevent possible infinite loop.
+      if SameText('Url', DefaultNoImage) then
+        raise Exception.Create('Failed to download image: ' + Response.StatusText)
+      else
+        Result := FGetFromUrl(DefaultNoImage, Value);
+    end;
   finally
     HTTPClient.Free;
   end;
@@ -150,6 +162,9 @@ end;
 
 function TImageCache.GetImage(const Url: string): TPicture;
 begin
+  // todo: add width/height param.
+  // parse URL to get thumbnail instead of full size image.
+
   CriticalSection.Enter;
   try
     try
@@ -158,7 +173,7 @@ begin
       else if FGetFromDisk(Url, Result) then begin
         AddImage(Url, Result);
         Exit;
-      end else if FGetFromUrl(Url, Result) then begin
+      end else if FGetFromUrl(Url, Result) then begin // May raise if image is not found.
         SaveImage(Url, Result);
         AddImage(Url, Result);
         Exit;
