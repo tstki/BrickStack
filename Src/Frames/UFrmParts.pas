@@ -52,6 +52,8 @@ type
     ShowPartCountAndLink: TMenuItem;
     ShowPartnum: TMenuItem;
     LblPartsGridSizePx: TLabel;
+    PopGridRightClick: TPopupMenu;
+    Viewpartexternally1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
@@ -74,6 +76,7 @@ type
     procedure TbGridSizeChange(Sender: TObject);
     procedure DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt;
       var CanSelect: Boolean);
+    procedure ActViewPartExternalExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -348,6 +351,11 @@ begin
 end;
 
 procedure TFrmParts.ActToggleIncludeSparePartsExecute(Sender: TObject);
+begin
+//
+end;
+
+procedure TFrmParts.ActViewPartExternalExecute(Sender: TObject);
 begin
 //
 end;

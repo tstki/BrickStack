@@ -344,6 +344,7 @@ object FrmParts: TFrmParts
     end
     object ActViewPartExternal: TAction
       Caption = 'View part externally'
+      OnExecute = ActViewPartExternalExecute
     end
     object ActViewSetExternal: TAction
       Caption = 'View set externally'
@@ -492,5 +493,12 @@ object FrmParts: TFrmParts
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
+  end
+  object PopGridRightClick: TPopupMenu
+    Left = 280
+    Top = 136
+    object Viewpartexternally1: TMenuItem
+      Action = ActViewPartExternal
+    end
   end
 end
