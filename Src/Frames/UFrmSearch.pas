@@ -114,7 +114,7 @@ type
     FSetObjectList: TSetObjectList; // Stored locally from query result.
     FResultPanels: TObjectList;
     FImageCache: TImageCache;
-    FCurMaxCols: Integer;
+    //FCurMaxCols: Integer;
     FLastMaxCols: Integer;
     procedure FDoSearch;
     function FGetFromYear(): Integer;
@@ -370,9 +370,9 @@ begin
 end;
 
 procedure TFrmSearch.DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
-var
+//var
 //  SquareRect: TRect;
-  ExampleText: String;
+  //ExampleText: String;
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
   if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin

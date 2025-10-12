@@ -35,7 +35,13 @@ uses
   UGetImageThread in 'Src\UGetImageThread.pas',
   UDownloadThread in 'Src\UDownloadThread.pas',
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  UBSSQL in 'Src\Scripts\UBSSQL.pas',
+  URBSQL_Drop in 'Src\Scripts\URBSQL_Drop.pas',
+  URBSQL_Indexes in 'Src\Scripts\URBSQL_Indexes.pas',
+  URBSQL_Tables in 'Src\Scripts\URBSQL_Tables.pas',
+  URBCSV in 'Src\Scripts\URBCSV.pas',
+  USQLUpdate in 'Src\Data\USQLUpdate.pas';
 
 {$R *.RES}
 
