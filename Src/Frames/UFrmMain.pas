@@ -309,7 +309,7 @@ begin
   end;// else
   //ActCheckDatabaseImportVersions;  // Based on setting, see how often we need to check for import versions.
 
-  // Check if the user created the database
+  // Check if the user created the database //todo: and if version matches miminum version.
   if FileExists(FConfig.DbasePath) then begin
     // Restore previously open child windows
     if FConfig.ReOpenWindowsAfterRestart and ActCollection.Enabled then begin

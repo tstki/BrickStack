@@ -213,10 +213,6 @@
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\UDownloadThread.pas"/>
         <DCCReference Include="Src\Scripts\UBSSQL.pas"/>
-        <DCCReference Include="Src\Scripts\URBSQL_Drop.pas"/>
-        <DCCReference Include="Src\Scripts\URBSQL_Indexes.pas"/>
-        <DCCReference Include="Src\Scripts\URBSQL_Tables.pas"/>
-        <DCCReference Include="Src\Scripts\URBCSV.pas"/>
         <DCCReference Include="Src\Data\USQLUpdate.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

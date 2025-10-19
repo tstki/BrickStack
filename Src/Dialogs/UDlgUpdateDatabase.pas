@@ -9,6 +9,18 @@ uses
   USQLUpdate,
   UConfig, Vcl.ExtCtrls;
 
+const
+  // Ready-made database //todo: we should configure this url in the options dialog for better versatility.
+  DownloadFiles: array[0..1] of String = (
+    'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.gz',
+    'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.sha256' // Text file, contains the sha.
+  );
+
+  DownloadFileNames: array[0..1] of String = (
+    'rb.db.gz',
+    'rb.db.sha256'
+  );
+
 type
   TUpdateMode = ( // Update modes:
                   umNONE = 0,      // Version already latest
@@ -66,9 +78,11 @@ type
     procedure FDoCreateDatabaseAndTables(const TableAndSQL: array of TTableSQL);
     procedure FDoDownloadFiles;
     procedure FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
-    procedure FDoImportCSV;
+//    procedure FDoImportCSV;
     procedure FDoExtractFiles;
     procedure FDoCleanup;
+//    function FGetFileSHA256(const AFileName: String): String;
+    procedure FMoveDatabaseFromImport;
   public
     class function CurrentDBVersion: Integer;
     class function MinDBVersion: Integer;
@@ -87,13 +101,10 @@ uses
   Threading,
   StrUtils,
   Net.HttpClient, Net.URLClient, Net.HttpClientComponent,
+  System.Hash,
   UFrmMain, UStrings,
   UDownloadThread,
   UBSSQL,
-  URBCSV,
-  //URBSQL_Drop,
-  URBSQL_Tables,
-  URBSQL_Indexes,
   ZLib,
   UITypes,
   Winapi.ShellAPI,
@@ -105,13 +116,12 @@ const
   stepDownload = 1;
   stepExtract = 2;
   stepValidate = 3;
-  stepBS_DBTables = 4;
-  stepRB_DBTables = 5;
+  stepMoveDBIfNeeded = 4;
+  stepBS_DBTables = 5;
   stepBS_DBIndexes = 6;
-  stepRB_DBIndexes = 7;
-  stepImport = 8;
-  stepCleanup = 9;
-  stepFinished = 10;
+  //stepImport = 8;
+  stepCleanup = 7;
+  stepFinished = 8;
 
 {
   First launch and updater steps
@@ -204,7 +214,7 @@ begin
   end;
 
   //start timer that checks whether progress is complete to 100%
-  // once progress done, enable next button.
+  // once progress done, automatically go to next step
   TimerCheckForNextStep.Enabled := True;
 end;
 
@@ -346,85 +356,23 @@ begin
 
       try
         var LocalFileName := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileName);
-        var TargetExtractedFileName := TPath.ChangeExtension(LocalFileName, '');  // Just remove the .gz part
-        if (TargetExtractedFileName.Length > 1) and TargetExtractedFileName.EndsWith('.') then
-          SetLength(TargetExtractedFileName, Length(TargetExtractedFileName) - 1);
-        FDecompressGZFile(LocalFileName, TargetExtractedFileName);
+        if LocalFileName.EndsWith('.gz') then begin
+          var TargetExtractedFileName := TPath.ChangeExtension(LocalFileName, '');  // Just remove the .gz part
+          if (TargetExtractedFileName.Length > 1) and TargetExtractedFileName.EndsWith('.') then
+            SetLength(TargetExtractedFileName, Length(TargetExtractedFileName) - 1);
+          FDecompressGZFile(LocalFileName, TargetExtractedFileName);
 
-        //todo: show better progress?
+          //todo: show better progress?
 
-        Item.Caption := '100';
-        Item.SubItems[1] := 'Extracted';
+          Item.Caption := '100';
+          Item.SubItems[1] := 'Extracted';
+        end else begin
+          Item.Caption := '100';
+          Item.SubItems[1] := 'As-is';
+        end;
       except
         Item.SubItems[1] := 'Error';
       end;
-    end;
-  finally
-    LvResults.Items.EndUpdate;
-  end;
-
-  //start timer that checks whether progress is complete to 100%
-  // once progress done, enable next button.
-  TimerCheckForNextStep.Enabled := True;
-end;
-
-procedure TDlgUpdateDatabase.FDoImportCSV;
-
-  procedure FRunCommandAsync(const Command: string; Item: TListItem);
-  begin
-    TTask.Run(
-      procedure
-      var
-        StartInfo: TStartupInfo;
-        ProcInfo: TProcessInformation;
-        CmdLine: string;
-        Success: Boolean;
-        ExitCode: DWORD;
-      begin
-        ZeroMemory(@StartInfo, SizeOf(StartInfo));
-        ZeroMemory(@ProcInfo, SizeOf(ProcInfo));
-        StartInfo.cb := SizeOf(StartInfo);
-        CmdLine := 'cmd.exe /C ' + Command;
-        Success := False;
-
-        var WorkingDir := ExtractFilePath(Application.ExeName);
-        if CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_NO_WINDOW, nil, PChar(WorkingDir), StartInfo, ProcInfo) then begin
-          WaitForSingleObject(ProcInfo.hProcess, INFINITE);
-          GetExitCodeProcess(ProcInfo.hProcess, ExitCode);
-          CloseHandle(ProcInfo.hProcess);
-          CloseHandle(ProcInfo.hThread);
-          Success := (ExitCode = 0);
-        end;
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            if Success then begin
-              Item.Caption := '100';
-              Item.SubItems[1] := 'Done';
-            end else begin
-              Item.SubItems[1] := 'Error: ' + IntToStr(ExitCode);
-            end;
-          end
-        );
-      end
-    );
-  end;
-
-const
-  sqliteCSVImportString = 'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\%s.csv %s" ".quit"';
-begin
-  LvResults.Clear;
-  LvResults.Items.BeginUpdate;
-  try
-    for var FileName in ImportTableNames do begin
-      var Item := LvResults.Items.Add;
-      Item.Caption := '0';
-      Item.SubItems.Add(FileName);
-      Item.SubItems.Add('Importing');
-      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
-
-      FRunCommandAsync(Format(sqliteCSVImportString, [FileName, FileName]), Item);
     end;
   finally
     LvResults.Items.EndUpdate;
@@ -486,13 +434,106 @@ begin
   Result := FCurrentStep + 1;
 end;
 
+{function TDlgUpdateDatabase.FGetFileSHA256(const AFileName: String): String;
+begin
+  var HashSHA2 := THashSHA2.Create(SHA256); // Specify SHA256 in constructor
+  var FileStream := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
+  try
+    var HashBytes := HashSHA2.GetHashBytes(FileStream);
+    Result := THash.DigestAsString(HashBytes); // Correct method to convert hash to string
+  finally
+    FileStream.Free;
+  end;
+end;
+}
+
+procedure TDlgUpdateDatabase.FMoveDatabaseFromImport;
+var
+  Moved: Boolean;
+begin
+  LvResults.Clear;
+  LvResults.Items.BeginUpdate;
+  try
+    var Item := LvResults.Items.Add;
+    Item.Caption := '0';
+    Item.SubItems.Add('rb.db');
+    Item.SubItems.Add('Moving');
+    Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
+
+    var ImportDBPath := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), 'rb.db');
+
+    if not TFile.Exists(ImportDBPath) then begin
+      Item.SubItems[1] := 'Not found in imports'; // Should not happen assuming we "just" downloaded it.
+      Item.Caption := '100';
+      Exit;
+    end;
+
+    // Ensure target directory exists
+    var TargetDBFileName := FConfig.DbasePath;
+    ForceDirectories(TPath.GetDirectoryName(TargetDBFileName));
+
+    // If a database already exists at the target, move it to a backup location
+    if TFile.Exists(TargetDBFileName) then begin
+      var BackupDir := TPath.Combine(TPath.GetDirectoryName(TargetDBFileName), 'Backup');
+      ForceDirectories(BackupDir);
+
+      var Timestamp := FormatDateTime('YYYYMMDD_HHNNSS', Now);
+      var BackupName := TPath.Combine(BackupDir, Format('rb.db.%s.bak', [Timestamp]));
+
+      // Try to move the existing DB to backups; if move fails, try delete + copy
+      try
+        TFile.Move(TargetDBFileName, BackupName);
+      except
+        try
+          TFile.Delete(TargetDBFileName);
+          TFile.Copy(TargetDBFileName, BackupName, True);
+        except
+          Item.SubItems[1] := 'Failed to backup existing DB';
+          Item.Caption := '100';
+          Exit;
+        end;
+      end;
+    end;
+
+    // Now move the imported DB into place
+    try
+      TFile.Move(ImportDBPath, TargetDBFileName);
+      Moved := True;
+    except
+      try
+        // If move fails (e.g., cross-volume), try delete+copy
+        TFile.Delete(ImportDBPath);
+        TFile.Copy(ImportDBPath, TargetDBFileName, True);
+        Moved := True;
+      except
+        Moved := False;
+      end;
+    end;
+
+    if Moved then begin
+      Item.Caption := '100';
+      Item.SubItems[1] := 'Moved';
+    end else begin
+      Item.SubItems[1] := 'Failed to move';
+      Item.Caption := '100';
+    end;
+  finally
+    LvResults.Items.EndUpdate;
+  end;
+
+  // Allow the timer to proceed to next step
+  TimerCheckForNextStep.Enabled := True;
+end;
+
 procedure TDlgUpdateDatabase.FDoNextStep;
 begin
 //  var StepAtStartOfFunction := FCurrentStep;
 //  FCurrentStep := FGetNextStep;
 
+//todo: update header explanation.
+
   case FCurrentStep of
-    //stepStart:        FCurrentStep := FGetNextStep;
+    stepStart:        FCurrentStep := FGetNextStep;
     stepDownload:     FDoDownloadFiles;
     stepExtract:      FDoExtractFiles;
     stepValidate:
@@ -501,11 +542,10 @@ begin
       // otherwise, show error
       //FCurrentStep := FGetNextStep;
     end;
+    stepMoveDBIfNeeded: FMoveDatabaseFromImport;
     stepBS_DBTables:  FDoCreateDatabaseAndTables(BS_CreateTables); //Result := High(BS_CreateTables) + 2; // +2 because of BSDBVersions
-    stepRB_DBTables:  FDoCreateDatabaseAndTables(RB_CreateTablesAndTriggers); //Result := High(RB_CreateTablesAndTriggers) + 1;
     stepBS_DBIndexes: FDoCreateDatabaseAndTables(BS_CreateIndexes); //Result := High(BS_CreateIndexes) + 1;
-    stepRB_DBIndexes: FDoCreateDatabaseAndTables(RB_CreateIndexes); //Result := High(RB_CreateIndexes) + 1;
-    stepImport:       FDoImportCSV;
+    //stepImport:       FDoImportCSV;
     stepCleanup:      FDoCleanup;
     stepFinished:
     begin
@@ -529,17 +569,18 @@ end;
 function TDlgUpdateDatabase.FStepMaxCount(Step: Integer): Integer;
 begin
   case FCurrentStep of
-    stepStart:        Result := 0;
-    stepDownload:     Result := High(DownloadFileNames) + 1;
-    stepExtract:      Result := High(DownloadFiles) + 1;
-    stepValidate:     Result := High(DownloadFiles) + 1;
-    stepBS_DBTables:  Result := High(BS_CreateTables) + 1;
-    stepRB_DBTables:  Result := High(RB_CreateTablesAndTriggers) + 1;
-    stepBS_DBIndexes: Result := High(BS_CreateIndexes) + 1;
-    stepRB_DBIndexes: Result := High(RB_CreateIndexes) + 1;
-    stepImport:       Result := High(DownloadFiles) + 1;
-    stepCleanup:      Result := High(DownloadFiles) + 1;
-    stepFinished:     Result := 0;
+    stepStart:          Result := 0;
+    stepDownload:       Result := High(DownloadFileNames) + 1;
+    stepExtract:        Result := High(DownloadFiles) + 1;
+    stepValidate:       Result := High(DownloadFiles) + 1;
+    stepMoveDBIfNeeded: Result := 1;
+    stepBS_DBTables:    Result := High(BS_CreateTables) + 1;
+    //stepRB_DBTables:  Result := High(RB_CreateTablesAndTriggers) + 1;
+    stepBS_DBIndexes:   Result := High(BS_CreateIndexes) + 1;
+    //stepRB_DBIndexes: Result := High(RB_CreateIndexes) + 1;
+    //stepImport:       Result := High(DownloadFiles) + 1;
+    stepCleanup:        Result := High(DownloadFiles) + 1;
+    stepFinished:       Result := 0;
     else begin
       Result := 0;
     end;
@@ -585,7 +626,7 @@ begin
   FCurrentStep := stepStart;
   TimerCheckForNextStep.Enabled := True;
 
-  FDoNextStep;
+//  FDoNextStep;
 end;
 
 procedure TDlgUpdateDatabase.BtnCancelClick(Sender: TObject);
