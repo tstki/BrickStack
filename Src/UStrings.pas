@@ -15,7 +15,8 @@ const
   // Constants, links, version info
   StrAboutProductName = 'BrickStack';
   StrAboutCopyright = 'MIT license, Copyright 2025. Thomas. H.';
-  StrAboutComment = 'Open source, See: bitbucket.org/tstki/brickstack' + #10 + 'Icons by Fatcow';
+  StrAboutComment1 = 'Open source, See: bitbucket.org/tstki/brickstack' + #10 + 'Icons by Fatcow';
+  StrAboutComment2 = 'Database by: https://github.com/ojuuji/rb.db';
 
   // Configuration
   StrRebrickableAPIInfo = 'https://rebrickable.com/api/';
@@ -30,7 +31,7 @@ const
   StrDefaultExportPath = 'Export\';
 
   // Dialog and frame labels
-  StrSetListFrameTitle = 'Set lists';
+  StrSetListFrameTitle = 'Collection - set lists';
   StrPartListFrameTitle = 'Part list';
   StrSearchFrameTitle = 'Search';
   StrFrmSetTitle = 'Lego set: %s - %s';

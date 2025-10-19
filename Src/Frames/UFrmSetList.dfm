@@ -44,7 +44,7 @@ object FrmSetList: TFrmSetList
       Width = 30
       Height = 30
       Cursor = crHandPoint
-      Hint = 'Open'
+      Hint = 'View'
       Anchors = [akTop, akRight]
       Picture.Data = {
         0954506E67496D61676589504E470D0A1A0A0000000D49484452000000200000
@@ -701,6 +701,7 @@ object FrmSetList: TFrmSetList
     object ActViewSet: TAction
       Category = 'SetList'
       Caption = 'ActViewSet'
+      Hint = 'View'
       ImageIndex = 2
       OnExecute = ActViewSetExecute
     end

@@ -70,7 +70,7 @@ begin
   LblVersion.Caption := LblVersion.Caption + ': ' + FGetAppVersion;
   LblProductName.Caption := StrAboutProductName;
   LblCopyright.Caption := StrAboutCopyright;
-  LblComments.Caption := StrAboutComment;
+  LblComments.Caption := StrAboutComment1 + #13#10 + StrAboutComment2;
 end;
 
 end.

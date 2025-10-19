@@ -28,7 +28,7 @@ type
     ag11: TMenuItem;
     ag21: TMenuItem;
     ag31: TMenuItem;
-    ActOpenCollection: TAction;
+    ActViewCollection: TAction;
     Edit1: TMenuItem;
     ActDeleteSetList1: TMenuItem;
     Import1: TMenuItem;
@@ -50,18 +50,19 @@ type
     procedure ActExportExecute(Sender: TObject);
     procedure CbxFilterChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure ActOpenCollectionExecute(Sender: TObject);
+    procedure ActViewCollectionExecute(Sender: TObject);
     procedure ActDeleteSetListExecute(Sender: TObject);
     procedure ActAddSetListExecute(Sender: TObject);
     procedure LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure FormResize(Sender: TObject);
+    procedure RebuildBySQL();
   private
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
-    procedure RebuildListView;
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
+    procedure FRebuildListView;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -89,7 +90,7 @@ uses
   UFrmMain, UStrings, USqLiteConnection, Data.DB,
   UDlgSetList, UDlgExport, UDlgImport;
 
-procedure TFrmSetListCollection.RebuildListView;
+procedure TFrmSetListCollection.FRebuildListView;
 begin
   var TotalSetCount := 0;
 
@@ -171,6 +172,14 @@ begin
   end;
 
   FSetListObjectList := TSetListObjectList.Create;  // Do not load from file, get from database.
+  RebuildBySQL;
+
+  CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);
+end;
+
+procedure TFrmSetListCollection.RebuildBySQL();
+begin
+  FSetListObjectList.Clear;
 
   var SqlConnection := FrmMain.AcquireConnection;
   var FDQuery := TFDQuery.Create(nil);
@@ -187,9 +196,7 @@ begin
   end;
 
 //  if FSetListObjectList.Count > 0 then
-    RebuildListView;
-
-  CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);
+    FRebuildListView;
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
@@ -243,7 +250,7 @@ begin
       finally
         FrmMain.ReleaseConnection(SqlConnection);
       end;
-      RebuildListView;
+      FRebuildListView;
     end;
   finally
     DlgImport.Free;
@@ -264,10 +271,10 @@ end;
 
 procedure TFrmSetListCollection.CbxFilterChange(Sender: TObject);
 begin
-  RebuildListView;
+  FRebuildListView;
 end;
 
-procedure TFrmSetListCollection.ActOpenCollectionExecute(Sender: TObject);
+procedure TFrmSetListCollection.ActViewCollectionExecute(Sender: TObject);
 begin
   var SetList := FGetSelectedObject;
   if (SetList <> nil) and (SetList.ID <> 0) then
@@ -343,7 +350,7 @@ begin
 
       SetListObject.Dirty := False;
 
-      RebuildListView;
+      FRebuildListView;
     end else
       SetListObject.Free;
   finally
@@ -384,7 +391,7 @@ begin
 
         SetListObject.Dirty := False;
 
-        RebuildListView;
+        FRebuildListView;
       end;
     finally
       DlgEdit.Free;
@@ -425,7 +432,7 @@ begin
       end;
     end;
 
-    RebuildListView;
+    FRebuildListView;
   end;
 end;
 

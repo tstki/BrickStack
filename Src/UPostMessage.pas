@@ -16,10 +16,10 @@ type
   end;
   PShowPartsData = ^TShowPartsData;
 
-  TShowSetListData = record
-    SetListID: Integer;
+  TShowOrUpdateSetListData = record
+    BSSetListID: Integer;
   end;
-  PShowSetListData = ^TShowSetListData;
+  PShowOrUpdateSetListData = ^TShowOrUpdateSetListData;
 
   TOpenExternalData = record
     ObjectType: Integer;
@@ -34,6 +34,8 @@ const
   WM_OPEN_EXTERNAL = WM_USER + 4;
   WM_SHOW_SEARCH = WM_USER + 5;
   WM_SHOW_COLLECTION = WM_USER + 6;
+  WM_UPDATE_COLLECTION = WM_USER + 7;
+  WM_UPDATE_SETLIST = WM_USER + 8;
 
 implementation
 

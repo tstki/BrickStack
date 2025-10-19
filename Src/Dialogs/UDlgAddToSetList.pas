@@ -86,7 +86,7 @@ begin
   if CbxSetList.ItemIndex < 0 then
     Exit;
 
-  var SetListID := Integer(CbxSetList.Items.Objects[CbxSetList.ItemIndex]);
+  var BSSetListID := Integer(CbxSetList.Items.Objects[CbxSetList.ItemIndex]);
 
   //get mode - edit or insert. If update mode
 
@@ -100,7 +100,7 @@ begin
                         ' VALUES(:BSSetListID, :SetNum, :Built, :Quantity, :HaveSpareParts, :Notes);';
 
     var Params := FDQuery.Params;
-    Params.ParamByName('BSSetListID').asInteger := SetListID;
+    Params.ParamByName('BSSetListID').asInteger := BSSetListID;
     Params.ParamByName('SetNum').asString := Setnum;
     Params.ParamByName('Built').asInteger := IfThen(ChkBuilt.Checked,1,0);
     Params.ParamByName('Quantity').asInteger := StrToInt(EditAmount.Text); // Already checked to be valid
@@ -113,6 +113,7 @@ begin
   end;
 
   // call frmmain to update any possible frames that may already be open
+  TFrmMain.UpdateSetsByCollectionID(BSSetListID);
 end;
 
 procedure TDlgAddToSetList.FFillPulldown();

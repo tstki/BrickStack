@@ -106,6 +106,8 @@ type
     procedure WMOpenExternal(var Msg: TMessage); message WM_OPEN_EXTERNAL;
     procedure WMShowSearch(var Msg: TMessage); message WM_SHOW_SEARCH;
     procedure WMShowCollection(var Msg: TMessage); message WM_SHOW_COLLECTION;
+    procedure WMUpdateSetList(var Msg: TMessage); message WM_UPDATE_SETLIST;
+    procedure WMUpdateCollection(var Msg: TMessage); message WM_UPDATE_COLLECTION;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure ActUpdateDatabaseExecute(Sender: TObject);
@@ -115,6 +117,8 @@ type
     FConfig: TConfig;
     FImageCache: TImageCache;
     FConnectionPool: TFDConnectionPool;
+    function FFindMDIChildByClass(AFormClass: TFormClass): TForm;
+    procedure FUpdateMDIChild(AFormClass: TFormClass; BSSetListID: Integer);
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
     function CtrlShiftPressed: Boolean;
     function FCheckDatabaseVersion(): TUpdateMode;
@@ -128,10 +132,12 @@ type
     procedure ReleaseConnection(Conn: TFDConnection); inline;
     class procedure ShowSetWindow(const set_num: String);
     class procedure ShowPartsWindow(const set_num: String);
-    class procedure ShowSetListWindow(const SetListID: Integer);
+    class procedure ShowSetListWindow(const BSSetListID: Integer);
     class procedure OpenExternal(ObjectType: Integer; const ObjectID: String);
     class procedure ShowSearchWindow;
     class procedure ShowCollectionWindow;
+    class procedure UpdateSetsByCollectionID(BSSetListID: Integer);
+    class procedure UpdateCollectionsByID(BSSetListID: Integer);
   end;
 
 var
@@ -189,7 +195,7 @@ begin
       FConfig.FrmSetListCollection.OpenOnLoad := '1';
       FConfig.FrmSetListCollection.GetFormDimensions(Child);
     end else if Child.ClassType = TFrmSetList then begin
-      FConfig.FrmSetList.OpenOnLoad := IntToStr(TFrmSetList(Child).SetListID);
+      FConfig.FrmSetList.OpenOnLoad := IntToStr(TFrmSetList(Child).BSSetListID);
       FConfig.FrmSetList.GetFormDimensions(Child);
     end else if Child.ClassType = TFrmSet then begin
       FConfig.FrmSet.OpenOnLoad := TFrmSet(Child).SetNum;
@@ -375,7 +381,7 @@ begin
         var FrmSet := TFrmSet(Child);
         FrmSet.ImageCache := FImageCache;
         FrmSet.LoadSet(MsgData.Set_num); // - multithreaded load
-    end;
+      end;
     end;
   finally
     Dispose(MsgData); // Don't forget to free the allocated memory
@@ -401,14 +407,14 @@ end;
 
 procedure TFrmMain.WMShowSetList(var Msg: TMessage);
 begin
-  var MsgData := PShowSetListData(Msg.WParam);
+  var MsgData := PShowOrUpdateSetListData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
       var Child := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
       if Assigned(Child) then begin
         var FrmSetList := TFrmSetList(Child);
         //FrmSetList.ImageCache := FImageCache;
-        FrmSetList.SetListID := MsgData.SetListID; // - multithreaded load
+        FrmSetList.BSSetListID := MsgData.BSSetListID; // - multithreaded load
       end;
     end;
   finally
@@ -546,6 +552,32 @@ begin
   end;
 end;
 
+procedure TFrmMain.WMUpdateSetList(var Msg: TMessage);
+begin
+  var MsgData := PShowOrUpdateSetListData(Msg.WParam);
+  try
+    if Assigned(MsgData) then begin
+      FUpdateMDIChild(TFrmSetList, MsgData.BSSetListID);
+      FUpdateMDIChild(TFrmSetListCollection, MsgData.BSSetListID);
+    end;
+  finally
+    Dispose(MsgData); // Don't forget to free the allocated memory
+  end;
+end;
+
+procedure TFrmMain.WMUpdateCollection(var Msg: TMessage);
+begin
+  var MsgData := PShowOrUpdateSetListData(Msg.WParam);
+  try
+    if Assigned(MsgData) then begin
+      FUpdateMDIChild(TFrmSetList, MsgData.BSSetListID);
+      FUpdateMDIChild(TFrmSetListCollection, MsgData.BSSetListID);
+    end;
+  finally
+    Dispose(MsgData); // Don't forget to free the allocated memory
+  end;
+end;
+
 function TFrmMain.AcquireConnection: TFDConnection;
 begin
   Result := FConnectionPool.AcquireConnection;
@@ -565,6 +597,38 @@ end;
 class procedure TFrmMain.ShowCollectionWindow();
 begin
   PostMessage(FrmMain.Handle, WM_SHOW_COLLECTION, 0, 0);
+end;
+
+class procedure TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
+  // Tell set windows and collection windows to update because a set was added or removed from a collection.
+  // May be called from Search(add) / sets(add/remove)
+var
+  PostData: PShowOrUpdateSetListData;
+begin
+  New(PostData);
+  try
+    PostData^.BSSetListID := BSSetListID;
+    if not PostMessage(FrmMain.Handle, WM_UPDATE_SETLIST, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
+end;
+
+class procedure TFrmMain.UpdateCollectionsByID(BSSetListID: Integer);
+  // Tell collection windows to update because a set was added or removed from a collection.
+  // May be called from Search(add) / sets(add/remove)
+var
+  PostData: PShowOrUpdateSetListData;
+begin
+  New(PostData);
+  try
+    PostData^.BSSetListID := BSSetListID;
+    if not PostMessage(FrmMain.Handle, WM_UPDATE_COLLECTION, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
 end;
 
 class procedure TFrmMain.ShowSetWindow(const set_num: String);
@@ -595,13 +659,13 @@ begin
   end;
 end;
 
-class procedure TFrmMain.ShowSetListWindow(const SetListID: Integer);
+class procedure TFrmMain.ShowSetListWindow(const BSSetListID: Integer);
 var
-  PostData: PShowSetListData;
+  PostData: PShowOrUpdateSetListData;
 begin
   New(PostData);
   try
-    PostData^.SetListID := SetListID;
+    PostData^.BSSetListID := BSSetListID;
     if not PostMessage(FrmMain.Handle, WM_SHOW_SETLIST, WPARAM(PostData), 0) then
       Dispose(PostData);
   except
@@ -647,19 +711,45 @@ begin
   ShowCollectionWindow;
 end;
 
+function TFrmMain.FFindMDIChildByClass(AFormClass: TFormClass): TForm;
+begin
+  Result := nil;
+
+  // Check whether there's already a window open.
+  for var I := 0 to MDIChildCount-1 do begin
+    var Child := MDIChildren[I];
+    if Child.ClassType = AFormClass then begin
+      Result := Child;
+      Exit;
+    end;
+  end;
+end;
+
+procedure TFrmMain.FUpdateMDIChild(AFormClass: TFormClass; BSSetListID: Integer);
+begin
+  var Child := FFindMDIChildByClass(AFormClass); //todo: we can have more than 1 child of the same class, check them all
+  if Child <> nil then begin
+    if AFormClass = TFrmSetListCollection then begin
+      var FrmSetListCollection := TFrmSetListCollection(Child);
+      FrmSetListCollection.RebuildBySQL; //BSSetListID //todo: fine tune what to update instead of the whole dialog.
+    end else if AFormClass = TFrmSetList then begin
+      var FrmSetList := TFrmSetList(Child);
+      FrmSetList.ReloadAndRefresh; //BSSetListID
+    end;
+  end;
+end;
+
 function TFrmMain.FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
 begin
   if not AllowMultiple then begin
     // Check whether there's already a window open.
-    for var I := 0 to MDIChildCount-1 do begin
-      var Child := MDIChildren[I];
-      if Child.ClassType = AFormClass then begin
-        // Bring to the front instead of creating a new one.
-        Child.BringToFront;
-        Child.SetFocus;
-        Result := Child;
-        Exit;
-      end;
+    var Child := FFindMDIChildByClass(AFormClass);
+    if Child <> nil then begin
+      // Bring to the front instead of creating a new one.
+      Child.BringToFront;
+      Child.SetFocus;
+      Result := Child;
+      Exit;
     end;
   end;
 

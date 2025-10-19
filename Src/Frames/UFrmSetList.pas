@@ -62,17 +62,17 @@ type
     FSetObjects: TSetObjectList;
     FOwnsSetList: Boolean;
     FConfig: TConfig;
-    FSetListID: Integer;
+    FBSSetListID: Integer;
     procedure FSetConfig(Config: TConfig);
-    procedure FSetSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
-    procedure FSetSetListID(SetSetListID: Integer);
+    procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
+    procedure FSetBSSetListID(BSSetListID: Integer);
     procedure FRebuildTable;
     function FGetSelectedObject: TSetObject;
-    procedure FReloadAndRefresh;
   public
     { Public declarations }
+    procedure ReloadAndRefresh;
     property SetListObject: TSetListObject read FSetListObject write FSetListObject;
-    property SetListID: Integer read FSetListID write FSetSetListID;
+    property BSSetListID: Integer read FBSSetListID write FSetBSSetListID;
     property Config: TConfig read FConfig write FSetConfig;
   end;
 
@@ -207,10 +207,13 @@ begin
     end;
   end;
 
-  FReloadAndRefresh;
+  ReloadAndRefresh;
 
 //todo:
 //check if there's a details dialog open that needs to be closed or cleared
+
+  //TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
+  TFrmMain.UpdateCollectionsByID(FBSSetListID);
 end;
 
 procedure TFrmSetList.ActEditSetExecute(Sender: TObject);
@@ -264,7 +267,7 @@ begin
   FRebuildTable;
 end;
 
-procedure TFrmSetList.FReloadAndRefresh();
+procedure TFrmSetList.ReloadAndRefresh();
 
   function FIfThen(Input, IfTrue, IfFalse: Boolean): Boolean;
   begin
@@ -340,7 +343,7 @@ begin
   FRebuildTable;
 end;
 
-procedure TFrmSetList.FSetSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
+procedure TFrmSetList.FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
 begin
   if FOwnsSetList then
     FSetListObject.Free;
@@ -354,7 +357,7 @@ begin
     StatusBar1.Panels.EndUpdate;
   end;
 
-  FReloadAndRefresh;
+  ReloadAndRefresh;
  end;
 
 function TFrmSetList.FGetSelectedObject: TSetObject;
@@ -369,14 +372,14 @@ begin
   end;
 end;
 
-procedure TFrmSetList.FSetSetListID(SetSetListID: Integer);
+procedure TFrmSetList.FSetBSSetListID(BSSetListID: Integer);
 begin
-  FSetListID := SetSetListID;
+  BSSetListID := BSSetListID;
 
   var SetListObject := TSetListObject.Create;
-  SetListObject.LoadByID(SetSetListID);
+  SetListObject.LoadByID(BSSetListID);
 
-  FSetSetListObject(SetListObject, True);
+  FSetBSSetListObject(SetListObject, True);
 end;
 
 end.
