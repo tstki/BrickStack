@@ -6,9 +6,30 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
   FireDAC.Comp.Client,
+  USQLUpdate,
   UConfig, Vcl.ExtCtrls;
 
+const
+  // Ready-made database //todo: we should configure this url in the options dialog for better versatility.
+  DownloadFiles: array[0..1] of String = (
+    'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.gz',
+    'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.sha256' // Text file, contains the sha.
+  );
+
+  DownloadFileNames: array[0..1] of String = (
+    'rb.db.gz',
+    'rb.db.sha256'
+  );
+
 type
+  TUpdateMode = ( // Update modes:
+                  umNONE = 0,      // Version already latest
+                  umNOUPDATE = 1,  // Version incompatible, please manualy upgrade
+                  umNEW = 2,       // No DB found, creating.
+                  umUPDATE = 3,    // Older version found, updating.
+                  umIMPORTCSV = 4  // Update base data from csv
+                );
+
   // These should always match ImportFileNames below.
   TImportTableIDs = ( itTHEMES = 0,
                       itCOLORS = 1,
@@ -26,7 +47,7 @@ type
   TDlgUpdateDatabase = class(TForm)
     BtnOK: TButton;
     BtnCancel: TButton;
-    Timer1: TTimer;
+    TimerCheckForNextStep: TTimer;
     PCDBWizard: TPageControl;
     TsTables: TTabSheet;
     LvResults: TListView;
@@ -39,7 +60,9 @@ type
     TsUpdate: TTabSheet;
     Memo3: TMemo;
     ChkDoNotRemind: TCheckBox;
-    procedure Timer1Timer(Sender: TObject);
+    TsReImport: TTabSheet;
+    Memo2: TMemo;
+    procedure TimerCheckForNextStepTimer(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BtnCancelClick(Sender: TObject);
@@ -48,15 +71,24 @@ type
     { Private declarations }
     FConfig: TConfig;
     FCurrentStep: Integer;
-    procedure FDoCreateDatabaseAndTables;
-    procedure FDoDownloadFiles;    
+    FUpdateMode: TUpdateMode;
+    function FStepMaxCount(Step: Integer): Integer;
+    function FGetNextStep(): Integer;
+    procedure FDoNextStep;
+    procedure FDoCreateDatabaseAndTables(const TableAndSQL: array of TTableSQL);
+    procedure FDoDownloadFiles;
     procedure FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
-    procedure FDoImportCSV;
+//    procedure FDoImportCSV;
     procedure FDoExtractFiles;
     procedure FDoCleanup;
+//    function FGetFileSHA256(const AFileName: String): String;
+    procedure FMoveDatabaseFromImport;
   public
+    class function CurrentDBVersion: Integer;
+    class function MinDBVersion: Integer;
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
+    property UpdateMode: TUpdateMode read FUpdateMode write FUpdateMode;
   end;
 
 implementation
@@ -69,228 +101,27 @@ uses
   Threading,
   StrUtils,
   Net.HttpClient, Net.URLClient, Net.HttpClientComponent,
+  System.Hash,
   UFrmMain, UStrings,
   UDownloadThread,
+  UBSSQL,
   ZLib,
   UITypes,
   Winapi.ShellAPI,
   System.RegularExpressions;
 
 const
-  // Database version and changes:
-  dbVERSION = 1;
-  // 0 -> 1: Parts.part_num int -> text(20), .name(200) -> 250, table BSDBPartsInventory, index BSDBVersions
-  // 0: Initial version
-
   // Wizard steps:
   stepStart = 0;
-  stepDatabase = 1;
-  stepDownload = 2;
-  stepExtract = 3;
-  stepImport = 4;
-  stepCleanup = 5;
-
-  // When downloading, param may be "?1721891280.3014483" - which is the unix timetamp and time fraction, but it's optional.
-  DownloadFiles: array[0..11] of String = (
-    'https://cdn.rebrickable.com/media/downloads/themes.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/colors.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/part_categories.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/parts.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/part_relationships.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/elements.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/sets.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/minifigs.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/inventories.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/inventory_parts.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/inventory_sets.csv.gz',
-    'https://cdn.rebrickable.com/media/downloads/inventory_minifigs.csv.gz');
-
-  // Array of just the filenames (without path) for downloaded files
-  DownloadFileNames: array[0..11] of String = (
-    'themes.csv.gz',
-    'colors.csv.gz',
-    'part_categories.csv.gz',
-    'parts.csv.gz',
-    'part_relationships.csv.gz',
-    'elements.csv.gz',
-    'sets.csv.gz',
-    'minifigs.csv.gz',
-    'inventories.csv.gz',
-    'inventory_parts.csv.gz',
-    'inventory_sets.csv.gz',
-    'inventory_minifigs.csv.gz');
-
-  // Must match the sequence of ImportTableID above
-  ImportFileNames: array[0..11] of String = (
-    'themes.csv',
-    'colors.csv',
-    'part_categories.csv',
-    'parts.csv',
-    'part_relationships.csv',
-    'elements.csv',
-    'sets.csv',
-    'minifigs.csv',
-    'inventories.csv',
-    'inventory_parts.csv',
-    'inventory_sets.csv',
-    'inventory_minifigs.csv');
-
-  // Must match the sequence of ImportTableID above
-  ImportTableNames: array[0..11] of String = (
-    'themes',
-    'colors',
-    'part_categories',
-    'parts',
-    'part_relationships',
-    'elements',
-    'sets',
-    'minifigs',
-    'inventories',
-    'inventory_parts',
-    'inventory_sets',
-    'inventory_minifigs');
-
-  //2D Array: TableName, SQL
-  CreateTableSQL: array[0..16, 0..1] of String = (
-    ('BSSetLists', 'CREATE TABLE IF NOT EXISTS BSSetLists (' +
-                    '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-                    '	Name TEXT(128),' +
-                    '	Description TEXT(1024),' +
-                    '	UseInCollection INTEGER,' +
-                    '	SortIndex INTEGER,' +
-                    '	ExternalID INTEGER,' + //-- external site's unique ID of your imported set list
-                    '	ExternalType INTEGER);' + //-- rebrickable / bricklink / other
-                    'CREATE INDEX IF NOT EXISTS BSSetLists_ID_IDX ON BSSetLists (ID);' +
-                    'CREATE INDEX IF NOT EXISTS BSSetLists_EXTERNALID_IDX ON BSSetLists (EXTERNALID);'),
-    ('BSSets', 'CREATE TABLE IF NOT EXISTS BSSets (' +
-                '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-                '	BSSetListID INTEGER,' +
-                '	set_num TEXT(20) NOT NULL,' + // -- link to rebrickable sets table
-                '	Built INTEGER,' +
-                '	Quantity INTEGER,' +
-                '	HaveSpareParts INTEGER,' +
-                '	Notes TEXT(1024));' +
-                'CREATE INDEX IF NOT EXISTS BSSets_ID_IDX ON BSSets (ID);' +
-                'CREATE INDEX IF NOT EXISTS BSSets_set_num_IDX ON BSSets (set_num);' +
-                'CREATE INDEX IF NOT EXISTS BSSets_BSSetListID_IDX ON BSSets (BSSetListID)'),
-    ('BSCustomTags', 'CREATE TABLE IF NOT EXISTS BSCustomTags (' +
-                      '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-                      '	LinkedID INTEGER,' + // -- ID of the setlist/set
-                      '	CustomType INTEGER,' + // -- 1/2 = setlist/sets
-                      '	Value TEXT(128));' +
-                      'CREATE INDEX IF NOT EXISTS BSCustomTags_ID_IDX ON BSCustomTags (ID);' +
-                      'CREATE INDEX IF NOT EXISTS BSCustomTags_LinkedID_IDX ON BSCustomTags (LinkedID);'),
-    ('BSDBVersions', 'CREATE TABLE IF NOT EXISTS BSDBVersions (' +
-                      '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-                      '	DBVersion INTEGER,' +       // Database structure version
-                      '	DRebrickableCSV INTEGER);' +  // Date of import
-                      'CREATE INDEX IF NOT EXISTS DBVersions_ID_IDX ON BSDBVersions (ID);'),
-    ('BSDBPartsInventory', 'CREATE TABLE IF NOT EXISTS BSDBPartsInventory (' +
-                            ' ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' + // You may own multiple of the same set, this way you can link to it's unique inventory
-                            ' InventoryID INTEGER,' +   // These 4 items are used to link to the inventory_parts
-                            ' Part_num TEXT(20),' +     // ^
-                            ' color_id INTEGER,' +      // ^
-                            ' is_spare INTEGER,' +      // ^
-                            ' cur_quantity INTEGER,' +  // How many do you have
-                            ' inv_quantity INTEGER);' + // How many does the set need
-                            'CREATE INDEX IF NOT EXISTS BSDBVersions_ID_IDX ON BSDBPartsInventory (ID);' +
-                            'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num);'),
-    ('Inventories', 'CREATE TABLE IF NOT EXISTS inventories (' +
-                    '	id INTEGER NOT NULL PRIMARY KEY,' +
-                    '	version INTEGER,' +
-                    '	set_num TEXT(20));' +
-                    'CREATE INDEX IF NOT EXISTS Inventories_id_IDX ON inventories (id);' +
-                    'CREATE INDEX IF NOT EXISTS Inventories_set_num_IDX ON inventories (set_num);'),
-    ('Inventory_parts', 'CREATE TABLE IF NOT EXISTS inventory_parts (' +
-                        '	inventory_id INTEGER,' +
-                        '	part_num TEXT(20),' +
-                        '	color_id INTEGER,' +
-                        '	quantity INTEGER,' +
-                        '	is_spare INTEGER,' +
-                        '	img_url TEXT(256));' +
-                        'CREATE INDEX IF NOT EXISTS inventory_parts_inventory_id_IDX ON inventory_parts (inventory_id);' +
-                        'CREATE INDEX IF NOT EXISTS inventory_parts_color_id_IDX ON inventory_parts (color_id);'),
-    ('Inventory_minifigs', 'CREATE TABLE IF NOT EXISTS inventory_minifigs (' +
-                            '	inventory_id INTEGER,' +
-                            '	fig_num TEXT(20),' +
-                            '	quantity INTEGER);' +
-                            'CREATE INDEX IF NOT EXISTS inventory_minifigs_inventory_id_IDX ON inventory_minifigs (inventory_id);'),
-    ('Inventory_sets', 'CREATE TABLE IF NOT EXISTS inventory_sets (' +
-                      '	inventory_id INTEGER,' +
-                      '	set_num TEXT(20),' +
-                      '	quantity INTEGER);' +
-                      'CREATE INDEX IF NOT EXISTS inventory_sets_inventory_id_IDX ON inventory_sets (inventory_id);' +
-                      'CREATE INDEX IF NOT EXISTS inventory_sets_set_num_IDX ON inventory_sets (set_num);'),
-    ('Part_categories', 'CREATE TABLE IF NOT EXISTS part_categories (' +
-                        '	id INTEGER NOT NULL PRIMARY KEY,' +
-                        '	name TEXT(200));' +
-                        'CREATE INDEX IF NOT EXISTS part_categories_id_IDX ON part_categories (id);'),
-    ('Parts', 'CREATE TABLE IF NOT EXISTS parts (' +
-              '	part_num TEXT(20) NOT NULL PRIMARY KEY,' +
-              '	name TEXT(250),' +
-              '	part_cat_id INTEGER,' +
-              '	part_material TEXT(20));' +
-              'CREATE INDEX IF NOT EXISTS parts_part_num_IDX ON parts (part_num);' +
-              'CREATE INDEX IF NOT EXISTS parts_part_cat_id_IDX ON parts (part_cat_id);'),
-    ('Colors', 'CREATE TABLE IF NOT EXISTS colors (' +
-              '	id INTEGER NOT NULL PRIMARY KEY,' +
-                '	name TEXT(200),' +
-                '	rgb TEXT(6),' +
-                '	is_trans INTEGER);' +
-                'CREATE INDEX IF NOT EXISTS colors_id_IDX ON colors (id);'),
-    ('Part_relationships', 'CREATE TABLE IF NOT EXISTS part_relationships (' +
-                            '	rel_type TEXT(1),' +
-                            '	child_part_num TEXT(20),' +
-                            '	parent_part_num TEXT(20));' +
-                            'CREATE INDEX IF NOT EXISTS part_relationships_child_part_num_IDX ON part_relationships (child_part_num);' +
-                            'CREATE INDEX IF NOT EXISTS part_relationships_parent_part_num_IDX ON part_relationships (parent_part_num);'),
-    ('Elements', 'CREATE TABLE IF NOT EXISTS elements (' +
-                  '	element_id TEXT(10) NOT NULL PRIMARY KEY,' +
-                  '	npart_num TEXT(200),' +
-                  '	color_id INTEGER,' +
-                  '	design_id INTEGER);' +
-                  'CREATE INDEX IF NOT EXISTS elements_element_id_IDX ON elements (element_id);' +
-                  'CREATE INDEX IF NOT EXISTS elements_npart_num_IDX ON elements (npart_num);' +
-                  'CREATE INDEX IF NOT EXISTS elements_color_id_IDX ON elements (color_id);' +
-                  'CREATE INDEX IF NOT EXISTS elements_design_id_IDX ON elements (design_id);'),
-    ('Minifigs', 'CREATE TABLE IF NOT EXISTS minifigs (' +
-                  '	fig_num TEXT(20) NOT NULL PRIMARY KEY,' +
-                  '	name TEXT(256),' +
-                  '	num_parts INTEGER,' +
-                  '	img_url TEXT(256));' +
-                  'CREATE INDEX IF NOT EXISTS minifigs_fig_num_IDX ON minifigs (fig_num);'),
-    ('Sets', 'CREATE TABLE IF NOT EXISTS sets (' +
-              '	set_num TEXT(20) NOT NULL PRIMARY KEY,' +
-              '	name TEXT(256),' +
-              '	year INTEGER,' +
-              '	theme_id INTEGER,' +
-              '	num_parts INTEGER,' +
-              '	img_url TEXT(256));' +
-              'CREATE INDEX IF NOT EXISTS sets_set_num_IDX ON sets (set_num);' +
-              'CREATE INDEX IF NOT EXISTS sets_theme_id_IDX ON sets (theme_id);'),
-    ('Themes', 'CREATE TABLE IF NOT EXISTS themes (' +
-                '	id INTEGER NOT NULL PRIMARY KEY,' +
-                '	name TEXT(42),' + // Was defined at 40, but some themes use 42 characters.
-                '	parent_id INTEGER);' +
-                'CREATE INDEX IF NOT EXISTS themes_id_IDX ON themes (id);' +
-                'CREATE INDEX IF NOT EXISTS themes_parent_id_IDX ON themes (parent_id);')
-  );
-
-  // The first line has column names, so: "--skip 1"
-  ImportDataCmd: array[0..11] of String = (
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventories.csv inventories" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_parts.csv inventory_parts" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_minifigs.csv inventory_minifigs" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\inventory_sets.csv inventory_sets" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\part_categories.csv part_categories" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\parts.csv parts" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\colors.csv colors" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\minifigs.csv minifigs" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\sets.csv sets" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\part_relationships.csv part_relationships" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\elements.csv elements" ".quit"',
-    'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\themes.csv themes" ".quit"'
-    );
+  stepDownload = 1;
+  stepExtract = 2;
+  stepValidate = 3;
+  stepMoveDBIfNeeded = 4;
+  stepBS_DBTables = 5;
+  stepBS_DBIndexes = 6;
+  //stepImport = 8;
+  stepCleanup = 7;
+  stepFinished = 8;
 
 {
   First launch and updater steps
@@ -311,6 +142,16 @@ const
       Once all files imported, show status page at the end.
 }
 
+class function TDlgUpdateDatabase.CurrentDBVersion: Integer;
+begin
+  Result := DBVersion;
+end;
+
+class function TDlgUpdateDatabase.MinDBVersion: Integer;
+begin
+  Result := dbMINVERSION;
+end;
+
 procedure TDlgUpdateDatabase.FormCreate(Sender: TObject);
 begin
   ChkDoNotRemind.Visible := False;
@@ -323,7 +164,18 @@ begin
 
   for var I := 0 to PCDBWizard.PageCount-1 do
     PCDBWizard.Pages[I].TabVisible := False;
-  PCDBWizard.ActivePage := TsStart;
+
+  //run query, check database version.
+  var DbasePath := FConfig.DbasePath;
+  if not FileExists(DbasePath) then begin
+    // New database! Run from start
+    PCDBWizard.ActivePage := TsStart;
+  end else begin
+    // Database exists, run version check.
+    PCDBWizard.ActivePage := TsUpdate;
+  end;
+
+  //TsReImport
 end;
 
 procedure TDlgUpdateDatabase.FStartDownload(const URL, FileName: string; ProgressRow: TListItem);
@@ -338,7 +190,6 @@ end;
 
 procedure TDlgUpdateDatabase.FDoDownloadFiles;
 begin
-  FCurrentStep := stepDownload;
   ForceDirectories(TPath.GetDirectoryName(FConfig.ImportPath));
 
   LvResults.Clear;
@@ -356,18 +207,18 @@ begin
       FStartDownload(FileToDownload, LocalFileName, Item);
 
       // Sleep a little between additions so we don't get Errors, and add errorhandling to the downloadthread.
-      Sleep(10);
+      Sleep(100);
     end;
   finally
     LvResults.Items.EndUpdate;
   end;
 
   //start timer that checks whether progress is complete to 100%
-  // once progress done, enable next button.
-  Timer1.Enabled := True;
+  // once progress done, automatically go to next step
+  TimerCheckForNextStep.Enabled := True;
 end;
 
-procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables;
+procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables(const TableAndSQL: array of TTableSQL);
 
   function FExecSQLAndUpdateProgress(Query: TFDQuery; const Name, QueryText: String): Boolean;
   begin
@@ -447,9 +298,9 @@ begin
           //if found, use id
           //update by id, set version = current dbversion, DRebrickableCSV = 0;
 
-          for var I := Low(CreateTableSQL) to High(CreateTableSQL) do begin
-            var TableName := CreateTableSQL[i][0];
-            var Sql := CreateTableSQL[i][1];
+          for var I := Low(TableAndSQL) to High(TableAndSQL) do begin
+            var TableName := TableAndSQL[i].tablename;
+            var Sql := TableAndSQL[i].sql;
             {var QResult :=} FExecSQLAndUpdateProgress(FDQuery, TableName, Sql);
 
             //if not result then
@@ -492,8 +343,6 @@ procedure TDlgUpdateDatabase.FDoExtractFiles;
   end;
 
 begin
-  FCurrentStep := stepExtract;
-
   LvResults.Clear;
   LvResults.Items.BeginUpdate;
   try
@@ -507,15 +356,20 @@ begin
 
       try
         var LocalFileName := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), FileName);
-        var TargetExtractedFileName := TPath.ChangeExtension(LocalFileName, '');  // Just remove the .gz part
-        if (TargetExtractedFileName.Length > 1) and TargetExtractedFileName.EndsWith('.') then
-          SetLength(TargetExtractedFileName, Length(TargetExtractedFileName) - 1);
-        FDecompressGZFile(LocalFileName, TargetExtractedFileName);
+        if LocalFileName.EndsWith('.gz') then begin
+          var TargetExtractedFileName := TPath.ChangeExtension(LocalFileName, '');  // Just remove the .gz part
+          if (TargetExtractedFileName.Length > 1) and TargetExtractedFileName.EndsWith('.') then
+            SetLength(TargetExtractedFileName, Length(TargetExtractedFileName) - 1);
+          FDecompressGZFile(LocalFileName, TargetExtractedFileName);
 
-        //todo: show better progress?
+          //todo: show better progress?
 
-        Item.Caption := '100';
-        Item.SubItems[1] := 'Extracted';
+          Item.Caption := '100';
+          Item.SubItems[1] := 'Extracted';
+        end else begin
+          Item.Caption := '100';
+          Item.SubItems[1] := 'As-is';
+        end;
       except
         Item.SubItems[1] := 'Error';
       end;
@@ -526,77 +380,11 @@ begin
 
   //start timer that checks whether progress is complete to 100%
   // once progress done, enable next button.
-  Timer1.Enabled := True;
-end;
-
-procedure TDlgUpdateDatabase.FDoImportCSV;
-
-  procedure FRunCommandAsync(const Command: string; Item: TListItem);
-  begin
-    TTask.Run(
-      procedure
-      var
-        StartInfo: TStartupInfo;
-        ProcInfo: TProcessInformation;
-        CmdLine: string;
-        Success: Boolean;
-      begin
-        ZeroMemory(@StartInfo, SizeOf(StartInfo));
-        StartInfo.cb := SizeOf(StartInfo);
-        CmdLine := 'cmd.exe /C ' + Command;
-        Success := False;
-        if CreateProcess(nil, PChar(CmdLine), nil, nil, False, CREATE_NO_WINDOW, nil, nil, StartInfo, ProcInfo) then begin
-          WaitForSingleObject(ProcInfo.hProcess, INFINITE);
-          CloseHandle(ProcInfo.hProcess);
-          CloseHandle(ProcInfo.hThread);
-          Success := True;
-        end;
-
-        TThread.Queue(nil,
-          procedure
-          begin
-            if Success then begin
-              Item.Caption := '100';
-              Item.SubItems[1] := 'Done';
-            end else begin
-              Item.SubItems[1] := 'Error';
-            end;
-          end
-        );
-      end
-    );
-  end;
-
-const
-  sqliteCSVImportString = 'sqlite3 .\dbase\BrickStack.db -cmd ".mode csv" -cmd ".import --skip 1 .\import\%s.csv %s" ".quit"';
-begin
-  FCurrentStep := stepImport;
-
-  LvResults.Clear;
-  LvResults.Items.BeginUpdate;
-  try
-    for var FileName in ImportTableNames do begin
-      var Item := LvResults.Items.Add;
-      Item.Caption := '0';
-      Item.SubItems.Add(FileName);
-      Item.SubItems.Add('Importing');
-      Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
-
-      FRunCommandAsync(Format(sqliteCSVImportString, [FileName, FileName]), Item);
-    end;
-  finally
-    LvResults.Items.EndUpdate;
-  end;
-
-  //start timer that checks whether progress is complete to 100%
-  // once progress done, enable next button.
-  Timer1.Enabled := True;
+  TimerCheckForNextStep.Enabled := True;
 end;
 
 procedure TDlgUpdateDatabase.FDoCleanup;
 begin
-  FCurrentStep := stepCleanup;
-
   LvResults.Clear;
   LvResults.Items.BeginUpdate;
   try
@@ -615,12 +403,12 @@ begin
 
       try
         if TFile.Exists(FilePath) then begin
-          TFile.Delete(FilePath);
+//          TFile.Delete(FilePath);
           Inc(Deleted);
         end;
 
         if TFile.Exists(ExtractedFile) then begin
-          TFile.Delete(ExtractedFile);
+//          TFile.Delete(ExtractedFile);
           Inc(Deleted);
         end;
       except
@@ -638,66 +426,191 @@ begin
   end;
 
   // Start timer to check for completion and enable next step
-  Timer1.Enabled := True;
+  TimerCheckForNextStep.Enabled := True;
 end;
 
-procedure TDlgUpdateDatabase.Timer1Timer(Sender: TObject);
+function TDlgUpdateDatabase.FGetNextStep(): Integer;
+begin
+  Result := FCurrentStep + 1;
+end;
+
+{function TDlgUpdateDatabase.FGetFileSHA256(const AFileName: String): String;
+begin
+  var HashSHA2 := THashSHA2.Create(SHA256); // Specify SHA256 in constructor
+  var FileStream := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
+  try
+    var HashBytes := HashSHA2.GetHashBytes(FileStream);
+    Result := THash.DigestAsString(HashBytes); // Correct method to convert hash to string
+  finally
+    FileStream.Free;
+  end;
+end;
+}
+
+procedure TDlgUpdateDatabase.FMoveDatabaseFromImport;
+var
+  Moved: Boolean;
+begin
+  LvResults.Clear;
+  LvResults.Items.BeginUpdate;
+  try
+    var Item := LvResults.Items.Add;
+    Item.Caption := '0';
+    Item.SubItems.Add('rb.db');
+    Item.SubItems.Add('Moving');
+    Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
+
+    var ImportDBPath := TPath.Combine(IncludeTrailingPathDelimiter(FConfig.ImportPath), 'rb.db');
+
+    if not TFile.Exists(ImportDBPath) then begin
+      Item.SubItems[1] := 'Not found in imports'; // Should not happen assuming we "just" downloaded it.
+      Item.Caption := '100';
+      Exit;
+    end;
+
+    // Ensure target directory exists
+    var TargetDBFileName := FConfig.DbasePath;
+    ForceDirectories(TPath.GetDirectoryName(TargetDBFileName));
+
+    // If a database already exists at the target, move it to a backup location
+    if TFile.Exists(TargetDBFileName) then begin
+      var BackupDir := TPath.Combine(TPath.GetDirectoryName(TargetDBFileName), 'Backup');
+      ForceDirectories(BackupDir);
+
+      var Timestamp := FormatDateTime('YYYYMMDD_HHNNSS', Now);
+      var BackupName := TPath.Combine(BackupDir, Format('rb.db.%s.bak', [Timestamp]));
+
+      // Try to move the existing DB to backups; if move fails, try delete + copy
+      try
+        TFile.Move(TargetDBFileName, BackupName);
+      except
+        try
+          TFile.Delete(TargetDBFileName);
+          TFile.Copy(TargetDBFileName, BackupName, True);
+        except
+          Item.SubItems[1] := 'Failed to backup existing DB';
+          Item.Caption := '100';
+          Exit;
+        end;
+      end;
+    end;
+
+    // Now move the imported DB into place
+    try
+      TFile.Move(ImportDBPath, TargetDBFileName);
+      Moved := True;
+    except
+      try
+        // If move fails (e.g., cross-volume), try delete+copy
+        TFile.Delete(ImportDBPath);
+        TFile.Copy(ImportDBPath, TargetDBFileName, True);
+        Moved := True;
+      except
+        Moved := False;
+      end;
+    end;
+
+    if Moved then begin
+      Item.Caption := '100';
+      Item.SubItems[1] := 'Moved';
+    end else begin
+      Item.SubItems[1] := 'Failed to move';
+      Item.Caption := '100';
+    end;
+  finally
+    LvResults.Items.EndUpdate;
+  end;
+
+  // Allow the timer to proceed to next step
+  TimerCheckForNextStep.Enabled := True;
+end;
+
+procedure TDlgUpdateDatabase.FDoNextStep;
+begin
+//  var StepAtStartOfFunction := FCurrentStep;
+//  FCurrentStep := FGetNextStep;
+
+//todo: update header explanation.
+
+  case FCurrentStep of
+    stepStart:        FCurrentStep := FGetNextStep;
+    stepDownload:     FDoDownloadFiles;
+    stepExtract:      FDoExtractFiles;
+    stepValidate:
+    begin
+      //todo: ensure CSV files have the required number of columns
+      // otherwise, show error
+      //FCurrentStep := FGetNextStep;
+    end;
+    stepMoveDBIfNeeded: FMoveDatabaseFromImport;
+    stepBS_DBTables:  FDoCreateDatabaseAndTables(BS_CreateTables); //Result := High(BS_CreateTables) + 2; // +2 because of BSDBVersions
+    stepBS_DBIndexes: FDoCreateDatabaseAndTables(BS_CreateIndexes); //Result := High(BS_CreateIndexes) + 1;
+    //stepImport:       FDoImportCSV;
+    stepCleanup:      FDoCleanup;
+    stepFinished:
+    begin
+      MessageDlg(StrMsgDataBaseUpdateComplete, mtInformation, [mbOK], 0);
+      ModalResult := mrOk;
+    end;
+  end;
+        {
+  var ASyncTask := TTask.Run(procedure
+  begin
+    // Background task
+    try
+      FDoCreateDatabaseAndTables();
+    except
+      //
+    end;
+  end);   }
+
+end;
+
+function TDlgUpdateDatabase.FStepMaxCount(Step: Integer): Integer;
+begin
+  case FCurrentStep of
+    stepStart:          Result := 0;
+    stepDownload:       Result := High(DownloadFileNames) + 1;
+    stepExtract:        Result := High(DownloadFiles) + 1;
+    stepValidate:       Result := High(DownloadFiles) + 1;
+    stepMoveDBIfNeeded: Result := 1;
+    stepBS_DBTables:    Result := High(BS_CreateTables) + 1;
+    //stepRB_DBTables:  Result := High(RB_CreateTablesAndTriggers) + 1;
+    stepBS_DBIndexes:   Result := High(BS_CreateIndexes) + 1;
+    //stepRB_DBIndexes: Result := High(RB_CreateIndexes) + 1;
+    //stepImport:       Result := High(DownloadFiles) + 1;
+    stepCleanup:        Result := High(DownloadFiles) + 1;
+    stepFinished:       Result := 0;
+    else begin
+      Result := 0;
+    end;
+  end;
+end;
+
+procedure TDlgUpdateDatabase.TimerCheckForNextStepTimer(Sender: TObject);
 
   function FIsStepDone(): Boolean;
   begin
-    Result := False;
-
     var AmountDone := 0;
     for var LvItem in LvResults.Items do begin
       if StrToIntDef(LvItem.Caption, 0) = 100 then
         Inc(AmountDone);
     end;
 
-    case FCurrentStep of
-      stepDatabase:   Result := AmountDone = High(CreateTableSQL) + 1;
-      stepDownload:   Result := AmountDone = High(DownloadFiles) + 1;
-      stepExtract:    Result := AmountDone = High(DownloadFiles) + 1;
-      stepImport:     Result := AmountDone = High(DownloadFiles) + 1;
-      stepCleanup:    Result := AmountDone = High(DownloadFiles) + 1;
-    end;
+    Result := AmountDone = FStepMaxCount(FCurrentStep);
   end;
 
 begin
   // Check whether all downloads are finished, if so, disable timer and start the next step
   //  LblDownloadState.Caption := Format('In progress (%d/%d)', [Done, ListView1.Items.Count]);
-  case FCurrentStep of
-    stepDatabase:
-      if FIsStepDone then begin
-        Timer1.Enabled := False;
-        FDoDownloadFiles;
-      end;
-    stepDownload:
-      if FIsStepDone then begin
-        Timer1.Enabled := False;
-        FDoExtractFiles;
-      end;
-    stepExtract:
-      if FIsStepDone then begin
-        Timer1.Enabled := False;
-        FDoImportCSV;
-      end;
-    stepImport:
-      if FIsStepDone then begin
-        Timer1.Enabled := False;
-        FDoCleanup;
-      end;
-    stepCleanup:
-      if FIsStepDone then begin
-        Timer1.Enabled := False;
-        // show results and disable timer
-        //todo: or FUpdateCancelled.
-        //close dialog
-        //show message good luck
-        MessageDlg(StrMsgDataBaseUpdateComplete, mtInformation, [mbOK], 0);
-        ModalResult := mrOk;
-      end;
-    //stepStart:
-      // Should not happen.
+  TimerCheckForNextStep.Enabled := False;
+  try
+    if FIsStepDone then begin
+      FCurrentStep := FGetNextStep;
+      FDoNextStep;
+    end;
+  finally
+    TimerCheckForNextStep.Enabled := True;
   end;
 end;
 
@@ -710,18 +623,10 @@ begin
 
   PCDBWizard.ActivePage := TsTables;
 
-  FCurrentStep := 1;
-  Timer1.Enabled := True;
+  FCurrentStep := stepStart;
+  TimerCheckForNextStep.Enabled := True;
 
-  var SQLTask := TTask.Run(procedure
-  begin
-    // Background task
-    try
-      FDoCreateDatabaseAndTables
-    except
-      //
-    end;
-  end);
+//  FDoNextStep;
 end;
 
 procedure TDlgUpdateDatabase.BtnCancelClick(Sender: TObject);

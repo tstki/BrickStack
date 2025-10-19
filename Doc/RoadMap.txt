@@ -17,32 +17,27 @@ Welcome:
 - "Welcome to BrickStack", splash screen on first load - show progress on creating base tables. (should be fast anyway)
 - Mandatory download of required files / database on first load (the software is kinda useless otherwise)
 - reference to tutorial/about and mandatory database creation steps and updating.
+- Choose a language (with flag icon) - also in settings.
 
 Database:
-- Rename Brickstack tables to something more sensible than "my..."
-- Support .gz files for database import. Can be downloaded manually and placed in import folder.
-- Automate import / Bulk download:
--- https://rebrickable.com/downloads/ - option to perform a bulk download, unzip and fill a local database with this data.
 - Database updater steps:
 -- Start page explaining what it's for. Press Start to start.
 -- Start page, show table with current versions, if available, otherwise "no database yet", press next to download and create it.
--- Find the 12 download links and show the available version. Give user option to close if version is in the last week. (auto check versions later)
--- Show download progress. File 1/12, 50%,. until 12/12 100%
 -- First number is unix time
--- Once downloaded show option to create (if not exist), or wipe and update new imports using sqlite.
--- Once done show results / versions of all tables.
--- Disable buttons while loading.
--- Allow abort with cancel - but keep in mind youll have a broken database.
--- Base "myTable" stuff will need to exist before anything else.
 -- Track versions in myVersions table
 - Comma separated search input, so you can search for sets "and / or"
+
+Database updates:
+- Detect if it's there, and missing the brickstack tables, or drop those tables from brickstack, then import them from the rb.db into brickstack.db
+- Tell user to download and unzip the file, and place it in the import folder.
+- On startup, find the file, copy the tables to our db, then delete it.
+- attach db, create table as select * from src.table
 
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
 - Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases
 - Inline small functions.
 - More multithreading - performing the query and convert to internal values, converting internal values to display list.
-- sql thread safety by connection pooling
 - Configure result limitation so the user cant query the whole database with one number.
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller

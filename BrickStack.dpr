@@ -35,7 +35,9 @@ uses
   UGetImageThread in 'Src\UGetImageThread.pas',
   UDownloadThread in 'Src\UDownloadThread.pas',
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  UBSSQL in 'Src\Scripts\UBSSQL.pas',
+  USQLUpdate in 'Src\Data\USQLUpdate.pas';
 
 {$R *.RES}
 

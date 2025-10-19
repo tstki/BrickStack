@@ -26,7 +26,6 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
     Default = True
     TabOrder = 0
     OnClick = BtnOKClick
-    ExplicitLeft = 433
   end
   object BtnCancel: TButton
     Left = 446
@@ -38,19 +37,17 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
     Caption = 'Close'
     TabOrder = 1
     OnClick = BtnCancelClick
-    ExplicitLeft = 514
   end
   object PCDBWizard: TPageControl
     Left = 8
     Top = 10
     Width = 513
     Height = 409
-    ActivePage = TsStart
+    ActivePage = TsReImport
     Anchors = [akLeft, akTop, akRight, akBottom]
     Style = tsButtons
     TabHeight = 4
     TabOrder = 2
-    ExplicitWidth = 581
     object TsStart: TTabSheet
       Caption = 'TsStart'
       ImageIndex = 1
@@ -97,6 +94,49 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
         505
         395)
       object Memo3: TMemo
+        Left = 3
+        Top = 3
+        Width = 490
+        Height = 343
+        Anchors = [akLeft, akTop, akRight, akBottom]
+        BevelInner = bvNone
+        BorderStyle = bsNone
+        Lines.Strings = (
+          'Welcome (back) to the database wizard.'
+          ''
+          
+            'It looks like the database has received some updates in this ver' +
+            'sion.'
+          ''
+          
+            'From here you can update them with a single click, just press '#39'S' +
+            'tart'#39'.'
+          ''
+          'Here'#39's what we'#39'd need to do:'
+          
+            '- Run a (few) queries to update the affected columns and/or inde' +
+            'xes.'
+          ''
+          
+            'Keep in mind this will take a little bit of time. Updating datab' +
+            'ases is rarely fast.'
+          'Or just click '#39'Close'#39' for now, and we'#39'll ask you again later.'
+          ''
+          'Please understand that database updates are important,'
+          'and skipping this step may put the existing data at risk.'
+          
+            'It'#39's probably a good idea to create a local backup of the databa' +
+            'se file "just in case".')
+        TabOrder = 0
+      end
+    end
+    object TsReImport: TTabSheet
+      Caption = 'TsReImport'
+      ImageIndex = 4
+      DesignSize = (
+        505
+        395)
+      object Memo2: TMemo
         Left = 3
         Top = 3
         Width = 490
@@ -170,7 +210,6 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
           end>
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitWidth = 545
       end
     end
     object TsResults: TTabSheet
@@ -211,7 +250,6 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
           end>
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitWidth = 545
       end
     end
   end
@@ -223,10 +261,10 @@ object DlgUpdateDatabase: TDlgUpdateDatabase
     Caption = 'Don'#39't remind me for at least 30 days'
     TabOrder = 3
   end
-  object Timer1: TTimer
+  object TimerCheckForNextStep: TTimer
     Enabled = False
     Interval = 500
-    OnTimer = Timer1Timer
+    OnTimer = TimerCheckForNextStepTimer
     Left = 320
     Top = 424
   end

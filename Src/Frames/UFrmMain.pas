@@ -9,6 +9,7 @@ uses
   System.SysUtils, System.Classes, System.ImageList, System.Actions,
   USqLiteConnection,
   FireDAC.Comp.Client,
+  UDlgUpdateDatabase,
   UConfig, UImageCache, UPostMessage;
 
 type
@@ -85,6 +86,10 @@ type
     ActUpdateDatabase: TAction;
     Export2: TMenuItem;
     Updatedatabase1: TMenuItem;
+    ActUpdateCSVData: TAction;
+    UpdateCSVdata1: TMenuItem;
+    N5: TMenuItem;
+    N6: TMenuItem;
     procedure FileOpen1Execute(Sender: TObject);
     procedure ActAboutExecute(Sender: TObject);
     procedure FileExit1Execute(Sender: TObject);
@@ -104,6 +109,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure ActUpdateDatabaseExecute(Sender: TObject);
+    procedure ActUpdateCSVDataExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -111,7 +117,9 @@ type
     FConnectionPool: TFDConnectionPool;
     function FCreateMDIChild(AFormClass: TFormClass; const Title: string; AllowMultiple: Boolean): TForm;
     function CtrlShiftPressed: Boolean;
+    function FCheckDatabaseVersion(): TUpdateMode;
     procedure FUpdateUI;
+    function FDoUpdateDatabase(UpdateMode: TUpdateMode): String;
   public
     { Public declarations }
     //class procedure ShowSetList();
@@ -137,7 +145,7 @@ uses
   ShellAPI, IOUtils, Themes, Styles,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
-  UStrings, UDlgUpdateDatabase;
+  UStrings;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 begin
@@ -203,6 +211,88 @@ begin
   Result := (GetKeyState(VK_CONTROL) < 0) and (GetKeyState(VK_SHIFT) < 0);
 end;
 
+function TFrmMain.FCheckDatabaseVersion(): TUpdateMode;
+
+  function FQueryVersion(Query: TFDQuery): Integer;
+  begin
+    Result := 0;
+
+    Query.SQL.Text := 'SELECT MAX(dbversion) AS version' +
+                      ' FROM BSDBVersions';
+    try
+      Query.Open; // Open the query to retrieve data
+
+      try
+        Query.First; // Move to the first row of the dataset
+
+        if not Query.EOF then
+          Result := StrToIntDef(Query.FieldByName('version').AsString, 0);
+      finally
+        Query.Close; // Close the query when done
+      end;
+    except
+      //
+    end;
+  end;
+
+begin
+  if not FileExists(FConfig.DbasePath) then
+    Result := umNEW
+  else begin
+    Result := umNONE;
+
+    var SqlConnection := AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := SqlConnection;
+      var DBVersion := FQueryVersion(FDQuery);
+      if DBVersion < TDlgUpdateDatabase.MinDBVersion then
+        Result := umNOUPDATE
+      else if FQueryVersion(FDQuery) < TDlgUpdateDatabase.CurrentDBVersion then
+        Result := umUPDATE;
+    finally
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+  end;
+end;
+
+function TFrmMain.FDoUpdateDatabase(UpdateMode: TUpdateMode): String;
+begin
+  Result := '';
+  case UpdateMode of
+    umNONE:
+      Result := StrMsgDatabaseIsUpToDate;
+    umNOUPDATE:
+    begin
+      //Todo: Instead of letting the user do this - move the database to a subfolder.
+      //Then, do umNEW (rename to umNEWUPDATE)
+      //Then copy the BS database tables to the new database.
+      Result := StrMsgDatabaseUnableToUpDate;
+    end;
+    umNEW, umUPDATE:
+    begin
+      var DlgUpdateDatabase := TDlgUpdateDatabase.Create(Self);
+      try
+        DlgUpdateDatabase.UpdateMode := UpdateMode;
+        DlgUpdateDatabase.Config := FConfig;
+        DlgUpdateDatabase.ShowModal;
+        FUpdateUI;
+      finally
+        DlgUpdateDatabase.Free;
+      end;
+    end;
+  end;
+end;
+
+procedure TFrmMain.ActUpdateDatabaseExecute(Sender: TObject);
+begin
+  var UpdateMode := FCheckDatabaseVersion;
+  var UpdateResult := FDoUpdateDatabase(UpdateMode);
+  if UpdateResult <> '' then
+    ShowMessage(UpdateResult);
+end;
+
 procedure TFrmMain.FormShow(Sender: TObject);
 begin
   inherited;
@@ -210,16 +300,17 @@ begin
   // Check whether we can show dialogs.
   FUpdateUI;
 
-  var DbasePath := FConfig.DbasePath;
-  if not FileExists(DbasePath) then
-    ActUpdateDatabaseExecute(Self)
-  else begin // Newly created databases are already up to date, so only needed on normal startup:
-//    ActCheckDatabaseVersionUpdate(Self);  // Can force an import update
-//    ActCheckDatabaseImportVersions(Self); // Based on setting, see how often we need to check for import versions.
-  end;
+  // Database validation on startup
+  var UpdateMode := FCheckDatabaseVersion;
+  var UpdateResult := FDoUpdateDatabase(UpdateMode);
+  if SameText(UpdateResult, StrMsgDatabaseUnableToUpDate) then begin
+    ShowMessage(UpdateResult);
+    Exit;
+  end;// else
+  //ActCheckDatabaseImportVersions;  // Based on setting, see how often we need to check for import versions.
 
-  // Check if the user created the database
-  if FileExists(DbasePath) then begin
+  // Check if the user created the database //todo: and if version matches miminum version.
+  if FileExists(FConfig.DbasePath) then begin
     // Restore previously open child windows
     if FConfig.ReOpenWindowsAfterRestart and ActCollection.Enabled then begin
       // Skip if both Ctrl and Shift are pressed, so we can reset window positions.
@@ -625,16 +716,9 @@ begin
   ShowSearchWindow;
 end;
 
-procedure TFrmMain.ActUpdateDatabaseExecute(Sender: TObject);
+procedure TFrmMain.ActUpdateCSVDataExecute(Sender: TObject);
 begin
-  var DlgUpdateDatabase := TDlgUpdateDatabase.Create(Self);
-  try
-    DlgUpdateDatabase.Config := FConfig;
-    DlgUpdateDatabase.ShowModal;
-    FUpdateUI;
-  finally
-    DlgUpdateDatabase.Free;
-  end;
+// reimport the csv data.
 end;
 
 procedure TFrmMain.ActConfigExecute(Sender: TObject);

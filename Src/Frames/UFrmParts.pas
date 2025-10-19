@@ -85,7 +85,7 @@ type
     FPartObjectList: TPartObjectList;
 //    FCurMaxCols: Integer;
     FSetNum: String;
-    FCheckboxMode: Boolean;
+    //FCheckboxMode: Boolean;
     FLastMaxCols: Integer;
 //    FLastCellAction: TCellAction;
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);

@@ -212,6 +212,8 @@
         <DCCReference Include="Src\UDelayedImage.pas"/>
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\UDownloadThread.pas"/>
+        <DCCReference Include="Src\Scripts\UBSSQL.pas"/>
+        <DCCReference Include="Src\Data\USQLUpdate.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

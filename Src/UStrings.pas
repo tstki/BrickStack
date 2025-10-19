@@ -5,6 +5,13 @@ interface
 // Try to keep all labels in one place, so it'll be easier to add translations later.
 
 const
+  // Language defines:
+  lnEN = 0;
+  lnDutch = 1;
+  lnGerman = 2;
+  lnFrench = 3;
+  lnSpanish = 4;
+
   // Constants, links, version info
   StrAboutProductName = 'BrickStack';
   StrAboutCopyright = 'MIT license, Copyright 2025. Thomas. H.';
@@ -114,6 +121,8 @@ const
   StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';
   StrMsgSureRemoveFromList = 'Are you sure you wish to remove set "%s" (num: %s)? This action can''t be undone.';
   StrMsgDataBaseUpdateComplete = 'Database update / creation complete.' + #13#10 + 'If you need information, please use the help menu.' + #13#10#13#10 + 'Good luck!';
+  StrMsgDatabaseIsUpToDate = 'Your database structure is up to date.';
+  StrMsgDatabaseUnableToUpDate = 'Your database structure is beyond the minimum version to update. Please create a backup and remove the database manually, then restart the application.';
 
   // Error strings
   StrErrNoResult = 'No result';
