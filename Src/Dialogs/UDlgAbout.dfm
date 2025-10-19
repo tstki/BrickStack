@@ -3,8 +3,8 @@ object DlgAbout: TDlgAbout
   Top = 127
   BorderStyle = bsDialog
   Caption = 'About'
-  ClientHeight = 206
-  ClientWidth = 297
+  ClientHeight = 223
+  ClientWidth = 345
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clBlack
@@ -14,14 +14,14 @@ object DlgAbout: TDlgAbout
   Position = poScreenCenter
   OnCreate = FormCreate
   DesignSize = (
-    297
-    206)
+    345
+    223)
   TextHeight = 13
   object Panel1: TPanel
     Left = 7
     Top = 7
-    Width = 283
-    Height = 157
+    Width = 327
+    Height = 174
     Margins.Left = 2
     Margins.Top = 2
     Margins.Right = 2
@@ -29,8 +29,8 @@ object DlgAbout: TDlgAbout
     Anchors = [akLeft, akTop, akRight, akBottom]
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitWidth = 286
-    ExplicitHeight = 161
+    ExplicitWidth = 275
+    ExplicitHeight = 156
     object ProgramIcon: TImage
       Left = 8
       Top = 8
@@ -229,8 +229,8 @@ object DlgAbout: TDlgAbout
     end
   end
   object BtnOK: TButton
-    Left = 214
-    Top = 173
+    Left = 258
+    Top = 190
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -239,7 +239,7 @@ object DlgAbout: TDlgAbout
     Default = True
     ModalResult = 1
     TabOrder = 1
-    ExplicitLeft = 217
-    ExplicitTop = 177
+    ExplicitLeft = 206
+    ExplicitTop = 172
   end
 end

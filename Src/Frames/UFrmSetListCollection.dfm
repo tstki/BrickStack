@@ -39,7 +39,7 @@ object FrmSetListCollection: TFrmSetListCollection
     ViewStyle = vsReport
     OnChange = LvSetListsChange
     OnColumnRightClick = LvSetListsColumnRightClick
-    OnDblClick = ActOpenCollectionExecute
+    OnDblClick = ActViewCollectionExecute
     ExplicitWidth = 426
     ExplicitHeight = 253
   end
@@ -64,7 +64,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Width = 30
       Height = 30
       Cursor = crHandPoint
-      Hint = 'Open'
+      Hint = 'View'
       Anchors = [akTop, akRight]
       Picture.Data = {
         0954506E67496D61676589504E470D0A1A0A0000000D49484452000000200000
@@ -143,7 +143,7 @@ object FrmSetListCollection: TFrmSetListCollection
         A316C5C218B89B4919DBC78FA8B573CE4983A9A930F1EBE7788DE9354C6DE83F
         F7A791513548B8220000000049454E44AE426082}
       Stretch = True
-      OnClick = ActOpenCollectionExecute
+      OnClick = ActViewCollectionExecute
       ExplicitLeft = 216
     end
     object LblFilter: TLabel
@@ -642,7 +642,6 @@ object FrmSetListCollection: TFrmSetListCollection
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
-      ExplicitWidth = 106
     end
   end
   object StatusBar1: TStatusBar
@@ -691,11 +690,12 @@ object FrmSetListCollection: TFrmSetListCollection
       ImageIndex = 4
       OnExecute = ActExportExecute
     end
-    object ActOpenCollection: TAction
+    object ActViewCollection: TAction
       Category = 'SetList'
       Caption = 'View...'
+      Hint = 'View'
       ImageIndex = 2
-      OnExecute = ActOpenCollectionExecute
+      OnExecute = ActViewCollectionExecute
     end
   end
   object ImageList16: TImageList
@@ -978,7 +978,7 @@ object FrmSetListCollection: TFrmSetListCollection
     Left = 120
     Top = 176
     object test1: TMenuItem
-      Action = ActOpenCollection
+      Action = ActViewCollection
       SubMenuImages = ImageList16
     end
     object Edit1: TMenuItem
