@@ -95,15 +95,20 @@ begin
   try
     FDQuery.Connection := SqlConnection;
 
-    FDQuery.SQL.Text := 'INSERT INTO BSSets' +
-                        ' (BSSetListID, set_num, Built, Quantity, HaveSpareParts, Notes)' +
-                        ' VALUES(:BSSetListID, :SetNum, :Built, :Quantity, :HaveSpareParts, :Notes);';
+    var SqlStr := 'INSERT INTO BSSets' +
+                  ' (BSSetListID, set_num, Built, HaveSpareParts, Notes)' +
+                  ' VALUES(:BSSetListID, :SetNum, :Built, :HaveSpareParts, :Notes);';
+
+    if StrToInt(EditAmount.Text) > 1 then begin
+      for var I := 1 to StrToInt(EditAmount.Text) do
+        FDQuery.SQL.Text := FDQuery.SQL.Text + SqlStr;
+    end else
+      FDQuery.SQL.Text := SqlStr;
 
     var Params := FDQuery.Params;
     Params.ParamByName('BSSetListID').asInteger := BSSetListID;
     Params.ParamByName('SetNum').asString := Setnum;
     Params.ParamByName('Built').asInteger := IfThen(ChkBuilt.Checked,1,0);
-    Params.ParamByName('Quantity').asInteger := StrToInt(EditAmount.Text); // Already checked to be valid
     Params.ParamByName('HaveSpareParts').asInteger := IfThen(ChkSpareParts.Checked,1,0);
     Params.ParamByName('Notes').asString := MemoNote.Text;
     FDQuery.ExecSQL;

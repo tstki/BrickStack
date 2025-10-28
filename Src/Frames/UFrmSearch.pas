@@ -556,7 +556,7 @@ begin
         if ThemeID > 0 then
           Params.ParamByName('themeid').AsInteger := ThemeID;
 
-        FSetObjectList.LoadFromQuery(FDQuery);
+        FSetObjectList.LoadFromQuery(FDQuery, False);
 
         FLastMaxCols := -1; // Force an invalidate
         FAdjustGrid;

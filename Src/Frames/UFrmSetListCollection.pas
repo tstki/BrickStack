@@ -187,7 +187,7 @@ begin
     // Set up the query
     FDQuery.Connection := SqlConnection;
     FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
-                        ' (select sum(quantity) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
+                        ' (select count(*) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
                         ' FROM BSSetLists m';
     FSetListObjectList.LoadFromQuery(FDQuery);
   finally

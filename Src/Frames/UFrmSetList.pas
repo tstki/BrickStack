@@ -59,7 +59,7 @@ type
   private
     { Private declarations }
     FSetListObject: TSetListObject;
-    FSetObjects: TSetObjectList;
+    FSetObjectListList: TSetObjectListList;
     FOwnsSetList: Boolean;
     FConfig: TConfig;
     FBSSetListID: Integer;
@@ -67,7 +67,8 @@ type
     procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
     procedure FSetBSSetListID(BSSetListID: Integer);
     procedure FRebuildTable;
-    function FGetSelectedObject: TSetObject;
+    function FGetSelectedObject: TSetObjectList;
+    procedure FUpdateStatusBar;
   public
     { Public declarations }
     procedure ReloadAndRefresh;
@@ -101,14 +102,14 @@ procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
   inherited;
 
-  FSetObjects := TSetObjectList.Create;
+  FSetObjectListList := TSetObjectListList.Create;
 end;
 
 procedure TFrmSetList.FormDestroy(Sender: TObject);
 begin
   if FOwnsSetList then
     FSetListObject.Free;
-  FSetObjects.Free;
+  FSetObjectListList.Free;
 
   inherited;
 end;
@@ -149,33 +150,34 @@ begin
   LvSets.Items.BeginUpdate;
   LvSets.Clear;
 
-  for var Obj in FSetObjects do begin
+  for var Obj in FSetObjectListList do begin
+  //todo fix filter
     // Check filter.
     if CbxFilter.ItemIndex = fltQUANTITY then begin
-      if StrToIntDef(Obj.Quantity, 0) <= 1 then
+      if Obj.Quantity <= 1 then
         Continue;
     end else if CbxFilter.ItemIndex = fltBUILT then begin
-      if not Obj.Built then
+      if Obj.Built = 0 then
         Continue;
     end else if CbxFilter.ItemIndex = fltNOTBUILT then begin
-      if Obj.Built then
+      if Obj.Built > 0 then
         Continue;
-    end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
+{    end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
       if not Obj.IncludeSpares then
         Continue;
     end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
       if Obj.IncludeSpares then
-        Continue;
+        Continue;  }
     end; // Else, no filter.
 
     var ListItem := LvSets.Items.Add;
     ListItem.Data := Obj;
     ListItem.Caption := Obj.SetName;
     ListItem.SubItems.Add(Obj.SetNum);
-    ListItem.SubItems.Add(Obj.Quantity);
-    ListItem.SubItems.Add(IfThen(Obj.Built, 'Yes', '-'));
-    ListItem.SubItems.Add(IfThen(Obj.IncludeSpares, 'Yes', '-'));
-    ListItem.SubItems.Add(Obj.Note);
+    ListItem.SubItems.Add(IntToStr(Obj.Quantity));
+    ListItem.SubItems.Add(IfThen(Obj.Built>0, IntToStr(Obj.Built), '0'));
+//    ListItem.SubItems.Add(IfThen(Obj.IncludeSpares>0, 'Yes', '-'));
+//    ListItem.SubItems.Add(Obj.Note);
     //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
     //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
     //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
@@ -199,8 +201,9 @@ begin
       FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
 
       var Params := FDQuery.Params;
-      Params.ParamByName('ID').asInteger := SetObject.BSSetID;
-      FDQuery.ExecSQL;
+      //todo: temporarily disabled.
+//      Params.ParamByName('ID').asInteger := SetObject.BSSetID;
+//      FDQuery.ExecSQL;
     finally
       FDQuery.Free;
       FrmMain.ReleaseConnection(SqlConnection);
@@ -278,7 +281,7 @@ procedure TFrmSetList.ReloadAndRefresh();
   end;
 
 begin
-  FSetObjects.Clear;
+  FSetObjectListList.Clear;
 
   Self.Caption := 'Sets in - ' + FSetlistObject.Name;
 
@@ -288,42 +291,20 @@ begin
     var SqlConnection := FrmMain.AcquireConnection;
     try
       FDQuery.Connection := SqlConnection;
-      FDQuery.SQL.Text := 'SELECT	ms.ID, s.name, s.set_num, s."year", s.num_parts, s.img_url, t.name, ms.Built, ms.Quantity, ms.HaveSpareParts, ms.Notes from BSSets ms'+
-                          ' left join sets s on s.set_num = ms.set_num'+
-                          ' left join themes t on t.id = s.theme_id'+
+      FDQuery.SQL.Text := 'SELECT	ms.ID, s.name, s.set_num, s."year", s.num_parts, s.img_url, t.name, ms.Built, ms.HaveSpareParts, ms.Notes' +
+                          ' from BSSets ms' +
+                          ' left join sets s on s.set_num = ms.set_num' +
+                          ' left join themes t on t.id = s.theme_id' +
                           ' where ms.BSSetListID = :BSSetListID';
 
       var Params := FDQuery.Params;
       Params.ParamByName('BSSetListID').asInteger := FSetListObject.ID;
 
+      // use : TSetObjectListList.LoadFromQuery
+      FSetObjectListList.LoadFromQuery(FDQuery);
+(*
       FDQuery.Open;
       if FDQuery.RecordCount > 0 then begin
-        // process results
-        try
-          FDQuery.First;
-
-          while not FDQuery.EOF do begin
-            var SetObject := TSetObject.Create;
-            SetObject.BSSetID := FDQuery.FieldByName('id').AsInteger;
-            SetObject.SetName := FDQuery.FieldByName('name').AsString;
-            SetObject.SetNum := FDQuery.FieldByName('set_num').AsString;
-            SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
-            SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
-            SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
-            SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
-            SetObject.Quantity := FDQuery.FieldByName('Quantity').AsString;
-            SetObject.IncludeSpares := FIfThen(FDQuery.FieldByName('HaveSpareParts').AsInteger = 1, true, false);
-            SetObject.Built := FIfThen(FDQuery.FieldByName('Built').AsInteger = 1, true, false);
-            SetObject.Note := FDQuery.FieldByName('Notes').AsString;
-
-            FSetObjects.Add(SetObject);
-
-            FDQuery.Next;
-          end;
-        finally
-          FDQuery.Close;
-        end;
-
         //sets fields.
       end else if FSetListObject.ExternalID <> 0 then begin
         // Imported from external
@@ -333,6 +314,7 @@ begin
           //insert into database, call the above code again.
         end;
       end; // Else, it's just an empty list, nothing to do.
+*)
     finally
       FrmMain.ReleaseConnection(SqlConnection);
     end;
@@ -341,6 +323,17 @@ begin
   end;
 
   FRebuildTable;
+  FUpdateStatusBar;
+end;
+
+procedure TFrmSetList.FUpdateStatusBar;
+begin
+  StatusBar1.Panels.BeginUpdate;
+  try
+    StatusBar1.Panels[0].Text := 'Total sets: ' + IntToStr(FSetObjectListList.Quantity);
+  finally
+    StatusBar1.Panels.EndUpdate;
+  end;
 end;
 
 procedure TFrmSetList.FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
@@ -350,17 +343,10 @@ begin
   FOwnsSetList := OwnsObject;
   FSetListObject := SetListObject;
 
-  StatusBar1.Panels.BeginUpdate;
-  try
-    StatusBar1.Panels[0].Text := 'Total sets: ' + IntToStr(FSetListObject.SetCount);
-  finally
-    StatusBar1.Panels.EndUpdate;
-  end;
-
   ReloadAndRefresh;
- end;
+end;
 
-function TFrmSetList.FGetSelectedObject: TSetObject;
+function TFrmSetList.FGetSelectedObject: TSetObjectList;
 begin
   Result := nil;
 

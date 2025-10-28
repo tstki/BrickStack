@@ -18,7 +18,7 @@ const
     // 0: Initial version
     // 0 -> 1: Parts.part_num int -> text(20), .name(200) -> 250, table BSDBPartsInventory, index BSDBVersions
     '',
-    // 1 -> 2: Themes.name text(40) -> text(42)
+    // 1 -> 2: Themes.name text(40) -> text(42), DBSets.quantity -> removed
     ''
   );
 
@@ -40,7 +40,6 @@ const
       '	BSSetListID INTEGER,' +
       '	set_num TEXT(20) NOT NULL,' + // -- link to rebrickable sets table
       '	Built INTEGER,' +
-      '	Quantity INTEGER,' +
       '	HaveSpareParts INTEGER,' +
       '	Notes TEXT(1024));'
     ),
