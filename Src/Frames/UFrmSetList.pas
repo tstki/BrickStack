@@ -56,6 +56,9 @@ type
     procedure ActImportExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
     procedure ActSearchExecute(Sender: TObject);
+    procedure LvSetsDrawItem(Sender: TCustomListView; Item: TListItem; Rect: TRect; State: TOwnerDrawState);
+    procedure LvSetsData(Sender: TObject; Item: TListItem);
+    procedure LvSetsClick(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -66,7 +69,6 @@ type
     procedure FSetConfig(Config: TConfig);
     procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
     procedure FSetBSSetListID(BSSetListID: Integer);
-    procedure FRebuildTable;
     function FGetSelectedObject: TSetObjectList;
     procedure FUpdateStatusBar;
   public
@@ -118,6 +120,8 @@ procedure TFrmSetList.FormShow(Sender: TObject);
 begin
   inherited;
 
+  LvSets.SmallImages := ImageList16;
+
   CbxFilter.Items.Clear;
   CbxFilter.Items.Add(StrSetListFillterShowAll);
   CbxFilter.Items.Add(StrSetListFillterQuantity);
@@ -143,48 +147,6 @@ end;
 procedure TFrmSetList.FSetConfig(Config: TConfig);
 begin
   FConfig := Config;
-end;
-
-procedure TFrmSetList.FRebuildTable();
-begin
-  LvSets.Items.BeginUpdate;
-  LvSets.Clear;
-
-  for var Obj in FSetObjectListList do begin
-  //todo fix filter
-    // Check filter.
-    if CbxFilter.ItemIndex = fltQUANTITY then begin
-      if Obj.Quantity <= 1 then
-        Continue;
-    end else if CbxFilter.ItemIndex = fltBUILT then begin
-      if Obj.Built = 0 then
-        Continue;
-    end else if CbxFilter.ItemIndex = fltNOTBUILT then begin
-      if Obj.Built > 0 then
-        Continue;
-{    end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
-      if not Obj.IncludeSpares then
-        Continue;
-    end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
-      if Obj.IncludeSpares then
-        Continue;  }
-    end; // Else, no filter.
-
-    var ListItem := LvSets.Items.Add;
-    ListItem.Data := Obj;
-    ListItem.Caption := Obj.SetName;
-    ListItem.SubItems.Add(Obj.SetNum);
-    ListItem.SubItems.Add(IntToStr(Obj.Quantity));
-    ListItem.SubItems.Add(IfThen(Obj.Built>0, IntToStr(Obj.Built), '0'));
-//    ListItem.SubItems.Add(IfThen(Obj.IncludeSpares>0, 'Yes', '-'));
-//    ListItem.SubItems.Add(Obj.Note);
-    //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
-    //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
-    //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
-    //SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
-  end;
-
-  LvSets.Items.EndUpdate;
 end;
 
 procedure TFrmSetList.ActDeleteSetExecute(Sender: TObject);
@@ -267,7 +229,7 @@ end;
 
 procedure TFrmSetList.CbxFilterChange(Sender: TObject);
 begin
-  FRebuildTable;
+  ReloadAndRefresh;
 end;
 
 procedure TFrmSetList.ReloadAndRefresh();
@@ -297,11 +259,32 @@ begin
                           ' left join themes t on t.id = s.theme_id' +
                           ' where ms.BSSetListID = :BSSetListID';
 
+      if CbxFilter.ItemIndex = fltQUANTITY then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN ('+
+                                               ' SELECT s2.set_num' +
+                                               ' FROM BSSets ms2' +
+                                               ' LEFT JOIN sets s2 ON s2.set_num = ms2.set_num' +
+                                               ' WHERE ms2.BSSetListID IN (:BSSetListID)' +
+                                               ' GROUP BY s2.set_num' +
+                                               ' HAVING COUNT(*) > 1);'
+      end else if CbxFilter.ItemIndex = fltBUILT then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' and built = 1';
+      end else if CbxFilter.ItemIndex = fltNOTBUILT then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' and built = 0';
+      end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' and havespareparts = 1';
+      end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' and havespareparts = 0';
+      end;
+       // Else, no filter.
+
       var Params := FDQuery.Params;
       Params.ParamByName('BSSetListID').asInteger := FSetListObject.ID;
 
       // use : TSetObjectListList.LoadFromQuery
       FSetObjectListList.LoadFromQuery(FDQuery);
+
+      LvSets.Items.Count := FSetObjectListList.Count;
 (*
       FDQuery.Open;
       if FDQuery.RecordCount > 0 then begin
@@ -322,7 +305,8 @@ begin
     FDQuery.Free;
   end;
 
-  FRebuildTable;
+  LvSets.Invalidate;
+
   FUpdateStatusBar;
 end;
 
@@ -334,6 +318,54 @@ begin
   finally
     StatusBar1.Panels.EndUpdate;
   end;
+end;
+
+procedure TFrmSetList.LvSetsClick(Sender: TObject);
+begin
+  //todo, check: did we click the image?
+  //Insert or remove the sub objects.
+end;
+
+procedure TFrmSetList.LvSetsData(Sender: TObject; Item: TListItem);
+begin
+  inherited;
+  //todo: Also for sorting
+
+  var obj := FSetObjectListList[Item.Index];
+  Item.Data := Obj;
+  Item.ImageIndex := 0;
+  Item.Caption := Obj.SetName;
+  Item.SubItems.Add(Obj.SetNum);
+  Item.SubItems.Add(IntToStr(Obj.Quantity));
+  Item.SubItems.Add(IntToStr(Obj.Built));
+  Item.SubItems.Add(IntToStr(Obj.HaveSpareParts));
+//    Item.SubItems.Add(Obj.Note);
+  //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
+  //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
+  //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
+  //SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+end;
+
+procedure TFrmSetList.LvSetsDrawItem(Sender: TCustomListView; Item: TListItem; Rect: TRect; State: TOwnerDrawState);
+//const
+//  ICON_SPACING = 2;
+begin
+  inherited;
+
+  //not used atm - is this even needed?
+
+{  // Choose the icon index for this item (change as needed, example: always index 0)
+  var IconIndex := 0;
+
+  // Set icon position
+  var IconX := Rect.Left + 2; // A small margin from item left
+  ImageList16.Draw(LvSets.Canvas, IconX, Rect.Top + (Rect.Height - ImageList16.Height) div 2, IconIndex, True);
+
+  // Set text start X position after icon
+  var TextX := IconX + ImageList16.Width + ICON_SPACING;
+
+  // Draw the item caption (move it to the right)
+  LvSets.Canvas.TextOut(TextX, Rect.Top + (Rect.Height - LvSets.Canvas.TextHeight(Item.Caption)) div 2, Item.Caption);     }
 end;
 
 procedure TFrmSetList.FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);

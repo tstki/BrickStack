@@ -44,7 +44,7 @@ implementation
 uses
   Math,
   FireDAC.Comp.Client, FireDAC.Stan.Param, USqLiteConnection,
-  UFrmMain,
+  UFrmMain, Data.DB,
   UStrings;
 
 procedure TDlgAddToSetList.FormCreate(Sender: TObject);

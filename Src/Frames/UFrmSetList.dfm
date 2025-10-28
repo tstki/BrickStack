@@ -598,12 +598,16 @@ object FrmSetList: TFrmSetList
         Caption = 'Note'
         Width = 150
       end>
+    OwnerData = True
     ReadOnly = True
     RowSelect = True
     PopupMenu = PopupMenu1
     TabOrder = 1
     ViewStyle = vsReport
+    OnClick = LvSetsClick
+    OnData = LvSetsData
     OnDblClick = ActViewSetExecute
+    OnDrawItem = LvSetsDrawItem
     ExplicitWidth = 624
     ExplicitHeight = 381
   end

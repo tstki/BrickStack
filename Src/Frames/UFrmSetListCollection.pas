@@ -97,7 +97,6 @@ begin
   LvSetLists.items.BeginUpdate;
   try
     LvSetLists.Items.Clear;
-    LvSetLists.SmallImages := ImageList16;
 
     for var SetListObject in FSetListObjectList do begin
 
@@ -151,6 +150,8 @@ begin
 
   // Research this more later - mdi child anchors are weird.
   Width := 450;
+
+  LvSetLists.SmallImages := ImageList16;
 
   CbxFilter.Items.BeginUpdate;
   try

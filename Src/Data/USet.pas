@@ -20,7 +20,7 @@ type
     FSetThemeName: String;        //t.name,
     FSetNumParts: Integer;        //s.num_parts,
     FSetImgUrl: String;           //s.img_url,
-    FIncludeSpares: Integer;      //ms.HaveSpareParts,
+    FHaveSpareParts: Integer;     //ms.HaveSpareParts,
     FBuilt: Integer;              //ms.Built,
     FNote: String;                //ms.Notes from BSSets ms'+
     //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
@@ -36,7 +36,7 @@ type
     property SetThemeName: String read FSetThemeName write FSetThemeName;
     property SetNumParts: Integer read FSetNumParts write FSetNumParts;
     property SetImgUrl: String read FSetImgUrl write FSetImgUrl;
-    property IncludeSpares: Integer read FIncludeSpares write FIncludeSpares;
+    property HaveSpareParts: Integer read FHaveSpareParts write FHaveSpareParts;
     property Built: Integer read FBuilt write FBuilt;
     property Note: String read FNote write FNote;
   end;
@@ -47,6 +47,7 @@ type
     function FGetFirstObject: TSetObject;
     function FGetQuantity: Integer;
     function FGetBuilt: Integer;
+    function FGetHaveSpareParts: Integer;
     function FGetSetNum: String;
     function FGetSetName: String;
     function FGetSetYear: Integer;
@@ -65,6 +66,7 @@ type
     // Calculated properties:
     property Quantity: Integer read FGetQuantity;
     property Built: Integer read FGetBuilt;
+    property HaveSpareParts: Integer read FGetHaveSpareParts;
 
     // Obtained from the first child object:
     property SetNum: String read FGetSetNum;
@@ -81,6 +83,7 @@ type
   private
     function FGetQuantity: Integer;
     function FGetBuilt: Integer;
+    function FGetHaveSpareParts: Integer;
   public
     function FindListBySetNum(const cSetNum: String): TSetObjectList;
     procedure LoadFromQuery(FDQuery: TFDQuery);
@@ -92,6 +95,7 @@ type
     // Calculated properties:
     property Quantity: Integer read FGetQuantity;
     property Built: Integer read FGetBuilt;
+    property HaveSpareParts: Integer read FGetHaveSpareParts;
   end;
 
 implementation
@@ -105,7 +109,7 @@ procedure TSetObject.ReadFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
 begin
   if IncludeBSSetID then begin
     Self.BSSetID := FDQuery.FieldByName('id').AsInteger;
-    //Self.IncludeSpares := FDQuery.FieldByName('includespares').AsInteger;
+    Self.HaveSpareParts := FDQuery.FieldByName('havespareparts').AsInteger;
     Self.Built := FDQuery.FieldByName('built').AsInteger;
     //Self.Note := FDQuery.FieldByName('note').AsString;
   end;
@@ -150,6 +154,13 @@ begin
   Result := 0;
   for var Obj in Self do
     Result := Result + Obj.Built;
+end;
+
+function TSetObjectList.FGetHaveSpareParts: Integer;
+begin
+  Result := 0;
+  for var Obj in Self do
+    Result := Result + Obj.FHaveSpareParts;
 end;
 
 function TSetObjectList.FGetFirstObject: TSetObject;
@@ -223,7 +234,6 @@ begin
     Result := '';
 end;
 
-
 /// TSetObjectListList
 
 function TSetObjectListList.FindListBySetNum(const cSetNum: String): TSetObjectList;
@@ -268,6 +278,13 @@ begin
   Result := 0;
   for var Obj in Self do
     Result := Result + Obj.Built;
+end;
+
+function TSetObjectListList.FGetHaveSpareParts: Integer;
+begin
+  Result := 0;
+  for var Obj in Self do
+    Result := Result + Obj.HaveSpareParts;
 end;
 
 end.
