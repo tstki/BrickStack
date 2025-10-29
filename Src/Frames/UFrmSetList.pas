@@ -56,9 +56,10 @@ type
     procedure ActImportExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
     procedure ActSearchExecute(Sender: TObject);
-    procedure LvSetsDrawItem(Sender: TCustomListView; Item: TListItem; Rect: TRect; State: TOwnerDrawState);
     procedure LvSetsData(Sender: TObject; Item: TListItem);
     procedure LvSetsClick(Sender: TObject);
+    procedure LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure LvSetsDblClick(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -66,11 +67,16 @@ type
     FOwnsSetList: Boolean;
     FConfig: TConfig;
     FBSSetListID: Integer;
+    FLvSetsLastClickPos: TPoint;
     procedure FSetConfig(Config: TConfig);
     procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
     procedure FSetBSSetListID(BSSetListID: Integer);
-    function FGetSelectedObject: TSetObjectList;
+    function FGetSelectedObject: TObject;
+    function FGetSelectedSetNum: String;
     procedure FUpdateStatusBar;
+    function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
+    function FGetVisibleRowCount: Integer;
+    procedure FHandleClickType(Sender: TObject; DoubleClick: Boolean);
   public
     { Public declarations }
     procedure ReloadAndRefresh;
@@ -84,8 +90,10 @@ implementation
 {$R *.dfm}
 
 uses
+  Types,
   StrUtils,
   Math,
+  TypInfo,
   Data.DB,
   USqLiteConnection,
   UITypes,
@@ -151,34 +159,46 @@ end;
 
 procedure TFrmSetList.ActDeleteSetExecute(Sender: TObject);
 begin
-  var SetObject := FGetSelectedObject;
-  if (SetObject <> nil) and (SetObject.SetNum <> '') and
-     (MessageDlg(Format(StrMsgSureRemoveFromList, [SetObject.SetName, SetObject.SetNum]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
+  var Obj := FGetSelectedObject;
+  if Obj.ClassType = TSetObjectList then begin
+    // Ask user if they are sure they want to delete all the sets in one go.
+    //ReloadAndRefresh;
+    //TFrmMain.UpdateCollectionsByID(FBSSetListID);
+//    if (SetObject <> nil) and (SetObject.SetNum <> '') and
+//       (MessageDlg(Format(StrMsgSureRemoveFromList, [SetObject.SetName, SetObject.SetNum]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
+//        FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE SET_NUM=:SETNUM';
+  end else begin
+    var SetObject := TSetObject(Obj);
 
-    var SqlConnection := FrmMain.AcquireConnection;
-    var FDQuery := TFDQuery.Create(nil);
-    try
-      FDQuery.Connection := SqlConnection;
+    if (SetObject <> nil) and (SetObject.SetNum <> '') and
+       (MessageDlg(Format(StrMsgSureRemoveFromList, [SetObject.SetName, SetObject.SetNum]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
 
-      FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
+      var SqlConnection := FrmMain.AcquireConnection;
+      var FDQuery := TFDQuery.Create(nil);
+      try
+        FDQuery.Connection := SqlConnection;
 
-      var Params := FDQuery.Params;
-      //todo: temporarily disabled.
-//      Params.ParamByName('ID').asInteger := SetObject.BSSetID;
-//      FDQuery.ExecSQL;
-    finally
-      FDQuery.Free;
-      FrmMain.ReleaseConnection(SqlConnection);
+        FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
+
+        var Params := FDQuery.Params;
+        //todo: temporarily disabled.
+        Params.ParamByName('ID').asInteger := SetObject.BSSetID;
+        FDQuery.ExecSQL;
+      finally
+        FDQuery.Free;
+        FrmMain.ReleaseConnection(SqlConnection);
+      end;
+
+      ReloadAndRefresh;
+      TFrmMain.UpdateCollectionsByID(FBSSetListID);
     end;
   end;
 
-  ReloadAndRefresh;
 
 //todo:
 //check if there's a details dialog open that needs to be closed or cleared
 
   //TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
-  TFrmMain.UpdateCollectionsByID(FBSSetListID);
 end;
 
 procedure TFrmSetList.ActEditSetExecute(Sender: TObject);
@@ -206,25 +226,38 @@ begin
 //
 end;
 
+function TFrmSetList.FGetSelectedSetNum: String;
+begin
+  Result := '';
+  var Obj := FGetSelectedObject;
+  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
+    var SetObject := TSetObject(Obj);
+    Result := SetObject.SetNum;
+  end else begin
+    var SetObjectList := TSetObjectList(Obj);
+    Result := SetObjectList[0].SetNum;
+  end;
+end;
+
 procedure TFrmSetList.ActViewSetExecute(Sender: TObject);
 begin
-  var SetObject := FGetSelectedObject;
-  if (SetObject <> nil) and (SetObject.SetNum <> '') then
-    TFrmMain.ShowSetWindow(SetObject.SetNum);
+  var SetNum := FGetSelectedSetNum;
+  if SetNum <> '' then
+    TFrmMain.ShowSetWindow(SetNum);
 end;
 
 procedure TFrmSetList.ActViewExternalExecute(Sender: TObject);
 begin
-  var SetObject := FGetSelectedObject;
-  if (SetObject <> nil) and (SetObject.SetNum <> '') then
-    TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
+  var SetNum := FGetSelectedSetNum;
+  if SetNum <> '' then
+    TFrmMain.OpenExternal(cTYPESET, SetNum);
 end;
 
 procedure TFrmSetList.ActViewPartsListExecute(Sender: TObject);
 begin
-  var SetObject := FGetSelectedObject;
-  if (SetObject <> nil) and (SetObject.SetNum <> '') then
-    TFrmMain.ShowPartsWindow(SetObject.SetNum);
+  var SetNum := FGetSelectedSetNum;
+  if SetNum <> '' then
+    TFrmMain.ShowPartsWindow(SetNum);
 end;
 
 procedure TFrmSetList.CbxFilterChange(Sender: TObject);
@@ -246,7 +279,7 @@ begin
   FSetObjectListList.Clear;
 
   Self.Caption := 'Sets in - ' + FSetlistObject.Name;
-
+//todo: remember the list of currently expanded setObjectList items so we can re-expand them after the update.
   var FDQuery := TFDQuery.Create(nil);
   try
     // Set up the query
@@ -310,6 +343,17 @@ begin
   FUpdateStatusBar;
 end;
 
+function TFrmSetList.FGetVisibleRowCount: Integer;
+begin
+  Result := 0;
+  for var I := 0 to FSetObjectListList.Count - 1 do begin
+    Inc(Result); // Count parent row
+    var Obj := FSetObjectListList[I];
+    if Obj.Expanded then
+      Inc(Result, Obj.Quantity); // Count children only if expanded
+  end;
+end;
+
 procedure TFrmSetList.FUpdateStatusBar;
 begin
   StatusBar1.Panels.BeginUpdate;
@@ -320,10 +364,85 @@ begin
   end;
 end;
 
-procedure TFrmSetList.LvSetsClick(Sender: TObject);
+procedure TFrmSetList.LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  FLvSetsLastClickPos := Point(X, Y);
+end;
+
+procedure TFrmSetList.FHandleClickType(Sender: TObject; DoubleClick: Boolean);
+var
+  ImageRect: TRect;
 begin
   //todo, check: did we click the image?
   //Insert or remove the sub objects.
+
+  //handle doubleclick here.
+
+  var Item := LvSets.GetItemAt(FLvSetsLastClickPos.X, FLvSetsLastClickPos.Y);
+  if Item = nil then
+    Exit;
+
+  var ItemRect := Item.DisplayRect(drBounds);
+  ImageRect.Left := ItemRect.Left + 2; // small left margin
+  ImageRect.Top := ItemRect.Top + (ItemRect.Height - 16) div 2;
+  ImageRect.Right := ImageRect.Left + 16;
+  ImageRect.Bottom := ImageRect.Top + 16;
+
+  if PtInRect(ImageRect, FLvSetsLastClickPos) then begin
+    // Toggle or set a different image index for the clicked item
+    if Item.Data <> nil then begin
+      var Obj := TObject(Item.Data);
+      if Obj.ClassType = TSetObjectList then begin
+        var SetObjectList := TSetObjectList(Obj);
+        if SetObjectList.Quantity > 1 then begin
+          SetObjectList.Expanded := not SetObjectList.Expanded;
+
+          LvSets.Items.Count := FGetVisibleRowCount;
+          LvSets.Invalidate; // force redraw
+        end;
+      end;
+    end;
+  end else if DoubleClick then
+    ActViewSetExecute(Self);
+end;
+
+procedure TFrmSetList.LvSetsClick(Sender: TObject);
+begin
+  FHandleClickType(Sender, False);
+end;
+
+procedure TFrmSetList.LvSetsDblClick(Sender: TObject);
+begin
+  FHandleClickType(Sender, True);
+end;
+
+function TFrmSetList.FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
+begin
+  // Flattened row traversal
+  var CurPos := 0; // Current 'virtual' index in the listview rows
+
+  for var I := 0 to FSetObjectListList.Count - 1 do begin
+    var Obj := FSetObjectListList[i];
+    if CurPos = ItemIndex then begin
+      Result := Obj;
+      Exit;
+    end;
+    Inc(CurPos);
+
+    if Obj.Expanded then begin
+      // Loop through children if expanded
+      for var ChildIdx := 0 to Obj.Quantity - 1 do begin
+        if CurPos = ItemIndex then begin
+          // Optionally: return a reference to the child, or the parent and a child index
+          Result := Obj[ChildIdx];
+          Exit;
+        end;
+        Inc(CurPos);
+      end;
+    end;
+  end;
+
+  Result := nil; // Fallback, not found
 end;
 
 procedure TFrmSetList.LvSetsData(Sender: TObject; Item: TListItem);
@@ -331,41 +450,45 @@ begin
   inherited;
   //todo: Also for sorting
 
-  var obj := FSetObjectListList[Item.Index];
+  var Obj := FGetSetObjByItemIndex(Item.Index);
+//todo, create a base object that houses the variables both bits of code need, so we dont need double code here
   Item.Data := Obj;
-  Item.ImageIndex := 0;
-  Item.Caption := Obj.SetName;
-  Item.SubItems.Add(Obj.SetNum);
-  Item.SubItems.Add(IntToStr(Obj.Quantity));
-  Item.SubItems.Add(IntToStr(Obj.Built));
-  Item.SubItems.Add(IntToStr(Obj.HaveSpareParts));
+  if Obj.ClassType = TSetObjectList then begin
+    var SetObjectList := TSetObjectList(Obj);
+    var BSSetID := 0;
+    if SetObjectList.Quantity > 1 then
+      Item.ImageIndex := IfThen(SetObjectList.Expanded, 11, 10)
+    else begin // Quantity = 1
+      Item.ImageIndex := 9;
+      BSSetID := SetObjectList[0].BSSetID;
+    end;
+    Item.Caption := SetObjectList.SetName;
+    if BSSetID > 0 then
+      Item.SubItems.Add(IntToStr(BSSetID))
+    else
+      Item.SubItems.Add('');
+    Item.SubItems.Add(SetObjectList.SetNum);
+    Item.SubItems.Add(IntToStr(SetObjectList.Quantity));
+    Item.SubItems.Add(IntToStr(SetObjectList.Built));
+    Item.SubItems.Add(IntToStr(SetObjectList.HaveSpareParts));
+  end else begin
+    var SetObject := TSetObject(Obj);
+    Item.ImageIndex := 9;
+    Item.Caption := '  ' + SetObject.SetName;
+    Item.SubItems.Add(IntToStr(SetObject.BSSetID));
+    Item.SubItems.Add(SetObject.SetNum);
+    Item.SubItems.Add('1');
+    Item.SubItems.Add(IntToStr(SetObject.Built));
+    Item.SubItems.Add(IntToStr(SetObject.HaveSpareParts));
+    Item.SubItems.Add(SetObject.Note);
+  end;
+
+  //var Obj := FSetObjectListList[Item.Index]; // calculate item by open/selected
 //    Item.SubItems.Add(Obj.Note);
   //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
   //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
   //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
   //SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
-end;
-
-procedure TFrmSetList.LvSetsDrawItem(Sender: TCustomListView; Item: TListItem; Rect: TRect; State: TOwnerDrawState);
-//const
-//  ICON_SPACING = 2;
-begin
-  inherited;
-
-  //not used atm - is this even needed?
-
-{  // Choose the icon index for this item (change as needed, example: always index 0)
-  var IconIndex := 0;
-
-  // Set icon position
-  var IconX := Rect.Left + 2; // A small margin from item left
-  ImageList16.Draw(LvSets.Canvas, IconX, Rect.Top + (Rect.Height - ImageList16.Height) div 2, IconIndex, True);
-
-  // Set text start X position after icon
-  var TextX := IconX + ImageList16.Width + ICON_SPACING;
-
-  // Draw the item caption (move it to the right)
-  LvSets.Canvas.TextOut(TextX, Rect.Top + (Rect.Height - LvSets.Canvas.TextHeight(Item.Caption)) div 2, Item.Caption);     }
 end;
 
 procedure TFrmSetList.FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
@@ -378,7 +501,7 @@ begin
   ReloadAndRefresh;
 end;
 
-function TFrmSetList.FGetSelectedObject: TSetObjectList;
+function TFrmSetList.FGetSelectedObject: TObject;
 begin
   Result := nil;
 

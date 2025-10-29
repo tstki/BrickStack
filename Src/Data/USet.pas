@@ -44,6 +44,7 @@ type
   //todo: convert these to TDictionary Later.
   TSetObjectList = class(TObjectList<TSetObject>)
   private
+    FExpanded: Boolean;
     function FGetFirstObject: TSetObject;
     function FGetQuantity: Integer;
     function FGetBuilt: Integer;
@@ -62,6 +63,9 @@ type
     //procedure LoadFromFile;
     //procedure SaveToFile(ReWrite: Boolean);
     //procedure SaveToSQL(SqlConnection: TFDConnection);
+
+    // Used for TListView
+    property Expanded: Boolean read FExpanded write FExpanded; // Quantity (below) is checked to determine if expanding is possible.
 
     // Calculated properties:
     property Quantity: Integer read FGetQuantity;
@@ -111,7 +115,7 @@ begin
     Self.BSSetID := FDQuery.FieldByName('id').AsInteger;
     Self.HaveSpareParts := FDQuery.FieldByName('havespareparts').AsInteger;
     Self.Built := FDQuery.FieldByName('built').AsInteger;
-    //Self.Note := FDQuery.FieldByName('note').AsString;
+    Self.Note := FDQuery.FieldByName('notes').AsString;
   end;
   Self.SetNum := FDQuery.FieldByName('set_num').AsString;
   Self.SetName := FDQuery.FieldByName('name').AsString;
