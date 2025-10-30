@@ -212,11 +212,9 @@ object FrmParts: TFrmParts
       Top = 7
       Width = 119
       Height = 27
-      Max = 128
-      Min = 32
-      PageSize = 16
-      Frequency = 16
-      Position = 64
+      Max = 6
+      PageSize = 1
+      Position = 2
       TabOrder = 2
       OnChange = TbGridSizeChange
     end

@@ -305,11 +305,9 @@ object FrmSearch: TFrmSearch
       Top = 35
       Width = 109
       Height = 27
-      Max = 256
-      Min = 32
-      PageSize = 16
-      Frequency = 16
-      Position = 128
+      Max = 14
+      PageSize = 1
+      Position = 4
       TabOrder = 6
       OnChange = TbGridSizeChange
     end

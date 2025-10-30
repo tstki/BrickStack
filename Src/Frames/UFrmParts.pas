@@ -92,6 +92,7 @@ type
 //    procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
+    function FTBGridSizePositionToPixels: Integer;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -118,6 +119,11 @@ const
   cPARTSORTBYCATEGORY = 3;
   //cPARTSORTBYPRICE = 3; // No price info yet
   cPARTSORTBYQUANTITY = 4;
+
+function TFrmParts.FTBGridSizePositionToPixels: Integer;
+begin
+  Result := 32 + (TbGridSize.Position*16);
+end;
 
 procedure TFrmParts.ActExportExecute(Sender: TObject);
 begin
@@ -203,19 +209,19 @@ begin
 
   // todo: We can add a slider to scale this up later, or a popup window to zoom in on the image.
   // Just make it exist first.
-  DgSetParts.DefaultColWidth := TbGridSize.Position;
+  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
   if DgSetParts.DefaultColWidth >= 64 then
-    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
   else if DgSetParts.DefaultColWidth >= 48 then
-    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 20
   else
-    DgSetParts.DefaultRowHeight := TbGridSize.Position;
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels;
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
 
   FAdjustGrid;
 
-  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
+  LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
 end;
 
 procedure TFrmParts.FAdjustGrid();
@@ -243,16 +249,16 @@ end;
 
 procedure TFrmParts.TbGridSizeChange(Sender: TObject);
 begin
-  DgSetParts.DefaultColWidth := TbGridSize.Position;
+  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
   if DgSetParts.DefaultColWidth >= 64 then
-    DgSetParts.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
   else if DgSetParts.DefaultColWidth >= 48 then
-    DgSetParts.DefaultRowHeight := TbGridSize.Position + 20
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 20
   else
-    DgSetParts.DefaultRowHeight := TbGridSize.Position;
+    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels;
   FAdjustGrid;
 
-  LblPartsGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px'
+  LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px'
 end;
 
 procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);

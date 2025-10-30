@@ -123,6 +123,7 @@ type
     function FGetToParts(): Integer;
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
+    function FTBGridSizePositionToPixels: Integer;
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -171,6 +172,11 @@ const
   cSearchSuffix = 2; // "%SearchText" and "%Searchtext-1" // Find parts of sets
   cSearchExact = 3; // "SearchText"
 
+function TFrmSearch.FTBGridSizePositionToPixels: Integer;
+begin
+  Result := 32 + (TbGridSize.Position*16);
+end;
+
 procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
   inherited;
@@ -217,18 +223,18 @@ begin
 //  SbSearchResults.UseWheelForScrolling := True;
   BtnExpandOptionsClick(Self);
 
-  DgSets.DefaultColWidth := TbGridSize.Position;
+  DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
   if DgSets.DefaultColWidth >= 64 then begin
     if PnlSearchOptions.Visible then
-      DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
     else
-      DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
   end else
-    DgSets.DefaultRowHeight := TbGridSize.Position;
+    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels;
   DgSets.FixedCols := 0;
   DgSets.FixedRows := 0;
 
-  TbGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
+  TbGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
 
   FLastMaxCols := -1;
   FAdjustGrid;
@@ -325,17 +331,17 @@ end;
 
 procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
 begin
-  DgSets.DefaultColWidth := TbGridSize.Position;
+  DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
   if DgSets.DefaultColWidth >= 64 then begin
     if PnlSearchOptions.Visible then
-      DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
     else
-      DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
   end else
-    DgSets.DefaultRowHeight := TbGridSize.Position;
+    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels;
   FAdjustGrid;
 
-  TbGridSizePx.Caption := IntToStr(TbGridSize.Position) + 'px';
+  TbGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
 end;
 
 procedure TFrmSearch.BtnExpandOptionsClick(Sender: TObject);
@@ -351,9 +357,9 @@ begin
   end;
 
   if PnlSearchOptions.Visible then
-    DgSets.DefaultRowHeight := TbGridSize.Position + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
   else
-    DgSets.DefaultRowHeight := TbGridSize.Position + 20; // 64 + 20
+    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
 
   DgSets.Invalidate;
 end;

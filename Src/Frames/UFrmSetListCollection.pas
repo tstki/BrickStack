@@ -63,6 +63,7 @@ type
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
     procedure FRebuildListView;
+    procedure FUpdateUI;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -200,10 +201,21 @@ begin
     FRebuildListView;
 end;
 
+procedure TFrmSetListCollection.FUpdateUI;
+begin
+  //ActAddSetList
+  //ActDeleteSetList
+  //ActEditSetList
+  //ActImport
+  //ActExport
+  //ActViewCollection
+end;
+
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
 begin
   inherited;
 // Check selection. Enable/disable actions as needed.
+  FUpdateUI;
 end;
 
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
