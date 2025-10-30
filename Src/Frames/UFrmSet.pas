@@ -186,6 +186,7 @@ procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);
 begin
   var DlgAddToSetList := TDlgAddToSetList.Create(Self);
   try
+    DlgAddToSetList.BSSetID := 0; // New
     DlgAddToSetList.SetNum := FSetNum;
     if DlgAddToSetList.ShowModal = mrOK then begin
       //Do add to BSSets

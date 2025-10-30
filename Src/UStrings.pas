@@ -37,6 +37,7 @@ const
   StrFrmSetTitle = 'Lego set: %s - %s';
   StrMax = 'Max: %d';
   StrAddSetTo = 'Add set ''%s'' to:';
+  StrEditSetTo = 'Edit set ''%s'' (%d):';
   StrSelectFile = 'Select a file';
   StrNewCollectionName = 'New collection';
   StrYouHaveSetsCollections = 'You have %d sets across %d setlists.';

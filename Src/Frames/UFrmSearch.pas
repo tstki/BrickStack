@@ -588,40 +588,6 @@ procedure TFrmSearch.ImgSearchClick(Sender: TObject);
 begin
   FDoSearch;
 end;
-           {
-function GetSetNumByComponentName(ComponentName: String): String;
-begin
-  //move this to a utility class / generic function
-  Result := '';
-  try
-    var SplittedString := ComponentName.Split(['_']);
-    if High(SplittedString) > 1 then begin
-      Result := SplittedString[1] + '-' + SplittedString[2];
-      //Add set to collections by setnum
-    end;
-  except
-    // Log error.
-  end;
-end;
-
-procedure TFrmSearch.ImgAddSetClick(Sender: TObject);
-begin
-  var SetNum := GetSetNumByComponentName(TImage(Sender).Name);
-  //Open the dialog to add the set to inventory
-  //Post message to update the inventory if it's open
-  var DlgAddToSetList := TDlgAddToSetList.Create(Self);
-  try
-    DlgAddToSetList.SetNum := SetNum;
-    if DlgAddToSetList.ShowModal = mrOK then begin
-    //TODO
-      //perform query insert
-      //Add SetNum
-      //postmessate to frmmain to update ufrmsetlist if it's open and the set got added to the active setlist
-    end;
-  finally
-    DlgAddToSetList.Free;
-  end;
-end;  }
 
 procedure TFrmSearch.ActAddSetToCollectionExecute(Sender: TObject);
 begin
@@ -631,9 +597,10 @@ begin
     var SetObject := FSetObjectList[Idx];
     var DlgAddToSetList := TDlgAddToSetList.Create(Self);
     try
+      DlgAddToSetList.BSSetID := 0; // New
       DlgAddToSetList.SetNum := SetObject.SetNum;
       if DlgAddToSetList.ShowModal = mrOK then begin
-        //Do add to BSSets
+        // DlgAddToSetList handles the query.
       end;
     finally
       DlgAddToSetList.Free;

@@ -73,6 +73,7 @@ type
     procedure FSetBSSetListID(BSSetListID: Integer);
     function FGetSelectedObject: TObject;
     function FGetSelectedSetNum: String;
+    function FGetSelectedBSSetID: Integer;
     procedure FUpdateStatusBar;
     function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
     function FGetVisibleRowCount: Integer;
@@ -97,7 +98,7 @@ uses
   Data.DB,
   USqLiteConnection,
   UITypes,
-  UFrmMain, UStrings;
+  UFrmMain, UDlgAddToSetList, UStrings;
 
 const //CbxFilter
   fltALL = 0;
@@ -202,13 +203,38 @@ begin
 end;
 
 procedure TFrmSetList.ActEditSetExecute(Sender: TObject);
+var
+  BSSetID: Integer;
+  SetNum: String;
 begin
-//todo: do addToSetList dialog.
-//set mode add or update.
+  var Obj := FGetSelectedObject;
+  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
+    var SetObject := TSetObject(Obj);
+    SetNum := SetObject.SetNum;
+    BSSetID := SetObject.BSSetID;
+  end else begin
+    var SetObjectList := TSetObjectList(Obj);
+    if SetObjectList.Count = 1 then begin
+      SetNum := SetObjectList[0].SetNum;
+      BSSetID := SetObjectList[0].BSSetID;
+    end else
+      BSSetID := 0;
+  end;
 
-//update query
-
-//update table
+  // Cant edit without an ID
+  if BSSetID <> 0 then begin
+    var DlgAddToSetList := TDlgAddToSetList.Create(Self);
+    try
+      DlgAddToSetList.BSSetID := BSSetID; // Edit
+      DlgAddToSetList.BSSetListID := FBSSetListID;
+      DlgAddToSetList.SetNum := SetNum;
+      if DlgAddToSetList.ShowModal = mrOK then begin
+        // DlgAddToSetList handles OK
+      end;
+    finally
+      DlgAddToSetList.Free;
+    end;
+  end;
 end;
 
 procedure TFrmSetList.ActExportExecute(Sender: TObject);
@@ -228,7 +254,6 @@ end;
 
 function TFrmSetList.FGetSelectedSetNum: String;
 begin
-  Result := '';
   var Obj := FGetSelectedObject;
   if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
     var SetObject := TSetObject(Obj);
@@ -236,6 +261,21 @@ begin
   end else begin
     var SetObjectList := TSetObjectList(Obj);
     Result := SetObjectList[0].SetNum;
+  end;
+end;
+
+function TFrmSetList.FGetSelectedBSSetID: Integer;
+begin
+  var Obj := FGetSelectedObject;
+  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
+    var SetObject := TSetObject(Obj);
+    Result := SetObject.BSSetID;
+  end else begin
+    var SetObjectList := TSetObjectList(Obj);
+    if SetObjectList.Count = 1 then
+      Result := SetObjectList[0].BSSetID
+    else
+      Result := 0;
   end;
 end;
 
@@ -456,11 +496,13 @@ begin
   if Obj.ClassType = TSetObjectList then begin
     var SetObjectList := TSetObjectList(Obj);
     var BSSetID := 0;
+    var Note := '';
     if SetObjectList.Quantity > 1 then
       Item.ImageIndex := IfThen(SetObjectList.Expanded, 11, 10)
     else begin // Quantity = 1
       Item.ImageIndex := 9;
       BSSetID := SetObjectList[0].BSSetID;
+      Note := SetObjectList[0].Note;
     end;
     Item.Caption := SetObjectList.SetName;
     if BSSetID > 0 then
@@ -471,6 +513,7 @@ begin
     Item.SubItems.Add(IntToStr(SetObjectList.Quantity));
     Item.SubItems.Add(IntToStr(SetObjectList.Built));
     Item.SubItems.Add(IntToStr(SetObjectList.HaveSpareParts));
+    Item.SubItems.Add(Note);
   end else begin
     var SetObject := TSetObject(Obj);
     Item.ImageIndex := 9;
@@ -515,7 +558,7 @@ end;
 
 procedure TFrmSetList.FSetBSSetListID(BSSetListID: Integer);
 begin
-  BSSetListID := BSSetListID;
+  FBSSetListID := BSSetListID;
 
   var SetListObject := TSetListObject.Create;
   SetListObject.LoadByID(BSSetListID);

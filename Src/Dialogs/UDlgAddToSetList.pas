@@ -13,7 +13,7 @@ type
     CbxSetList: TComboBox;
     BtnCancel: TButton;
     BtnOK: TButton;
-    Label1: TLabel;
+    LblAmount: TLabel;
     EditAmount: TEdit;
     ChkBuilt: TCheckBox;
     ChkSpareParts: TCheckBox;
@@ -28,12 +28,18 @@ type
     procedure BtnOKClick(Sender: TObject);
   private
     { Private declarations }
+    FBSSetID: Integer;
+    FBSSetListID: Integer;
     FSetNum: String;
     FSetListObjectList: TSetListObjectList;
     procedure FFillPulldown();
     procedure FUpdateUI();
+    procedure FSetBSSetID(BSSetID: Integer);
   public
     { Public declarations }
+
+    property BSSetID: Integer read FBSSetID write FSetBSSetID;
+    property BSSetListID: Integer read FBSSetListID write FBSSetListID;
     property SetNum: String read FSetNum write FSetNum;
   end;
 
@@ -50,6 +56,9 @@ uses
 procedure TDlgAddToSetList.FormCreate(Sender: TObject);
 begin
   inherited;
+
+  EditAmount.Text := '1';
+
   FSetListObjectList := TSetListObjectList.Create;
 end;
 
@@ -61,12 +70,48 @@ end;
 
 procedure TDlgAddToSetList.FormShow(Sender: TObject);
 begin
-  Self.Caption := Format(StrAddSetTo, [SetNum]);
+  if FBSSetID <> 0 then
+    Self.Caption := Format(StrEditSetTo, [FSetNum, FBSSetID])
+  else
+    Self.Caption := Format(StrAddSetTo, [FSetNum]);
+
+  LblAmount.Enabled := FBSSetID = 0;
+  EditAmount.Enabled := FBSSetID = 0;
 
   FFillPulldown;
-  EditAmount.Text := '1';
   MemoNoteChange(Self);
   FUpdateUI;
+end;
+
+procedure TDlgAddToSetList.FSetBSSetID(BSSetID: Integer);
+begin
+  FBSSetID := BSSetID;
+
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+  try
+    FDQuery.Connection := SqlConnection;
+
+    FDQuery.SQL.Text := 'SELECT BSSetListID, set_num, Built, HaveSpareParts, Notes from BSSets' +
+                        ' WHERE ID = :ID;';
+
+    var Params := FDQuery.Params;
+    Params.ParamByName('ID').asInteger := BSSetID;
+    FDQuery.Open;
+
+    if not FDQuery.Eof then begin
+      FBSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
+      FSetNum := FDQuery.FieldByName('set_num').AsString;
+      ChkBuilt.Checked := FDQuery.FieldByName('Built').AsInteger = 1;
+      ChkSpareParts.Checked := FDQuery.FieldByName('HaveSpareParts').AsInteger = 1;
+      MemoNote.Text := FDQuery.FieldByName('Notes').AsString;
+    end;
+
+    //read query result
+  finally
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
 end;
 
 procedure TDlgAddToSetList.OnChange(Sender: TObject);
@@ -95,22 +140,32 @@ begin
   try
     FDQuery.Connection := SqlConnection;
 
-    var SqlStr := 'INSERT INTO BSSets' +
-                  ' (BSSetListID, set_num, Built, HaveSpareParts, Notes)' +
-                  ' VALUES(:BSSetListID, :SetNum, :Built, :HaveSpareParts, :Notes);';
+    var SqlStr := '';
+    if FBSSetID <> 0 then begin
+      SqlStr := 'UPDATE BSSets' +
+                ' SET BSSetListID = :BSSetListID, Built = :Built, HaveSpareParts = :HaveSpareParts, Notes = :Notes' +
+                ' WHERE ID = :ID;';
+    end else begin
+      SqlStr := 'INSERT INTO BSSets' +
+                ' (BSSetListID, set_num, Built, HaveSpareParts, Notes)' +
+                ' VALUES(:BSSetListID, :SetNum, :Built, :HaveSpareParts, :Notes);';
+      if StrToInt(EditAmount.Text) > 1 then begin
+        for var I := 1 to StrToInt(EditAmount.Text) do
+          SqlStr := SqlStr + SqlStr;
+      end;
+    end;
 
-    if StrToInt(EditAmount.Text) > 1 then begin
-      for var I := 1 to StrToInt(EditAmount.Text) do
-        FDQuery.SQL.Text := FDQuery.SQL.Text + SqlStr;
-    end else
-      FDQuery.SQL.Text := SqlStr;
+    FDQuery.SQL.Text := SqlStr;
 
     var Params := FDQuery.Params;
     Params.ParamByName('BSSetListID').asInteger := BSSetListID;
-    Params.ParamByName('SetNum').asString := Setnum;
+    if FBSSetID = 0 then
+      Params.ParamByName('SetNum').asString := Setnum;
     Params.ParamByName('Built').asInteger := IfThen(ChkBuilt.Checked,1,0);
     Params.ParamByName('HaveSpareParts').asInteger := IfThen(ChkSpareParts.Checked,1,0);
     Params.ParamByName('Notes').asString := MemoNote.Text;
+    if FBSSetID <> 0 then
+      Params.ParamByName('ID').asInteger := FBSSetID;
     FDQuery.ExecSQL;
   finally
     FDQuery.Free;
@@ -156,11 +211,19 @@ begin
 
     CbxSetList.Items.BeginUpdate;
     try
-      for var Obj in FSetListObjectList do
+      var Index := 0;
+      for var Obj in FSetListObjectList do begin
         CbxSetList.Items.AddObject(Obj.Name, TObject(Obj.ID));
+        if (BSSetListID <> 0) and (Obj.ID = BSSetListID) then
+          CbxSetList.ItemIndex := Index;
+
+        Inc(Index);
+      end;
+
 
       // todo: Try to use latest selection from config
-      if FSetListObjectList.Count > 0 then
+      if ((BSSetListID = 0) and (FSetListObjectList.Count > 0)) or
+         (CbxSetList.ItemIndex = -1) then
         CbxSetList.ItemIndex := 0;
     finally
       CbxSetList.Items.EndUpdate;

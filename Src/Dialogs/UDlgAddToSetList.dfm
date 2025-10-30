@@ -24,7 +24,7 @@ object DlgAddToSetList: TDlgAddToSetList
     Height = 15
     Caption = 'Set list'
   end
-  object Label1: TLabel
+  object LblAmount: TLabel
     Left = 8
     Top = 40
     Width = 44
