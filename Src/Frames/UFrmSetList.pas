@@ -60,6 +60,7 @@ type
     procedure LvSetsClick(Sender: TObject);
     procedure LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure LvSetsDblClick(Sender: TObject);
+    procedure LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -78,6 +79,7 @@ type
     function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
     function FGetVisibleRowCount: Integer;
     procedure FHandleClickType(Sender: TObject; DoubleClick: Boolean);
+    procedure FUpdateUI(Item: TListItem);
   public
     { Public declarations }
     procedure ReloadAndRefresh;
@@ -145,6 +147,8 @@ begin
   //CbxFilter.Items.Add('Custom tag 2');
   //CbxFilter.Items.Add('Custom tag 3');
   CbxFilter.ItemIndex := 0;
+
+  FUpdateUI(nil);
 end;
 
 procedure TFrmSetList.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -444,6 +448,42 @@ begin
     end;
   end else if DoubleClick then
     ActViewSetExecute(Self);
+end;
+
+procedure TFrmSetList.FUpdateUI(Item: TListItem);
+begin
+  //Disable actions that cant be executed based on selection.
+  var BSSetID := 0;
+  var SetNum := '';
+
+  if Item <> nil then begin
+    var Obj := TObject(Item.Data);
+    if Obj.ClassType = TSetObjectList then begin
+      var SetObjectList := TSetObjectList(Obj);
+      if SetObjectList.Count = 1 then
+        BSSetID := SetObjectList[0].BSSetID;
+      SetNum := SetObjectList.SetNum;
+    end else begin
+      var SetObject := TSetObject(Obj);
+      BSSetID := SetObject.BSSetID;
+      SetNum := SetObject.SetNum;
+    end;
+  end;
+
+  ActDeleteSet.Enabled := BSSetID <> 0;  // todo : delete multiple implemented later
+  ActEditSet.Enabled := BSSetID <> 0;
+  ActViewExternal.Enabled := SetNum <> '';
+  ActViewPartsList.Enabled := SetNum <> '';
+  ActSearch.Enabled := SetNum <> '';
+  ActImport.Enabled := True;
+  ActExport.Enabled := True;
+  ActViewSet.Enabled := SetNum <> '';
+  Sub1.Enabled := False; // Not available until implemented
+end;
+
+procedure TFrmSetList.LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
+begin
+  FUpdateUI(Item);
 end;
 
 procedure TFrmSetList.LvSetsClick(Sender: TObject);

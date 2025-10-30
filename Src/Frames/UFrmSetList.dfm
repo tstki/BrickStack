@@ -607,6 +607,7 @@ object FrmSetList: TFrmSetList
     PopupMenu = PopupMenu1
     TabOrder = 1
     ViewStyle = vsReport
+    OnChange = LvSetsChange
     OnClick = LvSetsClick
     OnData = LvSetsData
     OnDblClick = LvSetsDblClick
@@ -630,10 +631,8 @@ object FrmSetList: TFrmSetList
     Left = 120
     Top = 176
     object test1: TMenuItem
-      Caption = 'View...'
+      Action = ActViewSet
       SubMenuImages = ImageList16
-      ImageIndex = 2
-      OnClick = ActViewSetExecute
     end
     object Viewpartslist1: TMenuItem
       Action = ActViewPartsList
@@ -707,7 +706,7 @@ object FrmSetList: TFrmSetList
     end
     object ActViewSet: TAction
       Category = 'SetList'
-      Caption = 'ActViewSet'
+      Caption = 'View...'
       Hint = 'View'
       ImageIndex = 2
       OnExecute = ActViewSetExecute
