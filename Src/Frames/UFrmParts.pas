@@ -121,11 +121,6 @@ const
   //cPARTSORTBYPRICE = 3; // No price info yet
   cPARTSORTBYQUANTITY = 4;
 
-function TFrmParts.FTBGridSizePositionToPixels: Integer;
-begin
-  Result := 32 + (TbGridSize.Position*16);
-end;
-
 procedure TFrmParts.ActExportExecute(Sender: TObject);
 begin
 //
@@ -200,16 +195,6 @@ begin
   inherited;
 end;
 
-function TFrmParts.FGetGridHeight: Integer;
-begin
-  if DgSetParts.DefaultColWidth >= 64 then
-    Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-  else if DgSetParts.DefaultColWidth >= 48 then
-    Result := FTBGridSizePositionToPixels + 20
-  else
-    Result := FTBGridSizePositionToPixels;
-end;
-
 procedure TFrmParts.FormCreate(Sender: TObject);
 begin
   inherited;
@@ -228,6 +213,26 @@ begin
   LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
 end;
 
+procedure TFrmParts.FormResize(Sender: TObject);
+begin
+  FAdjustGrid;
+end;
+
+function TFrmParts.FTBGridSizePositionToPixels: Integer;
+begin
+  Result := 32 + (TbGridSize.Position*16);
+end;
+
+function TFrmParts.FGetGridHeight: Integer;
+begin
+  if DgSetParts.DefaultColWidth >= 64 then
+    Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    Result := FTBGridSizePositionToPixels + 20
+  else
+    Result := FTBGridSizePositionToPixels;
+end;
+
 procedure TFrmParts.FAdjustGrid();
 begin
   // recalculate visible column and rowcount for DgSetParts
@@ -244,11 +249,6 @@ begin
   end;
 
   FLastMaxCols := DgSetParts.ColCount;
-end;
-
-procedure TFrmParts.FormResize(Sender: TObject);
-begin
-  FAdjustGrid;
 end;
 
 procedure TFrmParts.TbGridSizeChange(Sender: TObject);

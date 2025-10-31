@@ -173,11 +173,6 @@ const
   cSearchSuffix = 2; // "%SearchText" and "%Searchtext-1" // Find parts of sets
   cSearchExact = 3; // "SearchText"
 
-function TFrmSearch.FTBGridSizePositionToPixels: Integer;
-begin
-  Result := 32 + (TbGridSize.Position*16);
-end;
-
 procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
   inherited;
@@ -225,13 +220,7 @@ begin
   BtnExpandOptionsClick(Self);
 
   DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
-  if DgSets.DefaultColWidth >= 64 then begin
-    if PnlSearchOptions.Visible then
-      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-    else
-      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
-  end else
-    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels;
+  DgSets.DefaultRowHeight := FGetGridHeight;
   DgSets.FixedCols := 0;
   DgSets.FixedRows := 0;
 
@@ -307,6 +296,16 @@ begin
   CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
 end;
 
+procedure TFrmSearch.FormResize(Sender: TObject);
+begin
+  FAdjustGrid;
+end;
+
+function TFrmSearch.FTBGridSizePositionToPixels: Integer;
+begin
+  Result := 32 + (TbGridSize.Position*16);
+end;
+
 procedure TFrmSearch.FAdjustGrid();
 begin
   // recalculate visible column and rowcount for DgSetParts
@@ -323,11 +322,6 @@ begin
   end;
 
   FLastMaxCols := DgSets.ColCount;
-end;
-
-procedure TFrmSearch.FormResize(Sender: TObject);
-begin
-  FAdjustGrid;
 end;
 
 function TFrmSearch.FGetGridHeight: Integer;
