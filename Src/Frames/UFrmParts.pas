@@ -93,6 +93,7 @@ type
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
     function FTBGridSizePositionToPixels: Integer;
+    function FGetGridHeight: Integer;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -199,6 +200,16 @@ begin
   inherited;
 end;
 
+function TFrmParts.FGetGridHeight: Integer;
+begin
+  if DgSetParts.DefaultColWidth >= 64 then
+    Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+  else if DgSetParts.DefaultColWidth >= 48 then
+    Result := FTBGridSizePositionToPixels + 20
+  else
+    Result := FTBGridSizePositionToPixels;
+end;
+
 procedure TFrmParts.FormCreate(Sender: TObject);
 begin
   inherited;
@@ -207,15 +218,8 @@ begin
 
   FPartObjectList := TPartObjectList.Create;
 
-  // todo: We can add a slider to scale this up later, or a popup window to zoom in on the image.
-  // Just make it exist first.
   DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
-  if DgSetParts.DefaultColWidth >= 64 then
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-  else if DgSetParts.DefaultColWidth >= 48 then
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 20
-  else
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels;
+  DgSetParts.DefaultRowHeight := FGetGridHeight;
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
 
@@ -250,12 +254,7 @@ end;
 procedure TFrmParts.TbGridSizeChange(Sender: TObject);
 begin
   DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
-  if DgSetParts.DefaultColWidth >= 64 then
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-  else if DgSetParts.DefaultColWidth >= 48 then
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels + 20
-  else
-    DgSetParts.DefaultRowHeight := FTBGridSizePositionToPixels;
+  DgSetParts.DefaultRowHeight := FGetGridHeight;
   FAdjustGrid;
 
   LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px'

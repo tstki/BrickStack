@@ -124,6 +124,7 @@ type
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
     function FTBGridSizePositionToPixels: Integer;
+    function FGetGridHeight: Integer;
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -329,16 +330,21 @@ begin
   FAdjustGrid;
 end;
 
+function TFrmSearch.FGetGridHeight: Integer;
+begin
+  if DgSets.DefaultColWidth >= 64 then begin
+    if PnlSearchOptions.Visible then
+      Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
+    else
+      Result := FTBGridSizePositionToPixels + 20; // 64 + 20
+  end else
+    Result := FTBGridSizePositionToPixels;
+end;
+
 procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
 begin
   DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
-  if DgSets.DefaultColWidth >= 64 then begin
-    if PnlSearchOptions.Visible then
-      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-    else
-      DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
-  end else
-    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels;
+  DgSets.DefaultRowHeight := FGetGridHeight;
   FAdjustGrid;
 
   TbGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
@@ -356,10 +362,7 @@ begin
     DgSets.Height := DgSets.Height + (OldTop-DgSets.Top);
   end;
 
-  if PnlSearchOptions.Visible then
-    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-  else
-    DgSets.DefaultRowHeight := FTBGridSizePositionToPixels + 20; // 64 + 20
+  DgSets.DefaultRowHeight := FGetGridHeight;
 
   DgSets.Invalidate;
 end;
