@@ -1,25 +1,14 @@
 More of a todo / idea list than a roadmap, but here goes:
 ====
-- Dont use "select *" but get the exact columns
-- Add configurable behaviour for "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
-- Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
-- "3001pr004" and other parts with different external references does not allow part lookup at this time.
--- Should be available in the API
-- Caps lock is active warning in login dialog
-- Convert the older sql connections to firedac
-- Add "force refresh from external" button for sets under a setlist.
-- Fix printing, again.
 - Note bulk downloads may be slow and need to be throttled to +- 1 per second.
 - Closing a dialog should store it's last location, not just on application close
 
 Welcome:
-- Welcome message on launch
-- "Welcome to BrickStack", splash screen on first load - show progress on creating base tables. (should be fast anyway)
-- Mandatory download of required files / database on first load (the software is kinda useless otherwise)
 - reference to tutorial/about and mandatory database creation steps and updating.
 - Choose a language (with flag icon) - also in settings.
 
 Database:
+- Dont use "select *" but get the exact columns
 - Database updater steps:
 -- Start page explaining what it's for. Press Start to start.
 -- Start page, show table with current versions, if available, otherwise "no database yet", press next to download and create it.
@@ -42,19 +31,19 @@ Optimizations:
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller
 
+Throttling and request slowing:
+- Handle error 429: Add a mandatory delay between requests
+- Request was throttled - you are sending too many requests too fast.
+- Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
+- Example response: { "detail": "Request was throttled. Expected available in 2 seconds." }
+- Parts call: /lego/parts/?part_nums=3001,3002,3003&inc_part_details=1
+
 Images:
 - You can ask the image size you need with a suffix: https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg
 -- Limits are no smaller than 2x2, no bigger than 1000x1000, anything in between is accepted.
 
-Add config dialog to enter:
-- Default import / export path (just remember last used)
-- Option to allow multiple collections windows
-- Option to allow multiple collection windows
-- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
-- Sliders for default image quality for parts / sets / other.
-
 Get user's inventory
-- ability to export inventory per group to rebrickable csv/xml
+- Ability to export inventory per group to rebrickable csv/xml
 
 Configure desired columns when printing parts - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview
@@ -85,26 +74,31 @@ Collection window:
 - Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
 
 Parts window:
-- left click to add
-- right click to remove
+- Left click to add
+- Right click to remove
 - checkbox to select all or remove all.
 - Implement display filters
+- Fix printing, again.
 
 Settings:
-- Add option to show/hide columns for collection.
+- Add option to show/hide columns for collection / setlist.
 - Add ability to add custom fields.
 - Option to store backup files on changes / periodically.
 - Slider setting for delay between image downloads.
 - Search options box above treeview.
+- Caps lock is active warning in login dialog
+- Add configurable behaviour for doubleclick: "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
+- Default import / export path (just remember last used)
+- Option to allow multiple collections windows
+- Option to allow multiple collection windows
+- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
+- Sliders for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
+- Choose UI elements in search results / parts (several template layouts, with example)
 
 Windows:
-- Collection
 - Collection details (shows selected collection's details / custom fields / statistics)
 - Collection content (shows selected collection's set content)
 - Multiple collections (vertical and horizontal)
-- Link to set instructions - link to rebrickable / others.
-- Right mouse menu options on table
-- View set on rebrickable/other links. from set details page.
 - Remember checkbox mode and checks between sessions
 -- Reimagine checklist mode as a table with wider spacing so we can handle more data?
 - "layout" set for all windows to switch window placements configured by the user.
@@ -112,8 +106,6 @@ Windows:
 - Expand about screen
 - Fix window sizes and anchors
 - Helpfile / tutorial / common shortcuts
-- Choose UI elements in search results / parts (several template layouts, with example)
--- Scale options.
 - Sorting tables and grids
 
 Export collection:
@@ -132,26 +124,23 @@ Logging:
 - Make sure passwords are not logged to the _token endpoint
 - Make sure any token is not logged.
 
-Throttling and request slowing:
-- Handle error 429: Add a mandatory delay between requests
-- Request was throttled - you are sending too many requests too fast.
-- Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
-- Example response: { "detail": "Request was throttled. Expected available in 2 seconds." }
-- Parts call: /lego/parts/?part_nums=3001,3002,3003&inc_part_details=1
-
 Search:
 - Option to show search as image panels or table with text, and image on hover
 - Prevent text overlap (cut off by replacing text with ..."
 - Search add next results button.
 - Also to future part search dialogs
 - When searching for minifigs, also search "in sets"
+- Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
+- "3001pr004" and other parts with different external references does not allow part lookup at this time.
+-- Should be available in the API
+- Add "force refresh from external" button for sets under a setlist.
 
 Search parts in:
 - Search for parts in sets, to find sets
 
 Analytics:
 - Show graphs of each theme / year / part count of sets you own
-- Maybe some external api that we can call to get set values
 
 Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.
+- Some images are named ".jpg" but are actually bitmaps, or png.
