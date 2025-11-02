@@ -70,6 +70,8 @@ type
     FConfig: TConfig;
     FBSSetListID: Integer;
     FLvSetsLastClickPos: TPoint;
+    FSortColumn: Integer;
+    FSortDesc: Boolean;
     procedure FSetConfig(Config: TConfig);
     procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
     procedure FSetBSSetListID(BSSetListID: Integer);
@@ -111,6 +113,14 @@ const //CbxFilter
   fltSPAREPARTS = 4;
   fltNOSPAREPARTS = 5;
   //custom tag
+
+  colNAME = 0;
+  colBSID = 1;
+  colSETNUM = 2;
+  colQTY = 3;
+  colBUILD = 4;
+  colSPARES = 5;
+  colNOTE = 6;
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
@@ -354,7 +364,29 @@ begin
       end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' and havespareparts = 0';
       end;
-       // Else, no filter.
+      // Else, no filter.
+
+      case FSortColumn of
+        colNAME:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY s.name';
+        colBSID:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.id';
+        //colQTY: //todo
+          //FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY qty';
+        colBUILD:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.Built';
+        colSPARES:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.HaveSpareParts';
+        colNOTE:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.Notes';
+        else //colSETNUM:
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY s.set_num';
+      end;
+
+      if FSortDesc then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' DESC'
+      else
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' ASC';
 
       var Params := FDQuery.Params;
       Params.ParamByName('BSSetListID').asInteger := FSetListObject.ID;
@@ -494,7 +526,11 @@ end;
 
 procedure TFrmSetList.LvSetsColumnClick(Sender: TObject; Column: TListColumn);
 begin
-// do sort
+  if FSortColumn = Column.Index then
+    FSortDesc := not FSortDesc;
+  FSortColumn := Column.Index;
+
+  ReloadAndRefresh;
 end;
 
 procedure TFrmSetList.LvSetsDblClick(Sender: TObject);

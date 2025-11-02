@@ -3,7 +3,7 @@ object FrmSetListCollection: TFrmSetListCollection
   Top = 117
   Caption = 'Your set lists'
   ClientHeight = 314
-  ClientWidth = 430
+  ClientWidth = 481
   Color = clBtnFace
   DoubleBuffered = True
   ParentFont = True
@@ -17,7 +17,7 @@ object FrmSetListCollection: TFrmSetListCollection
   object LvSetLists: TListView
     Left = 0
     Top = 41
-    Width = 430
+    Width = 481
     Height = 254
     Align = alClient
     Columns = <
@@ -31,6 +31,9 @@ object FrmSetListCollection: TFrmSetListCollection
       item
         Caption = 'Use in build calc'
         Width = 100
+      end
+      item
+        Caption = 'Sort'
       end>
     OwnerData = True
     ReadOnly = True
@@ -43,13 +46,12 @@ object FrmSetListCollection: TFrmSetListCollection
     OnColumnRightClick = LvSetListsColumnRightClick
     OnData = LvSetListsData
     OnDblClick = ActViewCollectionExecute
-    ExplicitWidth = 426
-    ExplicitHeight = 253
+    ExplicitWidth = 430
   end
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 430
+    Width = 481
     Height = 41
     Align = alTop
     DoubleBuffered = True
@@ -57,12 +59,12 @@ object FrmSetListCollection: TFrmSetListCollection
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
-    ExplicitWidth = 426
+    ExplicitWidth = 430
     DesignSize = (
-      430
+      481
       41)
     object ImgOpen: TImage
-      Left = 156
+      Left = 207
       Top = 5
       Width = 30
       Height = 30
@@ -157,7 +159,7 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Filter'
     end
     object ImgEdit: TImage
-      Left = 192
+      Left = 243
       Top = 5
       Width = 30
       Height = 30
@@ -252,7 +254,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 252
     end
     object ImgAdd: TImage
-      Left = 228
+      Left = 279
       Top = 5
       Width = 30
       Height = 30
@@ -359,7 +361,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 288
     end
     object ImgDelete: TImage
-      Left = 264
+      Left = 315
       Top = 5
       Width = 30
       Height = 30
@@ -462,7 +464,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 324
     end
     object ImgImport: TImage
-      Left = 300
+      Left = 351
       Top = 5
       Width = 30
       Height = 30
@@ -554,7 +556,7 @@ object FrmSetListCollection: TFrmSetListCollection
       ExplicitLeft = 360
     end
     object ImgExport: TImage
-      Left = 336
+      Left = 387
       Top = 5
       Width = 30
       Height = 30
@@ -639,25 +641,25 @@ object FrmSetListCollection: TFrmSetListCollection
     object CbxFilter: TComboBox
       Left = 40
       Top = 8
-      Width = 110
+      Width = 161
       Height = 23
       Style = csDropDownList
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = CbxFilterChange
+      ExplicitWidth = 110
     end
   end
   object StatusBar1: TStatusBar
     Left = 0
     Top = 295
-    Width = 430
+    Width = 481
     Height = 19
     Panels = <
       item
         Width = 50
       end>
-    ExplicitTop = 294
-    ExplicitWidth = 426
+    ExplicitWidth = 430
   end
   object ActionList1: TActionList
     Images = ImageList16

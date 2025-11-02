@@ -106,7 +106,7 @@ Windows:
 - Expand about screen
 - Fix window sizes and anchors
 - Helpfile / tutorial / common shortcuts
-- Sorting tables and grids
+- Sorting grids
 
 Export collection:
 - Choose format

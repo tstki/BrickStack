@@ -62,6 +62,8 @@ type
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
+    FSortColumn: Integer;
+    FSortDesc: Boolean;
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
     procedure FRebuildStatusBar;
@@ -78,6 +80,11 @@ const
   cETFREBRICKABLE = 2; // Imported from Rebrickable
   cETFHASSETS = 3;
   cETFNOSETS = 4;
+
+  colNAME = 0;
+  colSETS = 1;
+  colUSEINBUILD = 2;
+  colSORTINDEX = 3;
 
   //cETF...  // Imported from other places
   //cETFSETS =
@@ -174,6 +181,23 @@ begin
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE SetCount = 0';
     // Else, no filter.
 
+    //order by "last column that was clicked" //todo remember in settings.
+    case FSortColumn of
+      colNAME:
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY name';
+      colSETS:
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY SetCount';
+      colUSEINBUILD:
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY useincollection';
+      else //colSORTINDEX:
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY SortIndex';
+    end;
+
+    if FSortDesc then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' DESC'
+    else
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' ASC';
+
     FSetListObjectList.LoadFromQuery(FDQuery);
 
     LvSetLists.Items.Count := FSetListObjectList.Count;
@@ -188,24 +212,30 @@ end;
 
 procedure TFrmSetListCollection.FUpdateUI;
 begin
-  //ActAddSetList.Enabled :=
-  //ActDeleteSetList.Enabled :=
-  //ActEditSetList.Enabled :=
-  //ActImport.Enabled :=
-  //ActExport.Enabled :=
-  //ActViewCollection.Enabled :=
+  var Obj := FGetSelectedObject;
+
+  ActAddSetList.Enabled := True;
+  ActDeleteSetList.Enabled := Obj <> nil;
+  ActEditSetList.Enabled := Obj <> nil;
+  ActImport.Enabled := True;
+  ActExport.Enabled := Obj <> nil;
+  ActViewCollection.Enabled := Obj <> nil;
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
 begin
   inherited;
-// Check selection. Enable/disable actions as needed.
+
   FUpdateUI;
 end;
 
 procedure TFrmSetListCollection.LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
 begin
-//todo: do sort
+  if FSortColumn = Column.Index then
+    FSortDesc := not FSortDesc;
+  FSortColumn := Column.Index;
+
+  RebuildBySQL;
 end;
 
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
@@ -222,6 +252,7 @@ begin
   Item.Caption := Obj.Name;
   Item.SubItems.Add(IntToStr(Obj.SetCount));
   Item.SubItems.Add(IfThen(Obj.UseInCollection, 'Yes', 'No'));
+  Item.SubItems.Add(IntToStr(Obj.SortIndex));
   Item.ImageIndex := 0;
   Item.Data := Obj;
 end;
