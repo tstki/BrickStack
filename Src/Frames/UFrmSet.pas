@@ -28,6 +28,7 @@ type
     procedure ActViewSetExternalExecute(Sender: TObject);
     procedure ActViewPartExternalExecute(Sender: TObject);
     procedure ActViewPartsExecute(Sender: TObject);
+    procedure LvTagDataColumnClick(Sender: TObject; Column: TListColumn);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -180,6 +181,11 @@ begin
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
   end;
+end;
+
+procedure TFrmSet.LvTagDataColumnClick(Sender: TObject; Column: TListColumn);
+begin
+//do sort
 end;
 
 procedure TFrmSet.ActAddToSetListExecute(Sender: TObject);

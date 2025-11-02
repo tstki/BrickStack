@@ -32,13 +32,16 @@ object FrmSetListCollection: TFrmSetListCollection
         Caption = 'Use in build calc'
         Width = 100
       end>
+    OwnerData = True
     ReadOnly = True
     RowSelect = True
     PopupMenu = PopupMenu1
     TabOrder = 1
     ViewStyle = vsReport
     OnChange = LvSetListsChange
+    OnColumnClick = LvSetListsColumnClick
     OnColumnRightClick = LvSetListsColumnRightClick
+    OnData = LvSetListsData
     OnDblClick = ActViewCollectionExecute
     ExplicitWidth = 426
     ExplicitHeight = 253

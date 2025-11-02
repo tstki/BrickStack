@@ -348,6 +348,7 @@ object FrmSet: TFrmSet
     TabOrder = 0
     ViewStyle = vsReport
     ExplicitLeft = 264
+    OnColumnClick = LvTagDataColumnClick
   end
   object ActionList1: TActionList
     Left = 192

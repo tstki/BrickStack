@@ -56,13 +56,15 @@ type
     procedure LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure FormResize(Sender: TObject);
     procedure RebuildBySQL();
+    procedure LvSetListsData(Sender: TObject; Item: TListItem);
+    procedure LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
   private
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
-    procedure FRebuildListView;
+    procedure FRebuildStatusBar;
     procedure FUpdateUI;
   public
     { Public declarations }
@@ -91,51 +93,18 @@ uses
   UFrmMain, UStrings, USqLiteConnection, Data.DB,
   UDlgSetList, UDlgExport, UDlgImport;
 
-procedure TFrmSetListCollection.FRebuildListView;
+procedure TFrmSetListCollection.FRebuildStatusBar;
 begin
   var TotalSetCount := 0;
 
-  LvSetLists.items.BeginUpdate;
+  for var SetListObject in FSetListObjectList do
+    TotalSetCount := TotalSetCount + SetListObject.SetCount;
+
+  StatusBar1.Panels.BeginUpdate;
   try
-    LvSetLists.Items.Clear;
-
-    for var SetListObject in FSetListObjectList do begin
-
-      // Check filter.
-      if CbxFilter.ItemIndex = cETFLOCAL then begin
-        if SetListObject.ExternalID <> 0 then
-          Continue;
-      end else if CbxFilter.ItemIndex = cETFREBRICKABLE then begin
-        if SetListObject.ExternalID = 0 then
-          Continue;
-      end else if CbxFilter.ItemIndex = cETFHASSETS then begin
-        if SetListObject.SetCount = 0 then
-          Continue;
-      end else if CbxFilter.ItemIndex = cETFNOSETS then begin
-        if SetListObject.SetCount <> 0 then
-          Continue;
-      end; // Else, no filter.
-
-
-      // Add items to the list view
-      var Item := LvSetLists.Items.Add;
-      Item.Caption := SetListObject.Name;
-      Item.SubItems.Add(IntToStr(SetListObject.SetCount));
-      Item.SubItems.Add(IfThen(SetListObject.UseInCollection, StrYes, StrNo));
-      Item.ImageIndex := 0;
-      Item.Data := SetListObject;
-
-      TotalSetCount := TotalSetCount + SetListObject.SetCount;
-    end;
-
-    StatusBar1.Panels.BeginUpdate;
-    try
-      StatusBar1.Panels[0].Text := Format(StrYouHaveSetsCollections, [TotalSetCount, FSetListObjectList.Count]);
-    finally
-      StatusBar1.Panels.EndUpdate;
-    end;
+    StatusBar1.Panels[0].Text := Format(StrYouHaveSetsCollections, [TotalSetCount, FSetListObjectList.Count]);
   finally
-    LvSetLists.items.EndUpdate;
+    StatusBar1.Panels.EndUpdate;
   end;
 end;
 
@@ -183,6 +152,9 @@ procedure TFrmSetListCollection.RebuildBySQL();
 begin
   FSetListObjectList.Clear;
 
+  //todo remember any "open" items
+  //suppord drag n drop of sets to this dialog
+
   var SqlConnection := FrmMain.AcquireConnection;
   var FDQuery := TFDQuery.Create(nil);
   try
@@ -191,24 +163,37 @@ begin
     FDQuery.SQL.Text := 'SELECT id, name, description, useincollection, externalid, externaltype, sortindex,'+
                         ' (select count(*) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
                         ' FROM BSSetLists m';
+
+    if CbxFilter.ItemIndex = cETFLOCAL then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE ExternalID IS NULL'
+    else if CbxFilter.ItemIndex = cETFREBRICKABLE then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE ExternalID IS NOT NULL'
+    else if CbxFilter.ItemIndex = cETFHASSETS then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE SetCount <> 0'
+    else if CbxFilter.ItemIndex = cETFNOSETS then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE SetCount = 0';
+    // Else, no filter.
+
     FSetListObjectList.LoadFromQuery(FDQuery);
+
+    LvSetLists.Items.Count := FSetListObjectList.Count;
+    LvSetLists.Invalidate;
   finally
     FDQuery.Free;
     FrmMain.ReleaseConnection(SqlConnection);
   end;
 
-//  if FSetListObjectList.Count > 0 then
-    FRebuildListView;
+  FRebuildStatusBar;
 end;
 
 procedure TFrmSetListCollection.FUpdateUI;
 begin
-  //ActAddSetList
-  //ActDeleteSetList
-  //ActEditSetList
-  //ActImport
-  //ActExport
-  //ActViewCollection
+  //ActAddSetList.Enabled :=
+  //ActDeleteSetList.Enabled :=
+  //ActEditSetList.Enabled :=
+  //ActImport.Enabled :=
+  //ActExport.Enabled :=
+  //ActViewCollection.Enabled :=
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
@@ -218,10 +203,27 @@ begin
   FUpdateUI;
 end;
 
+procedure TFrmSetListCollection.LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
+begin
+//todo: do sort
+end;
+
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
 begin
   inherited;
 // Show context menu to show/hide columns
+end;
+
+procedure TFrmSetListCollection.LvSetListsData(Sender: TObject; Item: TListItem);
+begin
+  inherited;
+
+  var Obj := FSetListObjectList[Item.Index];
+  Item.Caption := Obj.Name;
+  Item.SubItems.Add(IntToStr(Obj.SetCount));
+  Item.SubItems.Add(IfThen(Obj.UseInCollection, 'Yes', 'No'));
+  Item.ImageIndex := 0;
+  Item.Data := Obj;
 end;
 
 procedure TFrmSetListCollection.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -263,7 +265,7 @@ begin
       finally
         FrmMain.ReleaseConnection(SqlConnection);
       end;
-      FRebuildListView;
+      RebuildBySQL;
     end;
   finally
     DlgImport.Free;
@@ -284,7 +286,7 @@ end;
 
 procedure TFrmSetListCollection.CbxFilterChange(Sender: TObject);
 begin
-  FRebuildListView;
+  RebuildBySQL;
 end;
 
 procedure TFrmSetListCollection.ActViewCollectionExecute(Sender: TObject);
@@ -319,6 +321,7 @@ begin
       // id/externalid/externaltype can't be changed by the user.
       // add imageindex later
       // custom tags are a separate action, not done here.
+
       FDQuery.ExecSQL;
       //Params.Clear;
 
@@ -363,7 +366,7 @@ begin
 
       SetListObject.Dirty := False;
 
-      FRebuildListView;
+      RebuildBySQL;
     end else
       SetListObject.Free;
   finally
@@ -404,7 +407,7 @@ begin
 
         SetListObject.Dirty := False;
 
-        FRebuildListView;
+        RebuildBySQL;
       end;
     finally
       DlgEdit.Free;
@@ -445,7 +448,7 @@ begin
       end;
     end;
 
-    FRebuildListView;
+    RebuildBySQL;
   end;
 end;
 

@@ -61,6 +61,7 @@ type
     procedure LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure LvSetsDblClick(Sender: TObject);
     procedure LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
+    procedure LvSetsColumnClick(Sender: TObject; Column: TListColumn);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -489,6 +490,11 @@ end;
 procedure TFrmSetList.LvSetsClick(Sender: TObject);
 begin
   FHandleClickType(Sender, False);
+end;
+
+procedure TFrmSetList.LvSetsColumnClick(Sender: TObject; Column: TListColumn);
+begin
+// do sort
 end;
 
 procedure TFrmSetList.LvSetsDblClick(Sender: TObject);

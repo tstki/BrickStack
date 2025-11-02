@@ -609,6 +609,7 @@ object FrmSetList: TFrmSetList
     ViewStyle = vsReport
     OnChange = LvSetsChange
     OnClick = LvSetsClick
+    OnColumnClick = LvSetsColumnClick
     OnData = LvSetsData
     OnDblClick = LvSetsDblClick
     OnMouseDown = LvSetsMouseDown
