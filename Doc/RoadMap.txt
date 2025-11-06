@@ -72,6 +72,8 @@ Collection window:
 - Show owned sets. Show > in front of owned sets in case of multiple, and open as tree view.
 -- Sub-setlists, in collections screen.
 - Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
+- View all parts in this collection
+- View all "missing" parts in this collection. (filter?)
 
 Parts window:
 - Left click to add
@@ -91,9 +93,10 @@ Settings:
 - Default import / export path (just remember last used)
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
-- Check for updates / autoupdater (we dont have a webserver, so no auto updates anytime soon)
+- Check for updates / autoupdater (through github binary distribution)
 - Sliders for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
 - Choose UI elements in search results / parts (several template layouts, with example)
+- Option to treat newly added sets as having all parts
 
 Windows:
 - Collection details (shows selected collection's details / custom fields / statistics)

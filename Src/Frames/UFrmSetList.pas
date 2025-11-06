@@ -8,7 +8,8 @@ uses
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Stan.Param, FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
   UConfig, USetList, Vcl.StdCtrls, Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.ComCtrls,
-  Generics.Collections, USet, System.ImageList, Vcl.ImgList, Vcl.Menus;
+  Generics.Collections, USet, System.ImageList, Vcl.ImgList, Vcl.Menus,
+  Vcl.Buttons;
 
 type
   TFrmSetList = class(TForm)
@@ -33,16 +34,18 @@ type
     ActViewPartsList: TAction;
     Viewpartslist1: TMenuItem;
     StatusBar1: TStatusBar;
-    ImgFind: TImage;
-    ImgEdit: TImage;
-    ImgDelete: TImage;
-    ImgImport: TImage;
-    ImgExport: TImage;
     ActSearch: TAction;
     ActImport: TAction;
     ActExport: TAction;
     ActViewSet: TAction;
-    ImgView: TImage;
+    ActEditOwnedParts: TAction;
+    Editownedparts1: TMenuItem;
+    ImageList32: TImageList;
+    Button2: TButton;
+    Button3: TButton;
+    Button1: TButton;
+    Button4: TButton;
+    Button5: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
@@ -62,6 +65,7 @@ type
     procedure LvSetsDblClick(Sender: TObject);
     procedure LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure LvSetsColumnClick(Sender: TObject; Column: TListColumn);
+    procedure ActEditOwnedPartsExecute(Sender: TObject);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -215,6 +219,12 @@ begin
 //check if there's a details dialog open that needs to be closed or cleared
 
   //TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
+end;
+
+procedure TFrmSetList.ActEditOwnedPartsExecute(Sender: TObject);
+begin
+// perform a query that gets all the parts for this set from table BSPartsInventory
+// open edit parts dialog
 end;
 
 procedure TFrmSetList.ActEditSetExecute(Sender: TObject);

@@ -34,15 +34,18 @@ type
     Import1: TMenuItem;
     Export1: TMenuItem;
     Panel1: TPanel;
-    ImgOpen: TImage;
     CbxFilter: TComboBox;
     LblFilter: TLabel;
-    ImgEdit: TImage;
-    ImgAdd: TImage;
-    ImgDelete: TImage;
-    ImgImport: TImage;
-    ImgExport: TImage;
     StatusBar1: TStatusBar;
+    ActViewPartsInCollection: TAction;
+    ActViewPartsInCollection1: TMenuItem;
+    Button2: TButton;
+    ImageList32: TImageList;
+    Button1: TButton;
+    Button3: TButton;
+    Button4: TButton;
+    Button5: TButton;
+    Button6: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure ActEditSetListExecute(Sender: TObject);
@@ -153,6 +156,8 @@ begin
   RebuildBySQL;
 
   CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);
+
+  FUpdateUI;
 end;
 
 procedure TFrmSetListCollection.RebuildBySQL();
