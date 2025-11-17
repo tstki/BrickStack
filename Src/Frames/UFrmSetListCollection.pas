@@ -240,6 +240,8 @@ begin
     FSortDesc := not FSortDesc;
   FSortColumn := Column.Index;
 
+  //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
+
   RebuildBySQL;
 end;
 
@@ -254,12 +256,14 @@ begin
   inherited;
 
   var Obj := FSetListObjectList[Item.Index];
-  Item.Caption := Obj.Name;
-  Item.SubItems.Add(IntToStr(Obj.SetCount));
-  Item.SubItems.Add(IfThen(Obj.UseInCollection, 'Yes', 'No'));
-  Item.SubItems.Add(IntToStr(Obj.SortIndex));
-  Item.ImageIndex := 0;
-  Item.Data := Obj;
+  if Obj <> nil then begin
+    Item.Caption := Obj.Name;
+    Item.SubItems.Add(IntToStr(Obj.SetCount));
+    Item.SubItems.Add(IfThen(Obj.UseInCollection, 'Yes', 'No'));
+    Item.SubItems.Add(IntToStr(Obj.SortIndex));
+    Item.ImageIndex := 0;
+    Item.Data := Obj;
+  end;
 end;
 
 procedure TFrmSetListCollection.FormClose(Sender: TObject; var Action: TCloseAction);

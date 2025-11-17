@@ -222,9 +222,27 @@ begin
 end;
 
 procedure TFrmSetList.ActEditOwnedPartsExecute(Sender: TObject);
+var
+  BSSetID: Integer;
+  SetNum: String;
 begin
-// perform a query that gets all the parts for this set from table BSPartsInventory
-// open edit parts dialog
+  var Obj := FGetSelectedObject;
+  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
+    var SetObject := TSetObject(Obj);
+    SetNum := SetObject.SetNum;
+    BSSetID := SetObject.BSSetID;
+  end else begin
+    var SetObjectList := TSetObjectList(Obj);
+    if SetObjectList.Count = 1 then begin
+      SetNum := SetObjectList[0].SetNum;
+      BSSetID := SetObjectList[0].BSSetID;
+    end else
+      BSSetID := 0;
+  end;
+
+  // Cant edit without an ID
+  if BSSetID <> 0 then
+    TFrmMain.EditPartsWindow(SetNum, BSSetID);
 end;
 
 procedure TFrmSetList.ActEditSetExecute(Sender: TObject);
@@ -517,6 +535,7 @@ begin
   ActEditSet.Enabled := BSSetID <> 0;
   ActViewExternal.Enabled := SetNum <> '';
   ActViewPartsList.Enabled := SetNum <> '';
+  ActEditOwnedParts.Enabled := BSSetID <> 0;
   ActSearch.Enabled := SetNum <> '';
   ActImport.Enabled := True;
   ActExport.Enabled := True;
@@ -539,6 +558,8 @@ begin
   if FSortColumn = Column.Index then
     FSortDesc := not FSortDesc;
   FSortColumn := Column.Index;
+
+  //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
 
   ReloadAndRefresh;
 end;
@@ -583,47 +604,49 @@ begin
   //todo: Also for sorting
 
   var Obj := FGetSetObjByItemIndex(Item.Index);
-//todo, create a base object that houses the variables both bits of code need, so we dont need double code here
-  Item.Data := Obj;
-  if Obj.ClassType = TSetObjectList then begin
-    var SetObjectList := TSetObjectList(Obj);
-    var BSSetID := 0;
-    var Note := '';
-    if SetObjectList.Quantity > 1 then
-      Item.ImageIndex := IfThen(SetObjectList.Expanded, 11, 10)
-    else begin // Quantity = 1
+  if Obj <> nil then begin
+  //todo, create a base object that houses the variables both bits of code need, so we dont need double code here
+    Item.Data := Obj;
+    if Obj.ClassType = TSetObjectList then begin
+      var SetObjectList := TSetObjectList(Obj);
+      var BSSetID := 0;
+      var Note := '';
+      if SetObjectList.Quantity > 1 then
+        Item.ImageIndex := IfThen(SetObjectList.Expanded, 11, 10)
+      else begin // Quantity = 1
+        Item.ImageIndex := 9;
+        BSSetID := SetObjectList[0].BSSetID;
+        Note := SetObjectList[0].Note;
+      end;
+      Item.Caption := SetObjectList.SetName;
+      if BSSetID > 0 then
+        Item.SubItems.Add(IntToStr(BSSetID))
+      else
+        Item.SubItems.Add('');
+      Item.SubItems.Add(SetObjectList.SetNum);
+      Item.SubItems.Add(IntToStr(SetObjectList.Quantity));
+      Item.SubItems.Add(IntToStr(SetObjectList.Built));
+      Item.SubItems.Add(IntToStr(SetObjectList.HaveSpareParts));
+      Item.SubItems.Add(Note);
+    end else begin
+      var SetObject := TSetObject(Obj);
       Item.ImageIndex := 9;
-      BSSetID := SetObjectList[0].BSSetID;
-      Note := SetObjectList[0].Note;
+      Item.Caption := '  ' + SetObject.SetName;
+      Item.SubItems.Add(IntToStr(SetObject.BSSetID));
+      Item.SubItems.Add(SetObject.SetNum);
+      Item.SubItems.Add('1');
+      Item.SubItems.Add(IntToStr(SetObject.Built));
+      Item.SubItems.Add(IntToStr(SetObject.HaveSpareParts));
+      Item.SubItems.Add(SetObject.Note);
     end;
-    Item.Caption := SetObjectList.SetName;
-    if BSSetID > 0 then
-      Item.SubItems.Add(IntToStr(BSSetID))
-    else
-      Item.SubItems.Add('');
-    Item.SubItems.Add(SetObjectList.SetNum);
-    Item.SubItems.Add(IntToStr(SetObjectList.Quantity));
-    Item.SubItems.Add(IntToStr(SetObjectList.Built));
-    Item.SubItems.Add(IntToStr(SetObjectList.HaveSpareParts));
-    Item.SubItems.Add(Note);
-  end else begin
-    var SetObject := TSetObject(Obj);
-    Item.ImageIndex := 9;
-    Item.Caption := '  ' + SetObject.SetName;
-    Item.SubItems.Add(IntToStr(SetObject.BSSetID));
-    Item.SubItems.Add(SetObject.SetNum);
-    Item.SubItems.Add('1');
-    Item.SubItems.Add(IntToStr(SetObject.Built));
-    Item.SubItems.Add(IntToStr(SetObject.HaveSpareParts));
-    Item.SubItems.Add(SetObject.Note);
-  end;
 
-  //var Obj := FSetObjectListList[Item.Index]; // calculate item by open/selected
-//    Item.SubItems.Add(Obj.Note);
-  //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
-  //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
-  //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
-  //SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+    //var Obj := FSetObjectListList[Item.Index]; // calculate item by open/selected
+  //    Item.SubItems.Add(Obj.Note);
+    //SetObject.SetYear := FDQuery.FieldByName('year').AsInteger;
+    //SetObject.SetThemeName := FDQuery.FieldByName('name_1').AsString;
+    //SetObject.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
+    //SetObject.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+  end;
 end;
 
 procedure TFrmSetList.FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);

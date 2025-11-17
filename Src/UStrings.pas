@@ -125,6 +125,9 @@ const
   StrMsgDataBaseUpdateComplete = 'Database update / creation complete.' + #13#10 + 'If you need information, please use the help menu.' + #13#10#13#10 + 'Good luck!';
   StrMsgDatabaseIsUpToDate = 'Your database structure is up to date.';
   StrMsgDatabaseUnableToUpDate = 'Your database structure is beyond the minimum version to update. Please create a backup and remove the database manually, then restart the application.';
+  StrMsgSetPartsToZero = 'Are you sure you wish to set the quantity of all parts to "zero"?';
+  StrMsgInvertPartsSelection = 'Are you sure you wish to invert the "complete / zero" of all parts?';
+  StrMsgSetPartsToComplete = 'Are you sure you wish to set the quantity of all part to "complete"?';
 
   // Error strings
   StrErrNoResult = 'No result';

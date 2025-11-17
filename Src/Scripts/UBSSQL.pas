@@ -18,7 +18,7 @@ const
     // 0: Initial version
     // 0 -> 1: Parts.part_num int -> text(20), .name(200) -> 250, table BSDBPartsInventory, index BSDBVersions
     '',
-    // 1 -> 2: Themes.name text(40) -> text(42), DBSets.quantity -> removed
+    // 1 -> 2: Themes.name text(40) -> text(42), DBSets.quantity -> removed, BSDBPartsInventory remade
     ''
   );
 
@@ -62,12 +62,12 @@ const
     (TableName: 'BSDBPartsInventory';
       SQL: 'CREATE TABLE IF NOT EXISTS BSDBPartsInventory (' +
       ' ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' + // You may own multiple of the same set, this way you can link to it's unique inventory
+      ' BSSetID INTEGER,' +      // Link to the BSSet for update/delete
       ' InventoryID INTEGER,' +  // These 4 items are used to link to the inventory_parts
       ' Part_num TEXT(20),' +    // ^
       ' color_id INTEGER,' +     // ^
       ' is_spare INTEGER,' +     // ^
-      ' cur_quantity INTEGER,' + // How many do you have
-      ' inv_quantity INTEGER);'  // How many does the set need
+      ' quantity INTEGER);'      // How many do you have
     )
   );
 
@@ -86,7 +86,9 @@ const
       SQL: 'CREATE INDEX IF NOT EXISTS DBVersions_ID_IDX ON BSDBVersions (ID);'),
     (TableName: 'BSDBPartsInventory';
       SQL: 'CREATE INDEX IF NOT EXISTS BSDBVersions_ID_IDX ON BSDBPartsInventory (ID);' +
-           'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num);')
+           'CREATE INDEX IF NOT EXISTS BSDBVersions_Part_num_IDX ON BSDBPartsInventory (Part_num);' +
+           'CREATE INDEX IF NOT EXISTS BSDBPartsInventory_InventoryID_IDX ON BSDBPartsInventory (InventoryID,Part_num,color_id,is_spare);' +
+           'CREATE INDEX IF NOT EXISTS BSDBPartsInventory_BSSetID_IDX ON BSDBPartsInventory (BSSetID);')
   );
 
 implementation

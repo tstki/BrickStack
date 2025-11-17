@@ -13,12 +13,18 @@ type
     // Part details
     FPartNum: String;
     FName: String;
-    FQuantity: Integer; // A.k.a. max count
+    FMaxQuantity: Integer; // Aka: Max parts
     FIsSpare: Boolean;
     FImgUrl: String;
-    FColorRGB: String;
-    FColorName: String;
-    FColorIsTrans: Boolean;
+    FColorID: Integer;
+    FInventoryID: Integer;
+    //FColorRGB: String;
+    //FColorName: String;
+    //FColorIsTrans: Boolean;
+
+    // BS Part inventory details
+    FBSPartID: Integer;    // Only set if there are BSDBPartsInventory Items found / enriched.
+    FCurQuantity: Integer; // Aka: Selected parts
 
     //FDirty: Boolean;    // Not saved // Item was modified and needs to update
     //FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
@@ -33,14 +39,19 @@ type
     { Public declarations }
     //procedure LoadByPartNum(PartNum: String);
     procedure LoadFromQuery(FDQuery: TFDQuery);
-    property PartNum: String read FPartNum write FPartNum;
+
+    property PartNum: String read FPartNum write FPartNum;  //
     property PartName: String read FName write FName;
-    property Quantity: Integer read FQuantity write FQuantity;
+    property MaxQuantity: Integer read FMaxQuantity write FMaxQuantity;
     property IsSpare: Boolean read FIsSpare write FIsSpare;
     property ImgUrl: String read FImgUrl write FImgUrl;
-    property ColorRGB: String read FColorRGB write FColorRGB;
-    property ColorName: String read FColorName write FColorName;
-    property ColorIsTrans: Boolean read FColorIsTrans write FColorIsTrans;
+    property ColorID: Integer read FColorID write FColorID;
+    property InventoryID: Integer read FInventoryID write FInventoryID;
+    //property ColorRGB: String read FColorRGB write FColorRGB;
+    //property ColorName: String read FColorName write FColorName;
+    //property ColorIsTrans: Boolean read FColorIsTrans write FColorIsTrans;
+    property BSPartID: Integer read FBSPartID write FBSPartID;
+    property CurQuantity: Integer read FCurQuantity write FCurQuantity;
   end;
 
   // Move this to a separate unit later:
@@ -86,12 +97,16 @@ procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery);
 begin
   Self.FPartNum := FDQuery.FieldByName('part_num').AsString;
   Self.FName := FDQuery.FieldByName('partname').AsString;
-  Self.FQuantity := FDQuery.FieldByName('quantity').AsInteger;
+  Self.FMaxQuantity := FDQuery.FieldByName('quantity').AsInteger;
   Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
+
   Self.FImgUrl := FDQuery.FieldByName('img_url').AsString;
-  Self.FColorRGB := FDQuery.FieldByName('rgb').AsString;
-  Self.FColorName := FDQuery.FieldByName('colorname').AsString;
-  Self.FColorIsTrans := (FDQuery.FieldByName('is_trans').AsInteger) = 1;
+  Self.FColorID := FDQuery.FieldByName('colorid').AsInteger;
+  Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
+
+//  Self.FColorRGB := FDQuery.FieldByName('rgb').AsString;
+//  Self.FColorName := FDQuery.FieldByName('colorname').AsString;
+//  Self.FColorIsTrans := (FDQuery.FieldByName('is_trans').AsInteger) = 1;
 
 //  Self.FPartCatID := FDQuery.FieldByName('partcatid').AsInteger;
 //  Self.FPartMaterial := FDQuery.FieldByName('partmaterial').AsString;

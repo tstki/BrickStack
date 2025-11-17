@@ -102,6 +102,7 @@ type
     procedure ActHelpExecute(Sender: TObject);
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
     procedure WMShowPartsList(var Msg: TMessage); message WM_SHOW_PARTSLIST;
+    procedure WMEditPartsList(var Msg: TMessage); message WM_EDIT_PARTSLIST;
     procedure WMShowSetList(var Msg: TMessage); message WM_SHOW_SETLIST;
     procedure WMOpenExternal(var Msg: TMessage); message WM_OPEN_EXTERNAL;
     procedure WMShowSearch(var Msg: TMessage); message WM_SHOW_SEARCH;
@@ -132,6 +133,7 @@ type
     procedure ReleaseConnection(Conn: TFDConnection); inline;
     class procedure ShowSetWindow(const set_num: String);
     class procedure ShowPartsWindow(const set_num: String);
+    class procedure EditPartsWindow(const set_num: String; const BSSetID: Integer);
     class procedure ShowSetListWindow(const BSSetListID: Integer);
     class procedure OpenExternal(ObjectType: Integer; const ObjectID: String);
     class procedure ShowSearchWindow;
@@ -331,6 +333,8 @@ begin
           ShowSetWindow(FConfig.FrmSet.OpenOnLoad);
         if FConfig.FrmParts.OpenOnLoad <> '' then
           ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
+        //if FConfig.FrmEditParts.OpenOnLoad <> '' then //todo
+          //ShowPartsWindow(FConfig.FrmEditParts.OpenOnLoad);
         if StrToIntDef(FConfig.FrmSearch.OpenOnLoad, 0) <> 0 then
           ShowSearchWindow;
       end;
@@ -345,6 +349,7 @@ begin
   ActCollection.Enabled := FileExists(DbasePath);
   ActSearch.Enabled := ActCollection.Enabled;
   FileOpen1.Enabled := ActCollection.Enabled;
+
 end;
 
 procedure TFrmMain.WMShowSearch(var Msg: TMessage);
@@ -376,7 +381,7 @@ begin
   var MsgData := PShowSetData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Child := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      var Child := FCreateMDIChild(TFrmSet, StrSetListFrameTitle, False); // Set to true if we want to allow multiple windows.
       if Assigned(Child) then begin
         var FrmSet := TFrmSet(Child);
         FrmSet.ImageCache := FImageCache;
@@ -390,14 +395,34 @@ end;
 
 procedure TFrmMain.WMShowPartsList(var Msg: TMessage);
 begin
-  var MsgData := PShowSetData(Msg.WParam);
+  var MsgData := PShowPartsData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Child := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      var Child := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple windows.
       if Assigned(Child) then begin
         var FrmParts := TFrmParts(Child);
         FrmParts.ImageCache := FImageCache;
+        FrmParts.PartsMode := caView;
         FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
+      end;
+    end;
+  finally
+    Dispose(MsgData); // Don't forget to free the allocated memory
+  end;
+end;
+
+procedure TFrmMain.WMEditPartsList(var Msg: TMessage);
+begin
+  var MsgData := PEditPartsData(Msg.WParam);
+  try
+    if Assigned(MsgData) then begin
+      var Child := FCreateMDIChild(TFrmParts, StrPartListFrameTitle, False); // Set to true if we want to allow multiple windows.
+      if Assigned(Child) then begin
+        var FrmParts := TFrmParts(Child);
+        FrmParts.ImageCache := FImageCache;
+        FrmParts.PartsMode := caEdit;
+        FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
+        FrmParts.LoadPartCountByID(MsgData.BSSetID);
       end;
     end;
   finally
@@ -410,7 +435,7 @@ begin
   var MsgData := PShowOrUpdateSetListData(Msg.WParam);
   try
     if Assigned(MsgData) then begin
-      var Child := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple set windows.
+      var Child := FCreateMDIChild(TFrmSetList, StrSetListFrameTitle, False); // Set to true if we want to allow multiple windows.
       if Assigned(Child) then begin
         var FrmSetList := TFrmSetList(Child);
         //FrmSetList.ImageCache := FImageCache;
@@ -659,6 +684,21 @@ begin
   end;
 end;
 
+class procedure TFrmMain.EditPartsWindow(const set_num: String; const BSSetID: Integer);
+var
+  PostData: PEditPartsData;
+begin
+  New(PostData);
+  try
+    PostData^.set_num := set_num;
+    PostData^.BSSetID := BSSetID;
+    if not PostMessage(FrmMain.Handle, WM_EDIT_PARTSLIST, WPARAM(PostData), 0) then
+      Dispose(PostData);
+  except
+    Dispose(PostData);
+  end;
+end;
+
 class procedure TFrmMain.ShowSetListWindow(const BSSetListID: Integer);
 var
   PostData: PShowOrUpdateSetListData;
@@ -781,6 +821,7 @@ begin
       var FrmParts := TFrmParts(Child);
       FrmParts.Config := FConfig;
       FrmParts.ImageCache := FImageCache;
+      FrmParts.PartsMode := caView;
       FrmParts.Caption := Title;
       if not FConfig.FrmParts.SetFormDimensions(FrmParts) then begin
         //Set default size

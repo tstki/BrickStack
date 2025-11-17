@@ -66,7 +66,6 @@ Collection window:
 - Support adding figures
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
-- Export parts.
 - Export parts lists across multiple sets or inventories. so you can easily order what you need.
 - Invert selection - so you can select what you are missing and then invert.
 - Show owned sets. Show > in front of owned sets in case of multiple, and open as tree view.
@@ -74,6 +73,7 @@ Collection window:
 - Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
 - View all parts in this collection
 - View all "missing" parts in this collection. (filter?)
+- Deleting a set should also delete all parts.
 
 Parts window:
 - Left click to add
@@ -81,6 +81,11 @@ Parts window:
 - checkbox to select all or remove all.
 - Implement display filters
 - Fix printing, again.
+- Improve inventory version handling.
+- Export parts.
+
+Collection:
+- Deleting a collection should ask the user to move all sets to a new inventory, or delete (including all parts)
 
 Settings:
 - Add option to show/hide columns for collection / setlist.
@@ -121,6 +126,7 @@ Export set parts:
 Import collection:
 - Choose format
 - Choose overwrite / keep
+- Import as bulk input (line separated set numbers, part numbers or minifigure IDs)
 
 Logging:
 - Optional log files for communication and debugging.
@@ -146,4 +152,5 @@ Analytics:
 
 Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.
+-- https://stackoverflow.com/questions/7118194/how-can-i-disable-the-scroll-into-view-behavior-of-tscrollbox
 - Some images are named ".jpg" but are actually bitmaps, or png.
