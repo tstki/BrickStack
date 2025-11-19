@@ -120,7 +120,7 @@ const
   StrFileExistsWarning = 'File "%s" already exists, do you want to overwrite it?';
 
   // Message strings
-  StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone.';
+  StrMsgSureDelete = 'Are you sure you wish to delete "%s"(ID: %d)? This action can''t be undone and will also delete all parts and sets registered within.';
   StrMsgSureRemoveFromList = 'Are you sure you wish to remove set "%s" (num: %s)? This action can''t be undone.';
   StrMsgDataBaseUpdateComplete = 'Database update / creation complete.' + #13#10 + 'If you need information, please use the help menu.' + #13#10#13#10 + 'Good luck!';
   StrMsgDatabaseIsUpToDate = 'Your database structure is up to date.';

@@ -212,6 +212,12 @@ object FrmSetListCollection: TFrmSetListCollection
       Hint = 'View parts summary'
       ImageIndex = 1
     end
+    object ActMoveSets: TAction
+      AutoCheck = True
+      Caption = 'Move sets...'
+      ImageIndex = 5
+      OnExecute = ActMoveSetsExecute
+    end
   end
   object ImageList16: TImageList
     ColorDepth = cd32Bit
@@ -502,7 +508,11 @@ object FrmSetListCollection: TFrmSetListCollection
     object Edit1: TMenuItem
       Action = ActEditSetList
     end
-    object ActDeleteSetList1: TMenuItem
+    object Movesetstoothersetlist1: TMenuItem
+      Action = ActMoveSets
+      AutoCheck = True
+    end
+    object MnuDeleteSetList: TMenuItem
       Action = ActDeleteSetList
     end
     object Import1: TMenuItem

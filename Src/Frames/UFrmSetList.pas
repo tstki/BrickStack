@@ -81,7 +81,7 @@ type
     procedure FSetBSSetListID(BSSetListID: Integer);
     function FGetSelectedObject: TObject;
     function FGetSelectedSetNum: String;
-    function FGetSelectedBSSetID: Integer;
+    //function FGetSelectedBSSetID: Integer;
     procedure FUpdateStatusBar;
     function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
     function FGetVisibleRowCount: Integer;
@@ -147,6 +147,9 @@ begin
   inherited;
 
   LvSets.SmallImages := ImageList16;
+
+  // Enable dragging from this listview so other forms can accept dropped sets
+  LvSets.DragMode := dmAutomatic;
 
   CbxFilter.Items.Clear;
   CbxFilter.Items.Add(StrSetListFillterShowAll);
@@ -215,8 +218,11 @@ begin
   end;
 
 
+//  delete * from BSDBPartsInventory where BSSetID = :BSSetID;
+// Params.ParamByName('ID').asInteger := := SetObject.BSSetID
+
 //todo:
-//check if there's a details dialog open that needs to be closed or cleared
+//check if there's a details or parts dialog open that needs to be closed or cleared
 
   //TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
 end;
@@ -307,7 +313,7 @@ begin
   end;
 end;
 
-function TFrmSetList.FGetSelectedBSSetID: Integer;
+{function TFrmSetList.FGetSelectedBSSetID: Integer;
 begin
   var Obj := FGetSelectedObject;
   if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
@@ -320,7 +326,7 @@ begin
     else
       Result := 0;
   end;
-end;
+end;   }
 
 procedure TFrmSetList.ActViewSetExecute(Sender: TObject);
 begin

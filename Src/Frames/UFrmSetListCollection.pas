@@ -10,7 +10,7 @@ uses
   Vcl.Imaging.pngimage, Vcl.ExtCtrls,
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Stan.Param, FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
-  USetList;
+  USetList, USet, System.Generics.Collections;
 
 type
   TFrmSetListCollection = class(TForm)
@@ -29,8 +29,7 @@ type
     ag21: TMenuItem;
     ag31: TMenuItem;
     ActViewCollection: TAction;
-    Edit1: TMenuItem;
-    ActDeleteSetList1: TMenuItem;
+    MnuDeleteSetList: TMenuItem;
     Import1: TMenuItem;
     Export1: TMenuItem;
     Panel1: TPanel;
@@ -46,6 +45,8 @@ type
     Button4: TButton;
     Button5: TButton;
     Button6: TButton;
+    ActMoveSets: TAction;
+    Movesetstoothersetlist1: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure ActEditSetListExecute(Sender: TObject);
@@ -61,12 +62,19 @@ type
     procedure RebuildBySQL();
     procedure LvSetListsData(Sender: TObject; Item: TListItem);
     procedure LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
+    procedure ActMoveSetsExecute(Sender: TObject);
+    procedure LvSetListsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+    procedure LvSetListsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
+    procedure LvSetListsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
   private
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
     FSortColumn: Integer;
     FSortDesc: Boolean;
+//    FPrevSelectedIndex: Integer;
+    FIsDragHighlighting: Boolean;
+    FDragHoverIndex: Integer;
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
     procedure FRebuildStatusBar;
@@ -88,6 +96,9 @@ const
   colSETS = 1;
   colUSEINBUILD = 2;
   colSORTINDEX = 3;
+
+  // Size of ID batches when performing parameterized updates
+  CHUNK_SIZE = 50;
 
   //cETF...  // Imported from other places
   //cETFSETS =
@@ -132,6 +143,16 @@ begin
   Width := 450;
 
   LvSetLists.SmallImages := ImageList16;
+
+  // Accept drops from other listviews (sets)
+  LvSetLists.OnDragOver := LvSetListsDragOver;
+  LvSetLists.OnDragDrop := LvSetListsDragDrop;
+  // Custom draw to allow non-destructive hover highlighting during drag
+  LvSetLists.OnCustomDrawItem := LvSetListsCustomDrawItem;
+
+  // Initialize hover state
+  FDragHoverIndex := -1;
+  FIsDragHighlighting := False;
 
   CbxFilter.Items.BeginUpdate;
   try
@@ -245,10 +266,159 @@ begin
   RebuildBySQL;
 end;
 
+procedure TFrmSetListCollection.LvSetListsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+var
+  TargetItem: TListItem;
+begin
+  // Accept drags from other listviews (eg. the sets list)
+  Accept := (Source is TListView);
+
+  // Non-destructive visual feedback: set hover index and invalidate to paint
+  TargetItem := LvSetLists.GetItemAt(X, Y);
+  if TargetItem <> nil then begin
+    if FDragHoverIndex <> TargetItem.Index then begin
+      FDragHoverIndex := TargetItem.Index;
+      LvSetLists.Invalidate;
+    end;
+    FIsDragHighlighting := True;
+  end else if FDragHoverIndex <> -1 then begin
+    FDragHoverIndex := -1;
+    FIsDragHighlighting := False;
+    LvSetLists.Invalidate;
+  end;
+end;
+
+procedure TFrmSetListCollection.LvSetListsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
+var
+  SrcItem: TListItem;
+  IDs: TList<Integer>;
+  I: Integer;
+begin
+  if not (Source is TListView) then
+    Exit;
+
+  var SourceLV := TListView(Source);
+
+  var TargetItem := LvSetLists.GetItemAt(X, Y);
+  if TargetItem = nil then
+    TargetItem := LvSetLists.Selected;
+  if TargetItem = nil then
+    Exit;
+
+  var TargetSetList := TSetListObject(TargetItem.Data);
+  if (TargetSetList = nil) or (TargetSetList.ID = 0) then
+    Exit;
+
+  IDs := TList<Integer>.Create;
+  try
+    for SrcItem in SourceLV.Items do begin
+      if SrcItem.Selected and (SrcItem.Data <> nil) then begin
+        var Obj := TObject(SrcItem.Data);
+        if Obj is TSetObject then begin
+          var SetObj := TSetObject(Obj);
+          if SetObj.BSSetID <> 0 then
+            IDs.Add(SetObj.BSSetID);
+        end else if Obj is TSetObjectList then begin
+          var SetObjList := TSetObjectList(Obj);
+          for I := 0 to SetObjList.Count - 1 do
+            if SetObjList[I].BSSetID <> 0 then
+              IDs.Add(SetObjList[I].BSSetID);
+        end;
+      end;
+    end;
+
+    if IDs.Count = 0 then
+      Exit;
+
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
+    var FDTrans := TFDTransaction.Create(nil);
+    try
+      FDQuery.Connection := SqlConnection;
+      FDTrans.Connection := SqlConnection;
+      FDTrans.StartTransaction;
+      try
+        // Batch the IDs into chunks and update each chunk using parameters
+        var TotalIDs := IDs.Count;
+        var StartIdx := 0;
+
+        while StartIdx < TotalIDs do begin
+          var EndIdx := Min(StartIdx + CHUNK_SIZE - 1, TotalIDs - 1);
+          var ParamNames := '';
+
+          // Prepare parameter list and SQL IN clause
+          FDQuery.Params.Clear;
+          // NewID param
+          FDQuery.Params.CreateParam(ftInteger, 'NewID', ptInput).AsInteger := TargetSetList.ID;
+
+          var ParamIndex := 0;
+          for I := StartIdx to EndIdx do begin
+            var PName := 'ID' + IntToStr(ParamIndex);
+            if ParamNames <> '' then
+              ParamNames := ParamNames + ',';
+            ParamNames := ParamNames + ':' + PName;
+
+            FDQuery.Params.CreateParam(ftInteger, PName, ptInput).AsInteger := IDs[I];
+            Inc(ParamIndex);
+          end;
+
+          if ParamNames <> '' then begin
+            FDQuery.SQL.Text := 'UPDATE BSSets SET BSSetListID = :NewID WHERE ID IN (' + ParamNames + ')';
+            FDQuery.ExecSQL;
+          end;
+
+          StartIdx := EndIdx + 1;
+        end;
+
+        FDTrans.Commit;
+      except
+        FDTrans.Rollback;
+        raise;
+      end;
+    finally
+      FDQuery.Free;
+      FDTrans.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+
+    //todo: dont refresh is no valid drop target was found
+
+    // Refresh UI
+    RebuildBySQL;
+    if Assigned(FrmMain) then
+      TFrmMain.UpdateCollectionsByID(TargetSetList.ID);
+  finally
+    IDs.Free;
+  end;
+
+  // Clear hover highlight
+  if FIsDragHighlighting or (FDragHoverIndex <> -1) then begin
+    FIsDragHighlighting := False;
+    FDragHoverIndex := -1;
+    LvSetLists.Invalidate;
+  end;
+end;
+
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
 begin
   inherited;
 // Show context menu to show/hide columns
+end;
+
+procedure TFrmSetListCollection.LvSetListsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
+var
+  R: TRect;
+begin
+  // If we're highlighting during a drag, paint a highlight background for the hovered item
+  if FIsDragHighlighting and (FDragHoverIndex = Item.Index) then begin
+    R := Item.DisplayRect(drBounds);
+    Sender.Canvas.Brush.Style := bsSolid;
+    Sender.Canvas.Brush.Color := clHighlight;
+    Sender.Canvas.FillRect(R);
+    Sender.Canvas.Font.Color := clHighlightText;
+  end;
+
+  DefaultDraw := True;
 end;
 
 procedure TFrmSetListCollection.LvSetListsData(Sender: TObject; Item: TListItem);
@@ -310,6 +480,12 @@ begin
   finally
     DlgImport.Free;
   end;
+end;
+
+procedure TFrmSetListCollection.ActMoveSetsExecute(Sender: TObject);
+begin
+  // todo: show dialog where to move sets to
+  //move the sets to the selected
 end;
 
 function TFrmSetListCollection.FGetSelectedObject: TSetListObject;
