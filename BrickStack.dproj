@@ -214,6 +214,7 @@
         <DCCReference Include="Src\UDownloadThread.pas"/>
         <DCCReference Include="Src\Scripts\UBSSQL.pas"/>
         <DCCReference Include="Src\Data\USQLUpdate.pas"/>
+        <DCCReference Include="Src\UDragData.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

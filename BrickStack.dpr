@@ -37,7 +37,8 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   UBSSQL in 'Src\Scripts\UBSSQL.pas',
-  USQLUpdate in 'Src\Data\USQLUpdate.pas';
+  USQLUpdate in 'Src\Data\USQLUpdate.pas',
+  UDragData in 'Src\UDragData.pas';
 
 {$R *.RES}
 

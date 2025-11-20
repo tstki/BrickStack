@@ -62,6 +62,8 @@ type
     procedure LvSetsData(Sender: TObject; Item: TListItem);
     procedure LvSetsClick(Sender: TObject);
     procedure LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure LvSetsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+    procedure LvSetsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
     procedure LvSetsDblClick(Sender: TObject);
     procedure LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure LvSetsColumnClick(Sender: TObject; Column: TListColumn);
@@ -81,7 +83,6 @@ type
     procedure FSetBSSetListID(BSSetListID: Integer);
     function FGetSelectedObject: TObject;
     function FGetSelectedSetNum: String;
-    function FGetSelectedBSSetID: Integer;
     procedure FUpdateStatusBar;
     function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
     function FGetVisibleRowCount: Integer;
@@ -107,7 +108,7 @@ uses
   Data.DB,
   USqLiteConnection,
   UITypes,
-  UFrmMain, UDlgAddToSetList, UStrings;
+  UFrmMain, UDlgAddToSetList, UStrings, UDragData;
 
 const //CbxFilter
   fltALL = 0;
@@ -147,6 +148,12 @@ begin
   inherited;
 
   LvSets.SmallImages := ImageList16;
+
+  // Enable dragging from this listview so other forms can accept dropped sets
+  LvSets.DragMode := dmAutomatic;
+  // Accept drops from search grid
+  LvSets.OnDragOver := LvSetsDragOver;
+  LvSets.OnDragDrop := LvSetsDragDrop;
 
   CbxFilter.Items.Clear;
   CbxFilter.Items.Add(StrSetListFillterShowAll);
@@ -215,8 +222,11 @@ begin
   end;
 
 
+//  delete * from BSDBPartsInventory where BSSetID = :BSSetID;
+// Params.ParamByName('ID').asInteger := := SetObject.BSSetID
+
 //todo:
-//check if there's a details dialog open that needs to be closed or cleared
+//check if there's a details or parts dialog open that needs to be closed or cleared
 
   //TFrmMain.UpdateSetsByCollectionID(BSSetListID: Integer);
 end;
@@ -304,21 +314,6 @@ begin
   end else begin
     var SetObjectList := TSetObjectList(Obj);
     Result := SetObjectList[0].SetNum;
-  end;
-end;
-
-function TFrmSetList.FGetSelectedBSSetID: Integer;
-begin
-  var Obj := FGetSelectedObject;
-  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
-    var SetObject := TSetObject(Obj);
-    Result := SetObject.BSSetID;
-  end else begin
-    var SetObjectList := TSetObjectList(Obj);
-    if SetObjectList.Count = 1 then
-      Result := SetObjectList[0].BSSetID
-    else
-      Result := 0;
   end;
 end;
 
@@ -474,6 +469,80 @@ begin
   FLvSetsLastClickPos := Point(X, Y);
 end;
 
+procedure TFrmSetList.LvSetsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+begin
+  // Only accept drops from the search grid (TDrawGrid) if drag data exists
+  if Source is TCustomControl then begin
+    Accept := (DraggedBSSetIDs.Count > 0) or (DraggedSetNums.Count > 0);
+  end else
+    Accept := False;
+end;
+
+procedure TFrmSetList.LvSetsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
+var
+  I: Integer;
+begin
+  // Only handle drops from the search grid (via UDragData)
+  if not (Source is TCustomControl) then
+    Exit;
+
+  if ((DraggedBSSetIDs.Count = 0) and (DraggedSetNums.Count = 0)) then
+    Exit;
+
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+  var FDTrans := TFDTransaction.Create(nil);
+  try
+    FDQuery.Connection := SqlConnection;
+    FDTrans.Connection := SqlConnection;
+    FDTrans.StartTransaction;
+    try
+      // Insert any BSSetIDs by resolving to set_num
+      for I := 0 to DraggedBSSetIDs.Count - 1 do begin
+        FDQuery.SQL.Text := 'SELECT set_num FROM BSSets WHERE ID = :ID';
+        FDQuery.Params.Clear;
+        FDQuery.Params.CreateParam(ftInteger, 'ID', ptInput).AsInteger := DraggedBSSetIDs[I];
+        FDQuery.Open;
+        if not FDQuery.Eof then begin
+          var SetNum := FDQuery.Fields[0].AsString;
+          FDQuery.Close;
+
+          FDQuery.SQL.Text := 'INSERT INTO BSSets (BSSetListID, set_num, Built, HaveSpareParts) VALUES(:BSSetListID, :SetNum, 0, 0)';
+          FDQuery.Params.Clear;
+          FDQuery.Params.CreateParam(ftInteger, 'BSSetListID', ptInput).AsInteger := FBSSetListID;
+          FDQuery.Params.CreateParam(ftString, 'SetNum', ptInput).AsString := SetNum;
+          FDQuery.ExecSQL;
+        end else
+          FDQuery.Close;
+      end;
+
+      // Insert any plain SetNums
+      for I := 0 to DraggedSetNums.Count - 1 do begin
+        FDQuery.SQL.Text := 'INSERT INTO BSSets (BSSetListID, set_num, Built, HaveSpareParts) VALUES(:BSSetListID, :SetNum, 0, 0)';
+        FDQuery.Params.Clear;
+        FDQuery.Params.CreateParam(ftInteger, 'BSSetListID', ptInput).AsInteger := FBSSetListID;
+        FDQuery.Params.CreateParam(ftString, 'SetNum', ptInput).AsString := DraggedSetNums[I];
+        FDQuery.ExecSQL;
+      end;
+
+      FDTrans.Commit;
+    except
+      FDTrans.Rollback;
+      raise;
+    end;
+  finally
+    FDQuery.Free;
+    FDTrans.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
+
+  ClearDragData;
+
+  // Refresh the view
+  ReloadAndRefresh;
+  TFrmMain.UpdateCollectionsByID(FBSSetListID);
+end;
+
 procedure TFrmSetList.FHandleClickType(Sender: TObject; DoubleClick: Boolean);
 var
   ImageRect: TRect;
@@ -508,7 +577,7 @@ begin
       end;
     end;
   end else if DoubleClick then
-    ActViewSetExecute(Self);
+    ActEditSetExecute(Self);
 end;
 
 procedure TFrmSetList.FUpdateUI(Item: TListItem);
