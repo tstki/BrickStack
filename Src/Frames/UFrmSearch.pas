@@ -104,6 +104,7 @@ type
     procedure TbGridSizeChange(Sender: TObject);
     procedure DgSetsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure DgSetsMouseLeave(Sender: TObject);
+    procedure DgSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
     procedure ActViewSetExecute(Sender: TObject);
     procedure ActViewPartsExecute(Sender: TObject);
@@ -114,6 +115,8 @@ type
     FSetObjectList: TSetObjectList; // Stored locally from query result.
     FResultPanels: TObjectList;
     FImageCache: TImageCache;
+    FDragStartPoint: TPoint;
+    FDraggingStarted: Boolean;
     //FCurMaxCols: Integer;
     FLastMaxCols: Integer;
     procedure FDoSearch;
@@ -141,6 +144,7 @@ uses
   FireDAC.Comp.Client,
   USQLiteConnection,
   UDlgAddToSetList, UDelayedImage,
+  UDragData,
   DateUtils,
   UFrmMain, UStrings;
 
@@ -255,6 +259,10 @@ begin
   DgSets.Anchors := [TAnchorKind.akLeft, TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
 
   TrackChange(Self);
+
+  // Wire up mouse handlers used to initiate drags
+  DgSets.OnMouseDown := DgSetsMouseDown;
+  DgSets.OnMouseMove := DgSetsMouseMove;
 
   // Fill the theme pulldown - just main themes for now. No sub themes.
   var SqlConnection := FrmMain.AcquireConnection;
@@ -442,7 +450,41 @@ end;
 
 procedure TFrmSearch.DgSetsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
-// check where mouse is, and change cursor if needed
+  // Start a drag if left button is down and the mouse moved enough
+  if (ssLeft in Shift) and not FDraggingStarted then begin
+    var dx := Abs(X - FDragStartPoint.X);
+    var dy := Abs(Y - FDragStartPoint.Y);
+    if (dx >= 6) or (dy >= 6) then begin
+      // Determine the cell under the cursor
+      var Col, Row: Integer;
+      DgSets.MouseToCell(X, Y, Col, Row);
+      var Idx := FGetIndexByRowAndCol(Col, Row);
+      if (Idx >= 0) and (Idx < FSetObjectList.Count) then begin
+        // Populate drag data
+        ClearDragData;
+        var SetObj := FSetObjectList[Idx];
+        if Assigned(SetObj) then begin
+          if SetObj.BSSetID <> 0 then
+            DraggedBSSetIDs.Add(SetObj.BSSetID)
+          else
+            DraggedSetNums.Add(SetObj.SetNum);
+        end;
+
+        // Start the drag operation. The Source will be the grid control.
+        DgSets.BeginDrag(False);
+        FDraggingStarted := True;
+      end;
+    end;
+  end;
+end;
+
+procedure TFrmSearch.DgSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  // Record starting point for possible drag
+  if Button = mbLeft then begin
+    FDragStartPoint := Point(X, Y);
+    FDraggingStarted := False;
+  end;
 end;
 
 procedure TFrmSearch.DgSetsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);

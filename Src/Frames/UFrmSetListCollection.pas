@@ -112,7 +112,7 @@ uses
   StrUtils, SysUtils, Dialogs, UITypes, Math,
   UBrickLinkXMLIntf,
   UFrmMain, UStrings, USqLiteConnection, Data.DB,
-  UDlgSetList, UDlgExport, UDlgImport;
+  UDlgSetList, UDlgExport, UDlgImport, UDragData;
 
 procedure TFrmSetListCollection.FRebuildStatusBar;
 begin
@@ -270,9 +270,19 @@ procedure TFrmSetListCollection.LvSetListsDragOver(Sender: TObject; Source: TObj
 var
   TargetItem: TListItem;
 begin
-  // Only accept drags from other listviews when mouse is over a real item with data
+  // Only accept drags when mouse is over a real item with data.
+  // Support drags from `TListView` (internal move) or from the search grid (TDrawGrid) via `UDragData`.
   TargetItem := LvSetLists.GetItemAt(X, Y);
-  Accept := (Source is TListView) and (TargetItem <> nil) and (TargetItem.Data <> nil);
+  if TargetItem = nil then begin
+    Accept := False;
+  end else begin
+    if (Source is TListView) then
+      Accept := TargetItem.Data <> nil
+    else if (Source is TCustomControl) then // e.g. TDrawGrid from search
+      Accept := ((DraggedBSSetIDs.Count > 0) or (DraggedSetNums.Count > 0)) and (TargetItem.Data <> nil)
+    else
+      Accept := False;
+  end;
 
   // Non-destructive visual feedback: set hover index and invalidate to paint
   if TargetItem <> nil then begin
@@ -294,10 +304,9 @@ var
   IDs: TList<Integer>;
   I: Integer;
 begin
-  if not (Source is TListView) then
-    Exit;
-
-  var SourceLV := TListView(Source);
+  // Two supported sources:
+  // 1) Drag from another TListView (moving owned BSSets) - original behavior
+  // 2) Drag from the search grid (TDrawGrid) - add set(s) to the target setlist using DraggedSetNums/DraggedBSSetIDs
 
   var TargetItem := LvSetLists.GetItemAt(X, Y);
   if TargetItem = nil then
@@ -309,86 +318,146 @@ begin
   if (TargetSetList = nil) or (TargetSetList.ID = 0) then
     Exit;
 
-  IDs := TList<Integer>.Create;
-  try
-    for SrcItem in SourceLV.Items do begin
-      if SrcItem.Selected and (SrcItem.Data <> nil) then begin
-        var Obj := TObject(SrcItem.Data);
-        if Obj is TSetObject then begin
-          var SetObj := TSetObject(Obj);
-          if SetObj.BSSetID <> 0 then
-            IDs.Add(SetObj.BSSetID);
-        end else if Obj is TSetObjectList then begin
-          var SetObjList := TSetObjectList(Obj);
-          for I := 0 to SetObjList.Count - 1 do
-            if SetObjList[I].BSSetID <> 0 then
-              IDs.Add(SetObjList[I].BSSetID);
+  if Source is TListView then begin
+    var SourceLV := TListView(Source);
+    IDs := TList<Integer>.Create;
+    try
+      for SrcItem in SourceLV.Items do begin
+        if SrcItem.Selected and (SrcItem.Data <> nil) then begin
+          var Obj := TObject(SrcItem.Data);
+          if Obj is TSetObject then begin
+            var SetObj := TSetObject(Obj);
+            if SetObj.BSSetID <> 0 then
+              IDs.Add(SetObj.BSSetID);
+          end else if Obj is TSetObjectList then begin
+            var SetObjList := TSetObjectList(Obj);
+            for I := 0 to SetObjList.Count - 1 do
+              if SetObjList[I].BSSetID <> 0 then
+                IDs.Add(SetObjList[I].BSSetID);
+          end;
         end;
       end;
-    end;
 
-    if IDs.Count = 0 then
+      if IDs.Count = 0 then
+        Exit;
+
+      var SqlConnection := FrmMain.AcquireConnection;
+      var FDQuery := TFDQuery.Create(nil);
+      var FDTrans := TFDTransaction.Create(nil);
+      try
+        FDQuery.Connection := SqlConnection;
+        FDTrans.Connection := SqlConnection;
+        FDTrans.StartTransaction;
+        try
+          // Batch the IDs into chunks and update each chunk using parameters
+          var TotalIDs := IDs.Count;
+          var StartIdx := 0;
+
+          while StartIdx < TotalIDs do begin
+            var EndIdx := Min(StartIdx + CHUNK_SIZE - 1, TotalIDs - 1);
+            var ParamNames := '';
+
+            // Prepare parameter list and SQL IN clause
+            FDQuery.Params.Clear;
+            // NewID param
+            FDQuery.Params.CreateParam(ftInteger, 'NewID', ptInput).AsInteger := TargetSetList.ID;
+
+            var ParamIndex := 0;
+            for I := StartIdx to EndIdx do begin
+              var PName := 'ID' + IntToStr(ParamIndex);
+              if ParamNames <> '' then
+                ParamNames := ParamNames + ',';
+              ParamNames := ParamNames + ':' + PName;
+
+              FDQuery.Params.CreateParam(ftInteger, PName, ptInput).AsInteger := IDs[I];
+              Inc(ParamIndex);
+            end;
+
+            if ParamNames <> '' then begin
+              FDQuery.SQL.Text := 'UPDATE BSSets SET BSSetListID = :NewID WHERE ID IN (' + ParamNames + ')';
+              FDQuery.ExecSQL;
+            end;
+
+            StartIdx := EndIdx + 1;
+          end;
+
+          FDTrans.Commit;
+        except
+          FDTrans.Rollback;
+          raise;
+        end;
+      finally
+        FDQuery.Free;
+        FDTrans.Free;
+        FrmMain.ReleaseConnection(SqlConnection);
+      end;
+
+      // Refresh UI
+      RebuildBySQL;
+      if Assigned(FrmMain) then
+        TFrmMain.UpdateCollectionsByID(TargetSetList.ID);
+    finally
+      IDs.Free;
+    end;
+  end else if Source is TCustomControl then begin
+    // Drag coming from search grid: use DraggedSetNums / DraggedBSSetIDs
+    if (DraggedBSSetIDs.Count = 0) and (DraggedSetNums.Count = 0) then
       Exit;
 
-    var SqlConnection := FrmMain.AcquireConnection;
-    var FDQuery := TFDQuery.Create(nil);
-    var FDTrans := TFDTransaction.Create(nil);
+    var SqlConnection2 := FrmMain.AcquireConnection;
+    var FDQuery2 := TFDQuery.Create(nil);
+    var FDTrans2 := TFDTransaction.Create(nil);
     try
-      FDQuery.Connection := SqlConnection;
-      FDTrans.Connection := SqlConnection;
-      FDTrans.StartTransaction;
+      FDQuery2.Connection := SqlConnection2;
+      FDTrans2.Connection := SqlConnection2;
+      FDTrans2.StartTransaction;
       try
-        // Batch the IDs into chunks and update each chunk using parameters
-        var TotalIDs := IDs.Count;
-        var StartIdx := 0;
+        // Insert any BSSetIDs (if provided) as moved/duplicate entries using their set_num
+        for I := 0 to DraggedBSSetIDs.Count - 1 do begin
+          // Get set_num for BSSetID
+          FDQuery2.SQL.Text := 'SELECT set_num FROM BSSets WHERE ID = :ID';
+          FDQuery2.Params.Clear;
+          FDQuery2.Params.CreateParam(ftInteger, 'ID', ptInput).AsInteger := DraggedBSSetIDs[I];
+          FDQuery2.Open;
+          if not FDQuery2.Eof then begin
+            var SetNum := FDQuery2.Fields[0].AsString;
+            FDQuery2.Close;
 
-        while StartIdx < TotalIDs do begin
-          var EndIdx := Min(StartIdx + CHUNK_SIZE - 1, TotalIDs - 1);
-          var ParamNames := '';
-
-          // Prepare parameter list and SQL IN clause
-          FDQuery.Params.Clear;
-          // NewID param
-          FDQuery.Params.CreateParam(ftInteger, 'NewID', ptInput).AsInteger := TargetSetList.ID;
-
-          var ParamIndex := 0;
-          for I := StartIdx to EndIdx do begin
-            var PName := 'ID' + IntToStr(ParamIndex);
-            if ParamNames <> '' then
-              ParamNames := ParamNames + ',';
-            ParamNames := ParamNames + ':' + PName;
-
-            FDQuery.Params.CreateParam(ftInteger, PName, ptInput).AsInteger := IDs[I];
-            Inc(ParamIndex);
-          end;
-
-          if ParamNames <> '' then begin
-            FDQuery.SQL.Text := 'UPDATE BSSets SET BSSetListID = :NewID WHERE ID IN (' + ParamNames + ')';
-            FDQuery.ExecSQL;
-          end;
-
-          StartIdx := EndIdx + 1;
+            FDQuery2.SQL.Text := 'INSERT INTO BSSets (BSSetListID, set_num, Built, HaveSpareParts) VALUES(:BSSetListID, :SetNum, 0, 0)';
+            FDQuery2.Params.Clear;
+            FDQuery2.Params.CreateParam(ftInteger, 'BSSetListID', ptInput).AsInteger := TargetSetList.ID;
+            FDQuery2.Params.CreateParam(ftString, 'SetNum', ptInput).AsString := SetNum;
+            FDQuery2.ExecSQL;
+          end else
+            FDQuery2.Close;
         end;
 
-        FDTrans.Commit;
+        // Insert any plain SetNums
+        for I := 0 to DraggedSetNums.Count - 1 do begin
+          FDQuery2.SQL.Text := 'INSERT INTO BSSets (BSSetListID, set_num, Built, HaveSpareParts) VALUES(:BSSetListID, :SetNum, 0, 0)';
+          FDQuery2.Params.Clear;
+          FDQuery2.Params.CreateParam(ftInteger, 'BSSetListID', ptInput).AsInteger := TargetSetList.ID;
+          FDQuery2.Params.CreateParam(ftString, 'SetNum', ptInput).AsString := DraggedSetNums[I];
+          FDQuery2.ExecSQL;
+        end;
+
+        FDTrans2.Commit;
       except
-        FDTrans.Rollback;
+        FDTrans2.Rollback;
         raise;
       end;
     finally
-      FDQuery.Free;
-      FDTrans.Free;
-      FrmMain.ReleaseConnection(SqlConnection);
+      FDQuery2.Free;
+      FDTrans2.Free;
+      FrmMain.ReleaseConnection(SqlConnection2);
     end;
-
-    //todo: dont refresh is no valid drop target was found
 
     // Refresh UI
     RebuildBySQL;
     if Assigned(FrmMain) then
       TFrmMain.UpdateCollectionsByID(TargetSetList.ID);
-  finally
-    IDs.Free;
+
+    ClearDragData;
   end;
 
   // Clear hover highlight
