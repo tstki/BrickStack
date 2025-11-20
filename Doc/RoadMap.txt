@@ -58,7 +58,6 @@ Collection window:
 - Support filtering by custom tag
 - Give custom tags a user selectable icon
 - Option to open selected collections in the same window, or a new window for each. (extra work for saving dialog dimensions)
-- Right click or drag n drop (+shift) to move / add set to collection.
 - Right click mark as built
 - Add "all your sets" table entry to view your collection and filter from there.
 - Remember column widths
