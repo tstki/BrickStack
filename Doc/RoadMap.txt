@@ -105,8 +105,6 @@ Windows:
 - Collection details (shows selected collection's details / custom fields / statistics)
 - Collection content (shows selected collection's set content)
 - Multiple collections (vertical and horizontal)
-- Remember checkbox mode and checks between sessions
--- Reimagine checklist mode as a table with wider spacing so we can handle more data?
 - "layout" set for all windows to switch window placements configured by the user.
 - Hamburger menu if window size is too thin.
 - Expand about screen
