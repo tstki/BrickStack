@@ -47,7 +47,6 @@ Get user's inventory
 
 Configure desired columns when printing parts - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview
-- Color / grayscale - might not be needed since printer settings can arrange that.
 - Look into Skia library https://github.com/skia4delphi/skia4delphi
 
 Collection window:
@@ -75,11 +74,7 @@ Collection window:
 - Deleting a set should also delete all parts.
 
 Parts window:
-- Left click to add
-- Right click to remove
-- checkbox to select all or remove all.
 - Implement display filters
-- Fix printing, again.
 - Improve inventory version handling.
 - Export parts.
 

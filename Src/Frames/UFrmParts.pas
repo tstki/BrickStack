@@ -112,6 +112,7 @@ type
     function FTBGridSizePositionToPixels: Integer;
     function FGetGridHeight: Integer;
     procedure FModifyQuantity(PartObject: TPartObject; Amount: Integer; Increment: Boolean);
+    procedure FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -370,18 +371,38 @@ procedure TFrmParts.ActPrintPartsExecute(Sender: TObject);
         Bitmap := TBitmap.Create;
         try
           // Get the full size of the scrollbox content
-          var ScrollWidth := Box.ClientWidth;
-          var ScrollHeight := Box.DefaultRowHeight * Box.RowCount;
+          // Calculate full content size (all columns and rows)
+          var TotalCols := Box.ColCount;
+          var TotalRows := Box.RowCount;
+          var CellW := Box.DefaultColWidth;
+          var CellH := Box.DefaultRowHeight;
 
-          // Set the bitmap size to the full content size
-          Bitmap.Width := ScrollWidth;
-          Bitmap.Height := ScrollHeight;
+          var FullWidth := Max(1, TotalCols) * CellW;
+          var FullHeight := Max(1, TotalRows) * CellH;
 
-          // Paint the entire content to the bitmap
-//          Box.ScrollBars.Range.VertScrollBar.Position := 0;
-//          Box.ScrollBars.Position := 0;
-          //ScrollBox.PaintTo(Bitmap.Canvas.Handle, 0, 0); // No need to print the scrollbox itself.
-          Box.PaintTo(Bitmap.Canvas.Handle, 0, 0);
+          // Guard against extremely large bitmaps
+          if (FullWidth < 1) or (FullHeight < 1) then
+            Exit;
+
+          Bitmap.Width := FullWidth;
+          Bitmap.Height := FullHeight;
+
+          // Fill background
+          Bitmap.Canvas.Brush.Color := clWhite;
+          Bitmap.Canvas.FillRect(Rect(0,0,Bitmap.Width,Bitmap.Height));
+
+          // Render every cell into the bitmap using the same drawing logic as the grid
+          for var R := 0 to TotalRows - 1 do begin
+            for var C := 0 to TotalCols - 1 do begin
+              var CellRect: TRect;
+              CellRect.Left := C * CellW;
+              CellRect.Top := R * CellH;
+              CellRect.Right := CellRect.Left + CellW;
+              CellRect.Bottom := CellRect.Top + CellH;
+
+              FDrawPartCell(Bitmap.Canvas, C, R, CellRect, True);
+            end;
+          end;
 {          for var I := 0 to Box.ControlCount - 1 do begin
             var ChildControl := TPanel(ScrollBox.Controls[I]);
             if ChildControl.Visible then begin
@@ -884,6 +905,66 @@ begin
       // "More info" icon
       ImageList1.Draw(DgSetParts.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
     end;}
+  end;
+end;
+
+procedure TFrmParts.FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx >= 0) and (Idx < FPartObjectList.Count) then begin
+    var PartObject := FPartObjectList[Idx];
+    var ImageUrl := PartObject.ImgUrl;
+
+    // Draw cell background
+    if FPartsMode = caEdit then begin
+      if PartObject.CurQuantity = PartObject.MaxQuantity then begin
+        if AForPrint then
+          ACanvas.Brush.Color := TColor(RGB(210, 250, 210)) // much lighter green for printing
+        else
+          ACanvas.Brush.Color := clGreen;
+      end else
+        ACanvas.Brush.Color := clWindow;
+      ACanvas.FillRect(Rect);
+    end else begin
+      ACanvas.Brush.Color := clWindow;
+      ACanvas.FillRect(Rect);
+    end;
+
+    // Draw image if available
+    if FImageCache <> nil then begin
+      var Picture := FImageCache.GetImage(ImageUrl);
+      if Assigned(Picture) and Assigned(Picture.Graphic) then begin
+        var ImageRect := Rect;
+        if DgSetParts.DefaultColWidth >= 64 then
+          ImageRect.Bottom := ImageRect.Bottom - 40
+        else if DgSetParts.DefaultColWidth >= 48 then
+          ImageRect.Bottom := ImageRect.Bottom - 20;
+        ACanvas.StretchDraw(ImageRect, Picture.Graphic);
+      end;
+    end;
+
+    // Draw texts
+    ACanvas.Brush.Style := bsClear;
+
+    if DgSetParts.DefaultColWidth >= 64 then
+      ACanvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum);
+
+    if DgSetParts.DefaultColWidth >= 48 then begin
+      var PartCount := '';
+      if FPartsMode = caView then
+        PartCount := Format('%dx', [PartObject.MaxQuantity])
+      else
+        PartCount := Format('%d/%d', [PartObject.CurQuantity, PartObject.MaxQuantity]);
+
+      if PartObject.IsSpare then
+        PartCount := PartCount + '*';
+
+      ACanvas.TextOut(Rect.Left, Rect.Bottom - 18, PartCount);
+    end;
+  end else begin
+    // Empty cell: clear background
+    ACanvas.Brush.Color := clWindow;
+    ACanvas.FillRect(Rect);
   end;
 end;
 
