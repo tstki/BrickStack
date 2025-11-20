@@ -65,7 +65,7 @@ type
     procedure ActMoveSetsExecute(Sender: TObject);
     procedure LvSetListsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure LvSetListsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
-    procedure LvSetListsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
+    procedure LvSetListsAdvancedCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -147,8 +147,8 @@ begin
   // Accept drops from other listviews (sets)
   LvSetLists.OnDragOver := LvSetListsDragOver;
   LvSetLists.OnDragDrop := LvSetListsDragDrop;
-  // Custom draw to allow non-destructive hover highlighting during drag
-  LvSetLists.OnCustomDrawItem := LvSetListsCustomDrawItem;
+  // Custom draw to allow non-destructive hover highlighting during drag (draw after default paint)
+  LvSetLists.OnAdvancedCustomDrawItem := LvSetListsAdvancedCustomDrawItem;
 
   // Initialize hover state
   FDragHoverIndex := -1;
@@ -270,11 +270,11 @@ procedure TFrmSetListCollection.LvSetListsDragOver(Sender: TObject; Source: TObj
 var
   TargetItem: TListItem;
 begin
-  // Accept drags from other listviews (eg. the sets list)
-  Accept := (Source is TListView);
+  // Only accept drags from other listviews when mouse is over a real item with data
+  TargetItem := LvSetLists.GetItemAt(X, Y);
+  Accept := (Source is TListView) and (TargetItem <> nil) and (TargetItem.Data <> nil);
 
   // Non-destructive visual feedback: set hover index and invalidate to paint
-  TargetItem := LvSetLists.GetItemAt(X, Y);
   if TargetItem <> nil then begin
     if FDragHoverIndex <> TargetItem.Index then begin
       FDragHoverIndex := TargetItem.Index;
@@ -405,17 +405,32 @@ begin
 // Show context menu to show/hide columns
 end;
 
-procedure TFrmSetListCollection.LvSetListsCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
-var
-  R: TRect;
+procedure TFrmSetListCollection.LvSetListsAdvancedCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
 begin
-  // If we're highlighting during a drag, paint a highlight background for the hovered item
-  if FIsDragHighlighting and (FDragHoverIndex = Item.Index) then begin
-    R := Item.DisplayRect(drBounds);
-    Sender.Canvas.Brush.Style := bsSolid;
-    Sender.Canvas.Brush.Color := clHighlight;
-    Sender.Canvas.FillRect(R);
-    Sender.Canvas.Font.Color := clHighlightText;
+  // Draw the highlight border after the item has been painted so it is always visible
+  if (Stage = cdPostPaint) and FIsDragHighlighting and (FDragHoverIndex = Item.Index) then begin
+    var R := Item.DisplayRect(drBounds);
+    // inset the rect slightly so the border doesn't touch the control edges
+    InflateRect(R, -2, -1);
+
+    with Sender.Canvas do begin
+      var OldBrushStyle := Brush.Style;
+      var OldBrushColor := Brush.Color;
+      var OldPenColor := Pen.Color;
+      var OldPenWidth := Pen.Width;
+
+      Brush.Style := bsClear; // don't fill, only draw the border
+      Pen.Color := clHighlight;
+      Pen.Width := 2;
+
+      Rectangle(R.Left, R.Top, R.Right, R.Bottom);
+
+      // restore canvas state
+      Brush.Style := OldBrushStyle;
+      Brush.Color := OldBrushColor;
+      Pen.Color := OldPenColor;
+      Pen.Width := OldPenWidth;
+    end;
   end;
 
   DefaultDraw := True;

@@ -84,6 +84,10 @@ Parts window:
 - Improve inventory version handling.
 - Export parts.
 
+Parts collection:
+- Separate frame for loose parts
+- Special search window filter.
+
 Collection:
 - Deleting a collection should ask the user to move all sets to a new inventory, or delete (including all parts)
 
