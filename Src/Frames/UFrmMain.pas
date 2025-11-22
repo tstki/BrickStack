@@ -86,8 +86,6 @@ type
     ActUpdateDatabase: TAction;
     Export2: TMenuItem;
     Updatedatabase1: TMenuItem;
-    ActUpdateCSVData: TAction;
-    UpdateCSVdata1: TMenuItem;
     N5: TMenuItem;
     N6: TMenuItem;
     procedure FileOpen1Execute(Sender: TObject);
@@ -112,7 +110,6 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure ActUpdateDatabaseExecute(Sender: TObject);
-    procedure ActUpdateCSVDataExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -915,11 +912,6 @@ end;
 procedure TFrmMain.ActSearchExecute(Sender: TObject);
 begin
   ShowSearchWindow;
-end;
-
-procedure TFrmMain.ActUpdateCSVDataExecute(Sender: TObject);
-begin
-// reimport the csv data.
 end;
 
 procedure TFrmMain.ActConfigExecute(Sender: TObject);

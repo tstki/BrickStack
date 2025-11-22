@@ -212,9 +212,6 @@ object FrmMain: TFrmMain
       object Updatedatabase1: TMenuItem
         Action = ActUpdateDatabase
       end
-      object UpdateCSVdata1: TMenuItem
-        Action = ActUpdateCSVData
-      end
       object N5: TMenuItem
         Caption = '-'
       end
@@ -367,11 +364,6 @@ object FrmMain: TFrmMain
       Category = 'Help'
       Caption = 'Update database...'
       OnExecute = ActUpdateDatabaseExecute
-    end
-    object ActUpdateCSVData: TAction
-      Category = 'Help'
-      Caption = 'Update CSV data...'
-      OnExecute = ActUpdateCSVDataExecute
     end
   end
   object ImageList16: TImageList
