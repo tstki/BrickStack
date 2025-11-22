@@ -18,6 +18,7 @@ type
     CbxFilter: TComboBox;
     LvSets: TListView;
     PopupMenu1: TPopupMenu;
+    PopupMenu2: TPopupMenu;
     test1: TMenuItem;
     Edit1: TMenuItem;
     ActDeleteSetList1: TMenuItem;
@@ -67,6 +68,8 @@ type
     procedure LvSetsDblClick(Sender: TObject);
     procedure LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
     procedure LvSetsColumnClick(Sender: TObject; Column: TListColumn);
+    procedure LvSetsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
+    procedure PopupMenu2ItemClick(Sender: TObject);
     procedure ActEditOwnedPartsExecute(Sender: TObject);
   private
     { Private declarations }
@@ -631,6 +634,33 @@ begin
   //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
 
   ReloadAndRefresh;
+end;
+
+procedure TFrmSetList.LvSetsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
+begin
+  // Don't call inherited so default popup for the list header isn't shown.
+
+  // Build runtime menu and show at header click position
+  while PopupMenu2.Items.Count > 0 do
+    PopupMenu2.Items[0].Free;
+
+  // Add 3 dummy items at runtime
+  for var I := 1 to 3 do begin
+    var MI := TMenuItem.Create(PopupMenu2);
+    MI.Caption := Format('Dummy %d', [I]);
+    MI.OnClick := PopupMenu2ItemClick;
+    PopupMenu2.Items.Add(MI);
+  end;
+
+  // Show the popup at the header click screen coordinates
+  var ScreenPt := LvSets.ClientToScreen(Point);
+  PopupMenu2.Popup(ScreenPt.X, ScreenPt.Y);
+end;
+
+procedure TFrmSetList.PopupMenu2ItemClick(Sender: TObject);
+begin
+  if Assigned(Sender) and (Sender is TMenuItem) then
+    ShowMessage(Format('Clicked: %s', [TMenuItem(Sender).Caption]));
 end;
 
 procedure TFrmSetList.LvSetsDblClick(Sender: TObject);

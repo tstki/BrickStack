@@ -2660,4 +2660,8 @@ object FrmSetListCollection: TFrmSetListCollection
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
   end
+  object PopupMenu2: TPopupMenu
+    Left = 208
+    Top = 176
+  end
 end

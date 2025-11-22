@@ -27,7 +27,6 @@ object FrmSetList: TFrmSetList
     DoubleBuffered = True
     ParentDoubleBuffered = False
     TabOrder = 0
-    ExplicitTop = -6
     object LblFilter: TLabel
       Left = 8
       Top = 12
@@ -141,6 +140,7 @@ object FrmSetList: TFrmSetList
     OnChange = LvSetsChange
     OnClick = LvSetsClick
     OnColumnClick = LvSetsColumnClick
+    OnColumnRightClick = LvSetsColumnRightClick
     OnData = LvSetsData
     OnDblClick = LvSetsDblClick
     OnMouseDown = LvSetsMouseDown
@@ -2925,5 +2925,9 @@ object FrmSetList: TFrmSetList
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000}
+  end
+  object PopupMenu2: TPopupMenu
+    Left = 208
+    Top = 176
   end
 end

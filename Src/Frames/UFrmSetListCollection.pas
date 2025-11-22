@@ -18,6 +18,7 @@ type
     LvSetLists: TListView;
     ImageList16: TImageList;
     PopupMenu1: TPopupMenu;
+    PopupMenu2: TPopupMenu;
     ActAddSetList: TAction;
     ActDeleteSetList: TAction;
     ActEditSetList: TAction;
@@ -66,6 +67,7 @@ type
     procedure LvSetListsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure LvSetListsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
     procedure LvSetListsAdvancedCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
+    procedure PopupMenu2ItemClick(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -470,8 +472,29 @@ end;
 
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
 begin
-  inherited;
-// Show context menu to show/hide columns
+  // Don't call inherited so default popup for the list header isn't shown.
+
+  // Clear any existing runtime items
+  while PopupMenu2.Items.Count > 0 do
+    PopupMenu2.Items[0].Free;
+
+  // Add 3 dummy items at runtime
+  for var I := 1 to 3 do begin
+    var MI := TMenuItem.Create(PopupMenu2);
+    MI.Caption := Format('Dummy %d', [I]);
+    MI.OnClick := PopupMenu2ItemClick;
+    PopupMenu2.Items.Add(MI);
+  end;
+
+  // Show the popup at the header click screen coordinates
+  var ScreenPt := LvSetLists.ClientToScreen(Point);
+  PopupMenu2.Popup(ScreenPt.X, ScreenPt.Y);
+end;
+
+procedure TFrmSetListCollection.PopupMenu2ItemClick(Sender: TObject);
+begin
+  if Assigned(Sender) and (Sender is TMenuItem) then
+    ShowMessage(Format('Clicked: %s', [TMenuItem(Sender).Caption]));
 end;
 
 procedure TFrmSetListCollection.LvSetListsAdvancedCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
