@@ -70,6 +70,7 @@ type
   private
     { Private declarations }
     FConfig: TConfig;
+    FBackupDBPath: string;
     FCurrentStep: Integer;
     FUpdateMode: TUpdateMode;
     function FStepMaxCount(Step: Integer): Integer;
@@ -81,6 +82,7 @@ type
 //    procedure FDoImportCSV;
     procedure FDoExtractFiles;
     procedure FDoCleanup;
+    procedure FDoMigrateCustomData;
 //    function FGetFileSHA256(const AFileName: String): String;
     procedure FMoveDatabaseFromImport;
   public
@@ -119,9 +121,10 @@ const
   stepMoveDBIfNeeded = 4;
   stepBS_DBTables = 5;
   stepBS_DBIndexes = 6;
+  stepMigrateCustomData = 7;
   //stepImport = 8;
-  stepCleanup = 7;
-  stepFinished = 8;
+  stepCleanup = 8;
+  stepFinished = 9;
 
 {
   First launch and updater steps
@@ -240,6 +243,13 @@ procedure TDlgUpdateDatabase.FDoCreateDatabaseAndTables(const TableAndSQL: array
       // Background task
       try
         Query.SQL.Text := QueryText;
+
+        if SameText(Name, 'BSDBVersions insert') then begin
+          Query.Params.Clear;
+          Query.Params.CreateParam(ftInteger, 'DBVersion', ptInput).AsInteger := dbVERSION;
+          Query.Params.CreateParam(ftString, 'DBDateTime', ptInput).AsString := FormatDateTime('yyyymmdd,hhnnss', Now);
+        end;
+
         Query.ExecSQL;
         ExecResult := True;
       except
@@ -429,6 +439,76 @@ begin
   TimerCheckForNextStep.Enabled := True;
 end;
 
+procedure TDlgUpdateDatabase.FDoMigrateCustomData;
+const
+  MigrateTables: array[0..3] of string = ('BSSetLists','BSSets','BSCustomTags','BSDBPartsInventory');
+begin
+  // Migrate selected BrickStack custom tables from the backup DB into the new DB
+  if FBackupDBPath.Trim = '' then begin
+    // Nothing to migrate
+    TimerCheckForNextStep.Enabled := True;
+    Exit;
+  end;
+
+  LvResults.Clear;
+  LvResults.Items.BeginUpdate;
+  try
+    var Item := LvResults.Items.Add;
+    Item.Caption := '0';
+    Item.SubItems.Add('Migrate custom data');
+    Item.SubItems.Add('Running');
+    Item.SubItems.Add(FormatDateTime('YYYYMMDD', Now));
+
+    var SqlConnection := FrmMain.AcquireConnection;
+    try
+      SqlConnection.DriverName := 'SQLite';
+      SqlConnection.Params.Database := FConfig.DbasePath;
+      SqlConnection.Params.Add('LockingMode=Normal');
+      SqlConnection.Params.Add('Synchronous=Full');
+
+      SqlConnection.Connected := True;
+
+      var FDQuery := TFDQuery.Create(nil);
+      try
+        FDQuery.Connection := SqlConnection;
+        try
+          // Attach the backup DB as 'olddb'
+          var EscapedPath := StringReplace(FBackupDBPath, '''', '''''', [rfReplaceAll]);
+          FDQuery.SQL.Text := Format('ATTACH DATABASE ''%s'' AS olddb;', [EscapedPath]);
+          FDQuery.ExecSQL;
+
+          // Tables to migrate (defined in UBSSQL)
+          for var t in MigrateTables do begin
+            try
+              FDQuery.SQL.Text := Format('INSERT OR REPLACE INTO main.%s SELECT * FROM olddb.%s;', [t, t]);
+              FDQuery.ExecSQL;
+            except
+              // If a table doesn't exist or insert fails, continue with others
+            end;
+          end;
+
+          FDQuery.SQL.Text := 'DETACH DATABASE olddb;';
+          FDQuery.ExecSQL;
+
+          Item.SubItems[1] := 'Migrated';
+          Item.Caption := '100';
+        except
+          Item.SubItems[1] := 'Error during migration';
+          Item.Caption := '100';
+        end;
+      finally
+        FDQuery.Free;
+      end;
+    finally
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+  finally
+    LvResults.Items.EndUpdate;
+  end;
+
+  TimerCheckForNextStep.Enabled := True;
+end;
+
 function TDlgUpdateDatabase.FGetNextStep(): Integer;
 begin
   Result := FCurrentStep + 1;
@@ -483,10 +563,12 @@ begin
       // Try to move the existing DB to backups; if move fails, try delete + copy
       try
         TFile.Move(TargetDBFileName, BackupName);
+        FBackupDBPath := BackupName;
       except
         try
           TFile.Delete(TargetDBFileName);
           TFile.Copy(TargetDBFileName, BackupName, True);
+          FBackupDBPath := BackupName;
         except
           Item.SubItems[1] := 'Failed to backup existing DB';
           Item.Caption := '100';
@@ -545,6 +627,7 @@ begin
     stepMoveDBIfNeeded: FMoveDatabaseFromImport;
     stepBS_DBTables:  FDoCreateDatabaseAndTables(BS_CreateTables); //Result := High(BS_CreateTables) + 2; // +2 because of BSDBVersions
     stepBS_DBIndexes: FDoCreateDatabaseAndTables(BS_CreateIndexes); //Result := High(BS_CreateIndexes) + 1;
+    stepMigrateCustomData: FDoMigrateCustomData;
     //stepImport:       FDoImportCSV;
     stepCleanup:      FDoCleanup;
     stepFinished:
@@ -577,6 +660,7 @@ begin
     stepBS_DBTables:    Result := High(BS_CreateTables) + 1;
     //stepRB_DBTables:  Result := High(RB_CreateTablesAndTriggers) + 1;
     stepBS_DBIndexes:   Result := High(BS_CreateIndexes) + 1;
+    stepMigrateCustomData: Result := 1;
     //stepRB_DBIndexes: Result := High(RB_CreateIndexes) + 1;
     //stepImport:       Result := High(DownloadFiles) + 1;
     stepCleanup:        Result := High(DownloadFiles) + 1;

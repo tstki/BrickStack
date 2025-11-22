@@ -9,7 +9,7 @@ uses
   System.SysUtils, System.Classes, System.ImageList, System.Actions,
   USqLiteConnection,
   FireDAC.Comp.Client,
-  UDlgUpdateDatabase,
+  UDlgUpdateDatabase, UITypes,
   UConfig, UImageCache, UPostMessage;
 
 type
@@ -150,7 +150,7 @@ implementation
 {$R *.dfm}
 
 uses
-  ShellAPI, IOUtils, Themes, Styles,
+  ShellAPI, IOUtils, Themes, Styles, System.DateUtils,
   UFrmChild, UFrmSetListCollection, UFrmSearch, UFrmSet, UFrmSetList, UFrmParts,
   UDlgAbout, UDlgConfig, UDlgTest, UDlgLogin, UDlgHelp, UDlgViewExternal,
   UStrings;
@@ -296,6 +296,76 @@ end;
 procedure TFrmMain.ActUpdateDatabaseExecute(Sender: TObject);
 begin
   var UpdateMode := FCheckDatabaseVersion;
+
+  // If structure is fine, check when the last rebrickable CSV import happened
+  if UpdateMode = umNONE then begin
+    var ImportDate: TDateTime := 0;
+
+    var SqlConnection := AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := SqlConnection;
+      try
+        FDQuery.SQL.Text := 'SELECT MAX(DBDateTime) AS D FROM BSDBVersions';
+        try
+          FDQuery.Open;
+          if not FDQuery.EOF then begin
+            var vStr := Trim(FDQuery.FieldByName('D').AsString);
+            if vStr <> '' then begin
+              // Expect format: yyyymmdd,hhnnss
+              var commaPos := Pos(',', vStr);
+              if commaPos > 0 then begin
+                var datePart := Copy(vStr, 1, commaPos-1);
+                var timePart := Copy(vStr, commaPos+1, MaxInt);
+                if (Length(datePart) >= 8) and (Length(timePart) >= 6) then begin
+                  var y := StrToIntDef(Copy(datePart,1,4), 0);
+                  var m := StrToIntDef(Copy(datePart,5,2), 0);
+                  var d := StrToIntDef(Copy(datePart,7,2), 0);
+                  var hh := StrToIntDef(Copy(timePart,1,2), 0);
+                  var nn := StrToIntDef(Copy(timePart,3,2), 0);
+                  var ss := StrToIntDef(Copy(timePart,5,2), 0);
+                  try
+                    ImportDate := EncodeDateTime(y, m, d, hh, nn, ss, 0);
+                  except
+                    ImportDate := 0;
+                  end;
+                end;
+              end;
+            end;
+          end;
+        except
+          // If any error reading the value, treat as never imported
+          ImportDate := 0;
+        end;
+      finally
+        FDQuery.Close;
+      end;
+    finally
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+
+    var NeedPrompt := (ImportDate = 0) or (DaysBetween(Now, ImportDate) >= 7);
+    if NeedPrompt then begin
+      var MsgDate := 'Never';
+      if ImportDate <> 0 then
+        MsgDate := DateTimeToStr(ImportDate);
+
+      if MessageDlg(Format('Latest import: %s'#13#10#13#10 + 'Download a fresh database now?',
+          [MsgDate]), mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
+        var UpdateResult := FDoUpdateDatabase(umUPDATE);
+        if UpdateResult <> '' then
+          ShowMessage(UpdateResult);
+      end;
+      Exit;
+    end else begin
+      // recent enough, nothing to do
+      ShowMessage(StrMsgDatabaseIsUpToDate);
+      Exit;
+    end;
+  end;
+
+  // For other cases delegate to existing updater handling
   var UpdateResult := FDoUpdateDatabase(UpdateMode);
   if UpdateResult <> '' then
     ShowMessage(UpdateResult);

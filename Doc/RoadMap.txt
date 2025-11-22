@@ -16,12 +16,6 @@ Database:
 -- Track versions in myVersions table
 - Comma separated search input, so you can search for sets "and / or"
 
-Database updates:
-- Detect if it's there, and missing the brickstack tables, or drop those tables from brickstack, then import them from the rb.db into brickstack.db
-- Tell user to download and unzip the file, and place it in the import folder.
-- On startup, find the file, copy the tables to our db, then delete it.
-- attach db, create table as select * from src.table
-
 Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
 - Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases

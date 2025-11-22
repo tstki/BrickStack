@@ -53,11 +53,11 @@ const
     (TableName: 'BSDBVersions';
       SQL: 'CREATE TABLE IF NOT EXISTS BSDBVersions (' +
       '	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-      '	DBVersion INTEGER,' +       // Database structure version
-      '	DRebrickableCSV INTEGER);'  // Date of import
+      '	DBVersion INTEGER,' +   // Database structure version
+      '	DBDateTime TEXT(14));'  // Date of import
     ),
     (TableName: 'BSDBVersions insert';
-      SQL: 'INSERT INTO BSDBVersions (DBVersion) values (2);' // See: dbVERSION above - this array needs to be constant, so using value
+      SQL: 'INSERT INTO BSDBVersions (DBVersion, DBDateTime) values (:DBVersion, :DBDateTime);' // See: dbVERSION above - this array needs to be constant, so using params. See: FExecSQLAndUpdateProgress
     ),
     (TableName: 'BSDBPartsInventory';
       SQL: 'CREATE TABLE IF NOT EXISTS BSDBPartsInventory (' +
