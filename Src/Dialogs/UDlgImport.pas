@@ -78,8 +78,8 @@ uses
   StrUtils;
 
 const
-  cIMPORTREBRICKABLEAPI = 0;
-  cIMPORTREBRICKABLECSV = 1;
+  cIMPORTREBRICKABLECSV = 0;
+  cIMPORTREBRICKABLEAPI = 1;
   //cIMPORTFROMBRICKLINKXML = 2; // Unsure on the format for now
   //cIMPORTBRICKSETBSSETS = 3;   //
   //cIMPORTBRICKOWLORDER = 4;    //
@@ -93,16 +93,26 @@ procedure TDlgImport.FormCreate(Sender: TObject);
 begin
   inherited;
 
-  CbxImportOptions.Items.Clear;
-  CbxImportOptions.Items.Add(StrNameRebrickableAPI);
-  CbxImportOptions.Items.Add(StrNameRebrickableCSV);
-  CbxImportOptions.ItemIndex := 0;
+  CbxImportOptions.Items.BeginUpdate;
+  try
+    CbxImportOptions.Items.Clear;
+    CbxImportOptions.Items.Add(StrNameRebrickableCSV);
+    CbxImportOptions.Items.Add(StrNameRebrickableAPI);
+    CbxImportOptions.ItemIndex := 0;
+  finally
+    CbxImportOptions.Items.EndUpdate;
+  end;
 
-  CbxImportLocalOptions.Items.Clear;
-  CbxImportLocalOptions.Items.Add(StrImportOptionMerge);
-  CbxImportLocalOptions.Items.Add(StrImportOptionAppend);
-  CbxImportLocalOptions.Items.Add(StrImportOptionOverwrite);
-  CbxImportLocalOptions.ItemIndex := 0;
+  CbxImportLocalOptions.Items.BeginUpdate;
+  try
+    CbxImportLocalOptions.Items.Clear;
+    CbxImportLocalOptions.Items.Add(StrImportOptionMerge);
+    CbxImportLocalOptions.Items.Add(StrImportOptionAppend);
+    CbxImportLocalOptions.Items.Add(StrImportOptionOverwrite);
+    CbxImportLocalOptions.ItemIndex := 0;
+  finally
+    CbxImportLocalOptions.Items.EndUpdate;
+  end;
 
   EditCollectionName.Text := StrNewCollectionName;
 end;
@@ -158,9 +168,11 @@ procedure TDlgImport.FDoImportByRebrickableCSV;
 begin
   if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
     ShowMessage(StrErrMergeUnavailableForRebrickableCSVImport);
+    ModalResult := mrNone;
     Exit;
   end else if not FileExists(EditImportFilepath.Text) then begin
     ShowMessage(Format(StrErrFileNotFound, [EditImportFilepath.Text]));
+    ModalResult := mrNone;
     Exit;
   end;
 
