@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  FireDAC.Comp.Client,
+  FireDAC.Comp.Client, FireDAC.Stan.Param,
   USQLUpdate,
   UConfig, Vcl.ExtCtrls;
 
@@ -681,7 +681,7 @@ procedure TDlgUpdateDatabase.TimerCheckForNextStepTimer(Sender: TObject);
         Inc(AmountDone);
     end;
 
-    Result := AmountDone = FStepMaxCount(FCurrentStep);
+    Result := AmountDone >= FStepMaxCount(FCurrentStep);
   end;
 
 begin
