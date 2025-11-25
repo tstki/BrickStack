@@ -90,10 +90,11 @@ const
   StrSearchMinifigs = 'Minifigures';
   StrSearchParts = 'Parts';
   StrAny = 'Any';
+  StrNewCollection = 'New collection';
 
   // Option labels
   StrNameRebrickableAPI = 'Rebrickable API';
-  StrNameRebrickableCSV = 'Rebrickable CSV';
+  StrNameRebrickableCSV = 'Rebrickable CSV (2-4 columns)';
   StrNameBrickLinkXML = 'BrickLink XML';
   StrImportOptionMerge = 'Merge with local by ID';
   StrImportOptionAppend = 'Keep local and append new';
@@ -128,6 +129,7 @@ const
   StrMsgSetPartsToZero = 'Are you sure you wish to set the quantity of all parts to "zero"?';
   StrMsgInvertPartsSelection = 'Are you sure you wish to invert the "complete / zero" of all parts?';
   StrMsgSetPartsToComplete = 'Are you sure you wish to set the quantity of all part to "complete"?';
+  StrMsgImportCount = '%d rows imported';
 
   // Error strings
   StrErrNoResult = 'No result';
@@ -135,6 +137,7 @@ const
   StrErrTokenNotSet = 'Missing authentication token, please login first.';
   StrErrFileNotFound = 'File not found or no longer accessible. (%s)';
   StrErrMergeUnavailableForRebrickableCSVImport = '"Merge by ID" is unavailable for Rebrickable CSV imports. Please select another option.';
+  StrErrImportFailed = 'Import failed';
 
 implementation
 
