@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  UConfig, USetList, Vcl.Imaging.pngimage, Vcl.ExtCtrls;
+  UConfig, USetList, Vcl.Imaging.pngimage, Vcl.ExtCtrls, System.ImageList,
+  Vcl.ImgList;
 
 type
   TDlgImport = class(TForm)
@@ -19,7 +20,10 @@ type
     EditCollectionName: TEdit;
     EditImportFilepath: TEdit;
     LblImportFilepath: TLabel;
-    ImgOpen: TImage;
+    CbxLocalCollection: TComboBox;
+    Label2: TLabel;
+    BtnSelectFile: TButton;
+    ImageList32: TImageList;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure OnChange(Sender: TObject);
@@ -29,9 +33,10 @@ type
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
-    procedure FDoImportByRebrickableAPI;
-    procedure FDoImportByRebrickableCSV;
+    function FDoImportByRebrickableAPI: Integer;
+    function FDoImportByRebrickableCSV: Integer;
     procedure FUpdateUI;
+    procedure FFillLocalCollection;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -73,18 +78,23 @@ Example response:
 *)
 uses
   Net.HttpClientComponent,
+  FireDAC.Stan.Param,
   UStrings,
   System.JSON,
-  StrUtils;
+  StrUtils,
+  Math,
+  FireDAC.Comp.Client, Data.DB, USqLiteConnection, UFrmMain, System.Types;
 
 const
-  cIMPORTREBRICKABLEAPI = 0;
-  cIMPORTREBRICKABLECSV = 1;
+  // Import types
+  cIMPORTREBRICKABLECSV = 0;
+  cIMPORTREBRICKABLEAPI = 1;
   //cIMPORTFROMBRICKLINKXML = 2; // Unsure on the format for now
   //cIMPORTBRICKSETBSSETS = 3;   //
   //cIMPORTBRICKOWLORDER = 4;    //
   //cIMPORTBRICKLINKORDER = 5;   //
 
+  // Merge mode:
   cIMPORTMERGE = 0;
   cIMPORTAPPEND = 1;
   cIMPORTOVERWRITE = 2;
@@ -93,23 +103,72 @@ procedure TDlgImport.FormCreate(Sender: TObject);
 begin
   inherited;
 
-  CbxImportOptions.Items.Clear;
-  CbxImportOptions.Items.Add(StrNameRebrickableAPI);
-  CbxImportOptions.Items.Add(StrNameRebrickableCSV);
-  CbxImportOptions.ItemIndex := 0;
+  CbxImportOptions.Items.BeginUpdate;
+  try
+    CbxImportOptions.Items.Clear;
+    CbxImportOptions.Items.Add(StrNameRebrickableCSV);
+    CbxImportOptions.Items.Add(StrNameRebrickableAPI);
+    CbxImportOptions.ItemIndex := 0;
+  finally
+    CbxImportOptions.Items.EndUpdate;
+  end;
 
-  CbxImportLocalOptions.Items.Clear;
-  CbxImportLocalOptions.Items.Add(StrImportOptionMerge);
-  CbxImportLocalOptions.Items.Add(StrImportOptionAppend);
-  CbxImportLocalOptions.Items.Add(StrImportOptionOverwrite);
-  CbxImportLocalOptions.ItemIndex := 0;
+  CbxImportLocalOptions.Items.BeginUpdate;
+  try
+    CbxImportLocalOptions.Items.Clear;
+    CbxImportLocalOptions.Items.Add(StrImportOptionMerge);
+    CbxImportLocalOptions.Items.Add(StrImportOptionAppend);
+    CbxImportLocalOptions.Items.Add(StrImportOptionOverwrite);
+    CbxImportLocalOptions.ItemIndex := 0;
+  finally
+    CbxImportLocalOptions.Items.EndUpdate;
+  end;
 
   EditCollectionName.Text := StrNewCollectionName;
+end;
+
+procedure TDlgImport.FFillLocalCollection;
+begin
+  CbxLocalCollection.Items.BeginUpdate;
+  try
+    CbxLocalCollection.Clear;
+    CbxLocalCollection.AddItem(' - ' + StrNewCollection, TObject(0));
+
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := SqlConnection;
+
+      FDQuery.SQL.Text := 'SELECT ID, Name, ExternalID, ExternalType from BSSetLists order by Name;';
+      FDQuery.Open;
+
+      while not FDQuery.Eof do begin
+        var ID := FDQuery.FieldByName('ID').AsInteger;
+        var Name := FDQuery.FieldByName('Name').AsString;
+        //var ExternalID := FDQuery.FieldByName('ExternalID').AsString;
+        //var ExternalType := FDQuery.FieldByName('ExternalType').AsInteger;
+
+        CbxLocalCollection.AddItem(Name, TObject(ID));
+        FDQuery.Next; // Move to the next row
+      end;
+
+      //read query result
+    finally
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+
+    CbxLocalCollection.ItemIndex := 0;
+  finally
+    CbxLocalCollection.Items.EndUpdate;
+  end;
 end;
 
 procedure TDlgImport.FormShow(Sender: TObject);
 begin
   inherited;
+
+  FFillLocalCollection;
   FUpdateUI;
 end;
 
@@ -127,13 +186,23 @@ http response codes for rebrickable:
 
 procedure TDlgImport.FUpdateUI;
 begin
+  var CollectionID := 0;
+  if CbxLocalCollection.ItemIndex > 0 then
+    CollectionID := Integer(CbxLocalCollection.Items.Objects[CbxLocalCollection.ItemIndex]);
+
   LblImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
   EditImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
-  EditCollectionName.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
-  LblCollectionName.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
+  BtnSelectFile.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
 
-  BtnOK.Enabled := ((Length(EditImportFilepath.Text) > 0) and (Length(EditCollectionName.Text) > 0)) or
-                   (CbxImportOptions.ItemIndex = cIMPORTREBRICKABLEAPI);
+  if CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV then begin
+    BtnOK.Enabled := ((CollectionID > 0) or (Length(EditImportFilepath.Text) > 0)) and
+                     (CbxImportLocalOptions.ItemIndex <> cIMPORTMERGE) and
+                     (Length(EditCollectionName.Text) > 0);
+  end else
+    BtnOK.Enabled := CollectionID > 0;
+
+  EditCollectionName.Enabled := CollectionID <= 0;
+  LblCollectionName.Enabled := CollectionID <= 0;
 end;
 
 procedure TDlgImport.ImgOpenClick(Sender: TObject);
@@ -154,13 +223,17 @@ begin
   FUpdateUI;
 end;
 
-procedure TDlgImport.FDoImportByRebrickableCSV;
+function TDlgImport.FDoImportByRebrickableCSV: Integer;
 begin
+  Result := 0;
+
   if CbxImportLocalOptions.ItemIndex = cIMPORTMERGE then begin
     ShowMessage(StrErrMergeUnavailableForRebrickableCSVImport);
+    ModalResult := mrNone;
     Exit;
   end else if not FileExists(EditImportFilepath.Text) then begin
     ShowMessage(Format(StrErrFileNotFound, [EditImportFilepath.Text]));
+    ModalResult := mrNone;
     Exit;
   end;
 
@@ -170,55 +243,142 @@ begin
   44013-1,1,True,4097
   6203-1,1,True,11731}
 
-  //'SELECT id FROM BSSetLists WHERE name = :name'
-  //If result, use result
-  //If no result, insert into
+  var CollectionID := 0;
+  if CbxLocalCollection.ItemIndex > 0 then
+    CollectionID := Integer(CbxLocalCollection.Items.Objects[CbxLocalCollection.ItemIndex]);
 
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+  var FDTransaction := TFDTransaction.Create(nil);
+  try
+    FDTransaction.Connection := SqlConnection;
+    FDQuery.Connection := SqlConnection;
 
-  var SL := TStringList.Create;
-  SL.LoadFromFile(EditImportFilepath.Text);
-  if SL.Count > 0 then begin
-    for var Item in SL do begin
-      var SplitStr := Item.Split([',']);
+    if CollectionID = 0 then begin
+      //create new collection first.
+      FDTransaction.StartTransaction;
+      try
+        // Set up the query
+        FDQuery.Connection := SqlConnection;
+        FDQuery.SQL.Text := 'INSERT INTO BSSetLists (NAME, DESCRIPTION, USEINCOLLECTION, EXTERNALTYPE, SORTINDEX)' +
+                            'VALUES (:NAME, :DESCRIPTION, :USEINCOLLECTION, :EXTERNALTYPE, :SORTINDEX);';
 
-      if Length(SplitStr) < 4 then begin
-        // Skipping row - dont forget to alert user.
-        Continue;
+        var Params := FDQuery.Params;
+        Params.ParamByName('name').AsString := EditCollectionName.Text;
+        Params.ParamByName('description').AsString := '';
+        Params.ParamByName('useincollection').asInteger := 1;
+        Params.ParamByName('externaltype').asInteger := cETNONE;
+        Params.ParamByName('sortindex').asInteger := 0;
+        // id/externalid/externaltype can't be changed by the user.
+        // add imageindex later
+        // custom tags are a separate action, not done here.
+
+        FDQuery.ExecSQL;
+        Params.Clear;
+
+        // Get the new ID
+        FDQuery.SQL.Text := 'SELECT MAX(id) FROM BSSetLists';
+        FDQuery.Open;
+
+        try
+          FDQuery.First;
+          if not FDQuery.EOF then
+            CollectionID := FDQuery.Fields[0].AsInteger;
+        finally
+          FDQuery.Close;
+        end;
+
+        FDTransaction.Commit;
+      except
+        FDTransaction.Rollback;
+      end;
+    end else begin
+      var MergeMode := CbxImportLocalOptions.ItemIndex;
+
+      if MergeMode = cIMPORTOVERWRITE then begin
+        //  cIMPORTOVERWRITE = 2;
+          // Delete existing by CollectionID , then insert new stuff
+      end; //else if MergeMode = cIMPORTAPPEND
+        // Just insert new stuff into CollectionID
+    end;
+
+    var SL := TStringList.Create;
+    SL.LoadFromFile(EditImportFilepath.Text);
+    if SL.Count > 0 then begin
+      // If first line looks like a header, skip it
+      var StartIndex := 0;
+      if SL.Count > 0 then begin
+        if StartsText('Set Number', SL[0]) or StartsText('Set Number', SL[0]) then
+          StartIndex := 1;
       end;
 
-      //determine collectionID
-      //create if needed
+      FDTransaction.StartTransaction;
+      try
+        // Prepare insert SQL with parameters. InventoryID column assumed to exist.
+        FDQuery.SQL.Text := 'INSERT INTO BSSets (BSSetListID, set_num, Built, HaveSpareParts, Notes) ' + //todo: InventoryVersion
+                            'VALUES (:BSSetListID, :SetNum, :Built, :HaveSpareParts, :Notes)'; //:InventoryVersion
 
-      //var BSSetListID := selected;
-      //var Set_num := SplitStr[0];
-      //var built := false;
-      //var quantity := SplitStr[1];
-      //var havespareparts := SplitStr[2];
-      //var notes := '';
+        for var I := StartIndex to SL.Count - 1 do begin
+          var Line := SL[I];
+          if Trim(Line) = '' then
+            Continue;
 
-      //TSetListObjectList.SaveToSQL
+          //var InventoryVersion := 1;
+          var HaveSpares := 0;
 
-//      ShowMessage(SplitStr);
+          var SplitStr := Line.Split([',']);
+          var SplitStrLen := Length(SplitStr);
+          if SplitStrLen < 2 then
+            Continue // skip malformed rows
+          else if Length(SplitStr) > 2 then begin
+            var S := LowerCase(Trim(SplitStr[2]));
+            if (S = 'true') or (S = '1') or (S = 'yes') then
+              HaveSpares := 1;
+          end;
+          {if Length(SplitStr) > 3 then begin
+            InventoryVersion := StrToIntDef(Trim(SplitStr[3]), 0);
+          end;}
+
+          //todo: do we even need havespareparts - since we do parts per set now.
+
+          var SetNum := Trim(SplitStr[0]);
+          var Quantity := StrToIntDef(Trim(SplitStr[1]), 1);
+
+          for var Q := 1 to Max(1, Quantity) do begin
+            FDQuery.Params.Clear;
+            FDQuery.Params.CreateParam(ftInteger, 'BSSetListID', ptInput).AsInteger := CollectionID;
+            FDQuery.Params.CreateParam(ftString, 'SetNum', ptInput).AsString := SetNum;
+            FDQuery.Params.CreateParam(ftInteger, 'Built', ptInput).AsInteger := 1;
+            FDQuery.Params.CreateParam(ftInteger, 'HaveSpareParts', ptInput).AsInteger := HaveSpares;
+//            FDQuery.Params.CreateParam(ftInteger, 'InventoryVersion', ptInput).AsInteger := InventoryVersion;
+            FDQuery.Params.CreateParam(ftString, 'Notes', ptInput).AsString := '';
+
+            FDQuery.ExecSQL;
+            Inc(Result);
+          end;
+        end;
+
+        FDTransaction.Commit;
+      except
+        on E: Exception do begin
+          FDTransaction.Rollback;
+          ShowMessage(Format('%s: %s', [StrErrImportFailed, E.Message]));
+          ModalResult := mrNone;
+          Result := 0;
+          Exit;
+        end;
+      end;
     end;
+  finally
+    FDQuery.Free;
+    FDTransaction.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
   end;
-
-//TODO
-//find list by name.
-//If not found, create new one and use that as ID
-//otherwise use the found ID
-  //Check to make sure the listname the user entered does not exist yet, or ask to import there anyway.
-//  cIMPORTAPPEND = 1; //
-//  cIMPORTOVERWRITE = 2; // Delete the items that are in this list
-
-
-  //load CSV into TStringList, then go split and nextfield
-  //Create new database entry for new setlist collection.
-  //Import rows to database.
-  //Report any errors with the CSV.
 end;
 
-procedure TDlgImport.FDoImportByRebrickableAPI;
+function TDlgImport.FDoImportByRebrickableAPI: Integer;
 begin
+  Result := 0;
   // Check token, if not available - request login. Obtain a token for user actions such as import/export
 
   // API key is mandatory
@@ -296,6 +456,8 @@ begin
             SetListObject.Dirty := True;
             SetListObjectList.Add(SetListObject);
 
+            Inc(Result);
+
             // TSetListObjectList.SaveToSQL - handles the database side creation. See UFrmSetListCollection
           end;
         end;
@@ -328,11 +490,15 @@ begin
 end;
 
 procedure TDlgImport.BtnOKClick(Sender: TObject);
+var
+  TotalImported: Integer;
 begin
   if CbxImportOptions.ItemIndex = cIMPORTREBRICKABLEAPI then
-    FDoImportByRebrickableAPI
+    TotalImported := FDoImportByRebrickableAPI
   else
-    FDoImportByRebrickableCSV;
+    TotalImported := FDoImportByRebrickableCSV;
+
+  ShowMessage(Format(StrMsgImportCount, [TotalImported]));
 end;
 
 end.

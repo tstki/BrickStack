@@ -188,42 +188,66 @@ begin
 end;
 
 procedure TFrmSetList.ActDeleteSetExecute(Sender: TObject);
+var
+  BSSetID, Quantity: Integer;
+  SetName, SetNum: String;
 begin
   var Obj := FGetSelectedObject;
-  if Obj.ClassType = TSetObjectList then begin
+  if (Obj <> nil) and (Obj.ClassType = TSetObject) then begin
+    var SetObject := TSetObject(Obj);
+    SetNum := SetObject.SetNum;
+    BSSetID := SetObject.BSSetID;
+    Quantity := 1;
+    SetName := SetObject.SetName;
+  end else if Obj.ClassType = TSetObjectList then begin
+    var SetObjectList := TSetObjectList(Obj);
+    BSSetID := 0;
+    var Note := '';
+    if SetObjectList.Quantity > 1 then
+      //Item.ImageIndex := IfThen(SetObjectList.Expanded, 11, 10)
+    else begin // Quantity = 1
+      BSSetID := SetObjectList[0].BSSetID;
+      Note := SetObjectList[0].Note;
+      SetName := SetObjectList[0].SetName;
+      SetNum := SetObjectList[0].SetNum;
+    end;
+
+    Quantity := SetObjectList.Quantity;
+  end else begin
+    Quantity := 0;  // Should not happen
+    BSSetID := 0;   //
+  end;
+
+  if Quantity = 1 then begin
+    if MessageDlg(Format(StrMsgSureRemoveFromList, [SetName, SetNum]), mtConfirmation, mbYesNo, 0) <> mrYes then
+      Exit;
+
+    var SqlConnection := FrmMain.AcquireConnection;
+    var FDQuery := TFDQuery.Create(nil);
+    try
+      FDQuery.Connection := SqlConnection;
+
+      FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
+
+      var Params := FDQuery.Params;
+      //todo: temporarily disabled.
+      Params.ParamByName('ID').asInteger := BSSetID;
+      FDQuery.ExecSQL;
+    finally
+      FDQuery.Free;
+      FrmMain.ReleaseConnection(SqlConnection);
+    end;
+
+    ReloadAndRefresh;
+    TFrmMain.UpdateCollectionsByID(FBSSetListID);
+  end else begin
     // Ask user if they are sure they want to delete all the sets in one go.
     //ReloadAndRefresh;
     //TFrmMain.UpdateCollectionsByID(FBSSetListID);
 //    if (SetObject <> nil) and (SetObject.SetNum <> '') and
 //       (MessageDlg(Format(StrMsgSureRemoveFromList, [SetObject.SetName, SetObject.SetNum]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
 //        FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE SET_NUM=:SETNUM';
-  end else begin
-    var SetObject := TSetObject(Obj);
-
-    if (SetObject <> nil) and (SetObject.SetNum <> '') and
-       (MessageDlg(Format(StrMsgSureRemoveFromList, [SetObject.SetName, SetObject.SetNum]), mtConfirmation, mbYesNo, 0) = mrYes) then begin
-
-      var SqlConnection := FrmMain.AcquireConnection;
-      var FDQuery := TFDQuery.Create(nil);
-      try
-        FDQuery.Connection := SqlConnection;
-
-        FDQuery.SQL.Text := 'DELETE FROM BSSets WHERE ID=:ID';
-
-        var Params := FDQuery.Params;
-        //todo: temporarily disabled.
-        Params.ParamByName('ID').asInteger := SetObject.BSSetID;
-        FDQuery.ExecSQL;
-      finally
-        FDQuery.Free;
-        FrmMain.ReleaseConnection(SqlConnection);
-      end;
-
-      ReloadAndRefresh;
-      TFrmMain.UpdateCollectionsByID(FBSSetListID);
-    end;
   end;
-
 
 //  delete * from BSDBPartsInventory where BSSetID = :BSSetID;
 // Params.ParamByName('ID').asInteger := := SetObject.BSSetID
