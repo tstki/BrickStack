@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  Contnrs, UDelayedImage,
+  Contnrs,
   FireDAC.Comp.Client, FireDAC.Stan.Param,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
   UPart,
@@ -847,7 +847,7 @@ begin
 
     //TPicture
     if FImageCache <> nil then begin
-      var Picture := FImageCache.GetImage(ImageUrl);
+      var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
     //  ImageList1.draw
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
         // Center the image in the cell (optional)
@@ -932,7 +932,7 @@ begin
 
     // Draw image if available
     if FImageCache <> nil then begin
-      var Picture := FImageCache.GetImage(ImageUrl);
+      var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
         var ImageRect := Rect;
         if DgSetParts.DefaultColWidth >= 64 then

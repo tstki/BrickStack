@@ -215,7 +215,6 @@
         <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
         <DCCReference Include="Src\USqLiteConnection.pas"/>
         <DCCReference Include="Src\USqlThread.pas"/>
-        <DCCReference Include="Src\UDelayedImage.pas"/>
         <DCCReference Include="Src\UGetImageThread.pas"/>
         <DCCReference Include="Src\UDownloadThread.pas"/>
         <DCCReference Include="Src\Scripts\UBSSQL.pas"/>

@@ -143,7 +143,7 @@ uses
   StrUtils,
   FireDAC.Comp.Client,
   USQLiteConnection,
-  UDlgAddToSetList, UDelayedImage,
+  UDlgAddToSetList,
   UDragData,
   DateUtils,
   UFrmMain, UStrings;
@@ -392,7 +392,7 @@ begin
 
     //TPicture
     if FImageCache <> nil then begin
-      var Picture := FImageCache.GetImage(ImageUrl);
+      var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
         // Center the image in the cell (optional)
   //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;

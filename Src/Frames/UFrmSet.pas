@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  Contnrs, UDelayedImage,
+  Contnrs,
   FireDAC.Comp.Client,
   UConfig, UImageCache, Vcl.Menus, System.Actions, Vcl.ActnList, Vcl.Buttons,
   System.ImageList, Vcl.ImgList;
@@ -84,7 +84,7 @@ begin
     procedure
     begin
       try
-        var Picture := FImageCache.GetImage(Url);
+        var Picture := FImageCache.GetImage(Url, cidMAX512);
         if Picture <> nil then begin
           ImgSetImage.Picture := Picture;
 

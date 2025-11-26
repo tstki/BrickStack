@@ -7,6 +7,13 @@ uses
   System.SyncObjs,
   UConfig;
 
+const
+  // Image dimensions
+  cidMAX96 = 0;
+  cidMAX128 = 1;
+  cidMAX256 = 2;
+  cidMAX512 = 3;
+
 type
   TImageCache = class(TObject)
   private
@@ -22,7 +29,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure AddImage(const Url: string; Picture: TPicture);
-    function GetImage(const Url: string): TPicture;
+    function GetImage(const Url: string; const ImageType: Integer): TPicture;
     procedure SaveImage(const Url: String; Picture: TPicture);
     property Config: TConfig read FConfig write FConfig;
   end;
@@ -35,6 +42,16 @@ type
   // https://cdn.rebrickable.com/media/parts/elements/4211065.jpg
   // https://cdn.rebrickable.com/media/parts/ldraw/15/3069bps4.png
   // https://cdn.rebrickable.com/media/parts/ldraw/4/4070.png
+
+  //Smaller scale images:
+  //  https://cdn.rebrickable.com/media/sets/0011-2.jpg // Take from DB
+  //    Insert "thumbs"
+  //    Add size suffix
+  //  https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg // works
+
+  //Parts can be limited to 128x128 : for grid
+  //Sets can be limited to 256x256 : for grid
+  //Individual images can be limited to 1000x1000 or less.
 
 //Todo
   //Make this smarter
@@ -160,22 +177,48 @@ begin
   end;
 end;
 
-function TImageCache.GetImage(const Url: string): TPicture;
+function TImageCache.GetImage(const Url: string; const ImageType: Integer): TPicture;
 begin
   // todo: add width/height param.
   // parse URL to get thumbnail instead of full size image.
+  {
+  //Smaller scale images:
+  //  https://cdn.rebrickable.com/media/sets/0011-2.jpg // Take from DB
+  //    Insert "thumbs"
+  //    Add size suffix
+  //  https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg // works
+
+  //Parts can be limited to 128x128 : for grid
+  //Sets can be limited to 256x256 : for grid
+  //Individual images can be limited to 512x512 or less.
+  }
+
+  var SizeSuffix := '';
+
+  case ImageType of
+    cidMAX96:
+      SizeSuffix := '96x96p.jpg';
+    cidMAX128:
+      SizeSuffix := '128x128p.jpg';
+    cidMAX256:
+      SizeSuffix := '256x256p.jpg';
+    cidMAX512:
+      SizeSuffix := '512x512p.jpg';
+  end;
+
+  var NewUrl := StringReplace('Url', 'https://cdn.rebrickable.com/media/', 'https://cdn.rebrickable.com/media/thumbs/', []) + SizeSuffix;
 
   CriticalSection.Enter;
   try
     try
-      if FGetFromCache(Url, Result) then
+      if FGetFromCache(NewUrl, Result) then
         Exit
-      else if FGetFromDisk(Url, Result) then begin
-        AddImage(Url, Result);
+      else if FGetFromDisk(NewUrl, Result) then begin
+        AddImage(NewUrl, Result);
         Exit;
-      end else if FGetFromUrl(Url, Result) then begin // May raise if image is not found.
-        SaveImage(Url, Result);
-        AddImage(Url, Result);
+      end else if FGetFromUrl(NewUrl, Result) then begin // May raise if image is not found.
+        SaveImage(NewUrl, Result);
+        AddImage(NewUrl, Result);
         Exit;
       end else
         Result := nil;
