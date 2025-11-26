@@ -197,16 +197,16 @@ begin
 
   case ImageType of
     cidMAX96:
-      SizeSuffix := '96x96p.jpg';
+      SizeSuffix := '/96x96p.jpg';
     cidMAX128:
-      SizeSuffix := '128x128p.jpg';
+      SizeSuffix := '/128x128p.jpg';
     cidMAX256:
-      SizeSuffix := '256x256p.jpg';
+      SizeSuffix := '/256x256p.jpg';
     cidMAX512:
-      SizeSuffix := '512x512p.jpg';
+      SizeSuffix := '/512x512p.jpg';
   end;
 
-  var NewUrl := StringReplace('Url', 'https://cdn.rebrickable.com/media/', 'https://cdn.rebrickable.com/media/thumbs/', []) + SizeSuffix;
+  var NewUrl := StringReplace(Url, 'https://cdn.rebrickable.com/media/', 'https://cdn.rebrickable.com/media/thumbs/', []) + SizeSuffix;
 
   CriticalSection.Enter;
   try
