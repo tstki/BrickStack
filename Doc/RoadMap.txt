@@ -32,10 +32,6 @@ Throttling and request slowing:
 - Example response: { "detail": "Request was throttled. Expected available in 2 seconds." }
 - Parts call: /lego/parts/?part_nums=3001,3002,3003&inc_part_details=1
 
-Images:
-- You can ask the image size you need with a suffix: https://cdn.rebrickable.com/media/thumbs/parts/elements/6020193.jpg/50x150p.jpg
--- Limits are no smaller than 2x2, no bigger than 1000x1000, anything in between is accepted.
-
 Get user's inventory
 - Ability to export inventory per group to rebrickable csv/xml
 
