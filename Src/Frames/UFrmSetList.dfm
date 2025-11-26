@@ -138,12 +138,12 @@ object FrmSetList: TFrmSetList
     TabOrder = 1
     ViewStyle = vsReport
     OnChange = LvSetsChange
-    OnClick = LvSetsClick
     OnColumnClick = LvSetsColumnClick
     OnColumnRightClick = LvSetsColumnRightClick
     OnData = LvSetsData
     OnDblClick = LvSetsDblClick
     OnMouseDown = LvSetsMouseDown
+    OnMouseUp = LvSetsMouseUp
   end
   object StatusBar1: TStatusBar
     Left = 0

@@ -12,6 +12,8 @@ uses
   Vcl.Buttons;
 
 type
+  TCellAction = (caNone, caLeftClick, caDoubleClick, caRightClick);
+
   TFrmSetList = class(TForm)
     Panel1: TPanel;
     LblFilter: TLabel;
@@ -61,7 +63,6 @@ type
     procedure ActExportExecute(Sender: TObject);
     procedure ActSearchExecute(Sender: TObject);
     procedure LvSetsData(Sender: TObject; Item: TListItem);
-    procedure LvSetsClick(Sender: TObject);
     procedure LvSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure LvSetsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure LvSetsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
@@ -71,6 +72,8 @@ type
     procedure LvSetsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure PopupMenu2ItemClick(Sender: TObject);
     procedure ActEditOwnedPartsExecute(Sender: TObject);
+    procedure LvSetsMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
     FSetListObject: TSetListObject;
@@ -89,7 +92,7 @@ type
     procedure FUpdateStatusBar;
     function FGetSetObjByItemIndex(ItemIndex: Integer): TObject;
     function FGetVisibleRowCount: Integer;
-    procedure FHandleClickType(Sender: TObject; DoubleClick: Boolean);
+    procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
     procedure FUpdateUI(Item: TListItem);
   public
     { Public declarations }
@@ -496,6 +499,14 @@ begin
   FLvSetsLastClickPos := Point(X, Y);
 end;
 
+procedure TFrmSetList.LvSetsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  if Button = mbRight then
+    FHandleClick(caRightClick, Sender)
+  else if Button = mbLeft then
+    FHandleClick(caLeftClick, Sender);
+end;
+
 procedure TFrmSetList.LvSetsDragOver(Sender: TObject; Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
 begin
   // Only accept drops from the search grid (TDrawGrid) if drag data exists
@@ -570,7 +581,7 @@ begin
   TFrmMain.UpdateCollectionsByID(FBSSetListID);
 end;
 
-procedure TFrmSetList.FHandleClickType(Sender: TObject; DoubleClick: Boolean);
+procedure TFrmSetList.FHandleClick(CellAction: TCellAction; Sender: TObject);
 var
   ImageRect: TRect;
 begin
@@ -590,6 +601,10 @@ begin
   ImageRect.Bottom := ImageRect.Top + 16;
 
   if PtInRect(ImageRect, FLvSetsLastClickPos) then begin
+    // Ignore doubleclick here.
+    if CellAction = caDoubleClick then
+      Exit;
+
     // Toggle or set a different image index for the clicked item
     if Item.Data <> nil then begin
       var Obj := TObject(Item.Data);
@@ -603,7 +618,7 @@ begin
         end;
       end;
     end;
-  end else if DoubleClick then
+  end else if CellAction = caDoubleClick then
     ActEditSetExecute(Self);
 end;
 
@@ -642,11 +657,6 @@ end;
 procedure TFrmSetList.LvSetsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
 begin
   FUpdateUI(Item);
-end;
-
-procedure TFrmSetList.LvSetsClick(Sender: TObject);
-begin
-  FHandleClickType(Sender, False);
 end;
 
 procedure TFrmSetList.LvSetsColumnClick(Sender: TObject; Column: TListColumn);
@@ -689,7 +699,7 @@ end;
 
 procedure TFrmSetList.LvSetsDblClick(Sender: TObject);
 begin
-  FHandleClickType(Sender, True);
+  FHandleClick(caDoubleClick, Sender);
 end;
 
 function TFrmSetList.FGetSetObjByItemIndex(ItemIndex: Integer): TObject;

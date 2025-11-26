@@ -172,7 +172,6 @@ object FrmParts: TFrmParts
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
-    OnClick = DgSetPartsClick
     OnDblClick = DgSetPartsDblClick
     OnDrawCell = DgSetPartsDrawCell
     OnMouseUp = DgSetPartsMouseUp

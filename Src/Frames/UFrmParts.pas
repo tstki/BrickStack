@@ -12,7 +12,7 @@ uses
   System.ImageList, Vcl.ImgList, Vcl.Grids;
 
 type
-  TCellAction = (caNone, caClick, caDoubleClick, caRightClick);
+  TCellAction = (caNone, caLeftClick, caDoubleClick, caRightClick);
   TPartsMode = (caView, caEdit);
 
   TFrmParts = class(TForm)
@@ -80,11 +80,9 @@ type
     procedure ActSortByQuantityExecute(Sender: TObject);
     procedure ActToggleIncludeSparePartsExecute(Sender: TObject);
     procedure ActExportExecute(Sender: TObject);
-    procedure DgSetPartsClick(Sender: TObject);
     procedure DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
     procedure DgSetPartsDblClick(Sender: TObject);
     procedure DgSetPartsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure HandleClick(CellAction: TCellAction; Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure TbGridSizeChange(Sender: TObject);
     procedure DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt;  var CanSelect: Boolean);
@@ -113,6 +111,7 @@ type
     function FGetGridHeight: Integer;
     procedure FModifyQuantity(PartObject: TPartObject; Amount: Integer; Increment: Boolean);
     procedure FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
+    procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
   public
     { Public declarations }
     property Config: TConfig read FConfig write FConfig;
@@ -629,7 +628,7 @@ begin
   InvalidateRect(Grid.Handle, @R, False);
 end;
 
-procedure TFrmParts.HandleClick(CellAction: TCellAction; Sender: TObject);
+procedure TFrmParts.FHandleClick(CellAction: TCellAction; Sender: TObject);
 
   function IsCtrlDown: Boolean;
   begin
@@ -654,6 +653,10 @@ begin
 
   var Idx := FGetIndexByRowAndCol(Col, Row);
   if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
+    // Ignore doubleclick here.
+    if CellAction = caDoubleClick then
+      Exit;
+
     var PartObject := FPartObjectList[Idx];
     var Qty := 1;
     if IsCtrlDown and IsShiftDown then
@@ -663,7 +666,7 @@ begin
     else if IsShiftDown then
       Qty := 10;
 
-    FModifyQuantity(PartObject, Qty, (CellAction = caClick) or (CellAction = caDoubleClick));
+    FModifyQuantity(PartObject, Qty, (CellAction = caLeftClick) or (CellAction = caDoubleClick));
     FInvalidateGridCell(DgSetParts, Col, Row);
   end;
 
@@ -794,15 +797,17 @@ begin
   end;
 end;
 
-procedure TFrmParts.DgSetPartsClick(Sender: TObject);
-begin
-  HandleClick(caClick, Sender);
-end;
-
 procedure TFrmParts.DgSetPartsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   if Button = mbRight then
-    HandleClick(caRightClick, Sender);
+    FHandleClick(caRightClick, Sender)
+  else if Button = mbLeft then
+    FHandleClick(caLeftClick, Sender);
+end;
+
+procedure TFrmParts.DgSetPartsDblClick(Sender: TObject);
+begin
+  FHandleClick(caDoubleClick, Sender);
 end;
 
 procedure TFrmParts.DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
@@ -818,11 +823,6 @@ begin
     SbResults.Panels[1].Text := Format('%s%s, %s', [PartObject.PartNum, NumParts, PartObject.PartName]);
   end else
     SbResults.Panels[1].Text := '';
-end;
-
-procedure TFrmParts.DgSetPartsDblClick(Sender: TObject);
-begin
-  HandleClick(caDoubleClick, Sender);
 end;
 
 function TFrmParts.FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
