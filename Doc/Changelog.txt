@@ -1,8 +1,9 @@
 BrickStack
 ====
 Version: (0.0.0.9)
-- CSV import overhaul
-- Delete set fixed
+- CSV import overhaul.
+- Delete set fixed.
+- Use image thumbnails instead of full size for better performance, less disk space and reduced memory footprint.
 
 Version: 20251122.1201 (0.0.0.8)
 - Database version checking.

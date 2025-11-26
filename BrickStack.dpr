@@ -31,7 +31,6 @@ uses
   UBrickLinkXMLIntf in 'Src\UBrickLinkXMLIntf.pas',
   USqLiteConnection in 'Src\USqLiteConnection.pas',
   USqlThread in 'Src\USqlThread.pas',
-  UDelayedImage in 'Src\UDelayedImage.pas',
   UGetImageThread in 'Src\UGetImageThread.pas',
   UDownloadThread in 'Src\UDownloadThread.pas',
   Vcl.Themes,
