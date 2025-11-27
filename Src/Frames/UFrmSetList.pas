@@ -618,8 +618,20 @@ begin
         end;
       end;
     end;
-  end else if CellAction = caDoubleClick then
-    ActEditSetExecute(Self);
+  end else if CellAction = caDoubleClick then begin
+    case FConfig.SetsAction of
+      caVIEWEXTERNAL:
+        ActViewExternal.Execute;
+      caEDITDETAILS:
+        ActEditSet.Execute;
+      caVIEWPARTS:
+        ActViewPartsList.Execute;
+      caEDITPARTS:
+        ActEditOwnedParts.Execute;
+      else // caVIEW
+        ActViewSet.Execute;
+    end;
+  end;
 end;
 
 procedure TFrmSetList.FUpdateUI(Item: TListItem);

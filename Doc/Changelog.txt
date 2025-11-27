@@ -2,8 +2,12 @@ BrickStack
 ====
 Version: (0.0.0.9)
 - CSV import overhaul.
-- Delete set fixed.
 - Use image thumbnails instead of full size for better performance, less disk space and reduced memory footprint.
+- Added doubleclick action setting
+- Reorganized BrickStack.ini into sections - NOTE: Your old settings will be unavailable due to this! You can manually move them to the sections by editing the .ini
+Fixes:
+- Delete set fixed.
+- Scroll wheel causing click fixed.
 
 Version: 20251122.1201 (0.0.0.8)
 - Database version checking.
@@ -11,10 +15,11 @@ Version: 20251122.1201 (0.0.0.8)
 - Dialogs auto-update when sets are added to collections.
 - Many new features in setlist. Among which: Treeview, editing rows.
 - Table sorting.
-- Parts printing fixed.
 - Drag and drop search results to collections or set lists.
 - Drag and drop sets to other collections.
 - Lots of right click menu improvements.
+Fixes:
+- Parts printing fixed.
 
 Version: 20251005.1150 (0.0.0.7)
 - Put some meat on the bones of the previously very empty help screen.

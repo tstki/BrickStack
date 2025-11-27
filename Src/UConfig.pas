@@ -46,6 +46,9 @@ type
     FImportPath: String;
     FExportPath: String;
     FVisualStyle: String;
+    FSearchAction: Integer;
+    FSetListsAction: Integer;
+    FSetsAction: Integer;
 
     // Window states (move to separate class object later) - no need to save this every time after all
     FReOpenWindowsAfterRestart: Boolean;
@@ -86,6 +89,9 @@ type
     property ImportPath: String read FImportPath write FImportPath;
     property ExportPath: String read FExportPath write FExportPath;
     property VisualStyle: String read FVisualStyle write FVisualStyle;
+    property SearchAction: Integer read FSearchAction write FSearchAction;
+    property SetListsAction: Integer read FSetListsAction write FSetListsAction;
+    property SetsAction: Integer read FSetsAction write FSetsAction;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -110,6 +116,18 @@ const
   cOTBRICKSET = 4;    // Sets
   cOTLDRAW = 5;       // Parts
   cOTCUSTOM = 6;      // Parts and sets (probably)
+
+  // Doubleclick action windows
+  cACTIONSEARCH = 0;
+  cACTIONSETLISTS = 1;
+  cACTIONSETS = 2;
+  //cACTIONPARTS = 3; // Only view parts, not edit parts.
+
+  caVIEW = 0;
+  caVIEWEXTERNAL = 1;
+  caEDITDETAILS = 2;
+  caVIEWPARTS = 3;
+  caEDITPARTS = 4;
 
   //View External types:
   cTYPESET = 0;
@@ -208,35 +226,38 @@ begin
   var FilePath := ExtractFilePath(ParamStr(0));
   var IniFile := TIniFile.Create(FilePath + StrIniFileName);
   try
-    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
-    IniFile.WriteString(StrRebrickableIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
-    IniFile.WriteBool(StrRebrickableIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
+    IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
+    IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
+    IniFile.WriteString(StrAuthenticationIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
+    IniFile.WriteBool(StrAuthenticationIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
 
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
-    IniFile.WriteString(StrRebrickableIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
+    IniFile.WriteString(StrExternalIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
+    IniFile.WriteString(StrExternalIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
+    IniFile.WriteString(StrExternalIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
+    IniFile.WriteString(StrExternalIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
+    IniFile.WriteString(StrExternalIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
+    IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
+    IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
 
-    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
-    IniFile.WriteInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
+    IniFile.WriteString(StrLocalIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+    IniFile.WriteString(StrLocalIniSection, 'LocalLogsPath', FLocalLogsPath);
+    IniFile.WriteString(StrLocalIniSection, 'DbasePath', FDbasePath);
+    IniFile.WriteString(StrLocalIniSection, 'ImportPath', FImportPath);
+    IniFile.WriteString(StrLocalIniSection, 'ExportPath', FExportPath);
 
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalImageCachePath', FLocalImageCachePath);
-    IniFile.WriteString(StrRebrickableIniSection, 'LocalLogsPath', FLocalLogsPath);
-    IniFile.WriteString(StrRebrickableIniSection, 'DbasePath', FDbasePath);
-    IniFile.WriteString(StrRebrickableIniSection, 'ImportPath', FImportPath);
-    IniFile.WriteString(StrRebrickableIniSection, 'ExportPath', FExportPath);
+    IniFile.WriteString(StrWindowsIniSection, 'VisualStyle', FVisualStyle);
 
-    IniFile.WriteString(StrRebrickableIniSection, 'VisualStyle', FVisualStyle);
+    IniFile.WriteInteger(StrActionIniSection, 'SearchAction', FSearchAction);
+    IniFile.WriteInteger(StrActionIniSection, 'SetListsAction', FSetListsAction);
+    IniFile.WriteInteger(StrActionIniSection, 'SetsAction', FSetsAction);
 
     // Frame size/open states
-    IniFile.WriteBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
-    FFrmSetListCollection.Save(IniFile, StrRebrickableIniSection, 'FrmSetListCollection');
-    FFrmSetList.Save(IniFile, StrRebrickableIniSection, 'FrmSetList');
-    FFrmSet.Save(IniFile, StrRebrickableIniSection, 'FrmSet');
-    FFrmParts.Save(IniFile, StrRebrickableIniSection, 'FrmParts');
-    FFrmSearch.Save(IniFile, StrRebrickableIniSection, 'FrmSearch');
+    IniFile.WriteBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
+    FFrmSetListCollection.Save(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
+    FFrmSetList.Save(IniFile, StrBrickStackIniSection, 'FrmSetList');
+    FFrmSet.Save(IniFile, StrBrickStackIniSection, 'FrmSet');
+    FFrmParts.Save(IniFile, StrBrickStackIniSection, 'FrmParts');
+    FFrmSearch.Save(IniFile, StrBrickStackIniSection, 'FrmSearch');
   finally
     IniFile.Free;
   end;
@@ -255,35 +276,38 @@ begin
   var FilePath := ExtractFilePath(ParamStr(0));
   var IniFile := TIniFile.Create(FilePath + StrIniFileName);
   try
-    FRebrickableAPIKey := IniFile.ReadString(StrRebrickableIniSection, 'RebrickableAPIKey', '');
-    FRebrickableBaseUrl := IniFile.ReadString(StrRebrickableIniSection, 'RebrickableBaseUrl', 'https://rebrickable.com/');
-    FAuthenticationToken := IniFile.ReadString(StrRebrickableIniSection, 'AuthenticationToken', '');
-    FRememberAuthenticationToken := IniFile.ReadBool(StrRebrickableIniSection, 'RememberAuthenticationToken', False);
+    FRebrickableAPIKey := IniFile.ReadString(StrAuthenticationIniSection, 'RebrickableAPIKey', '');
+    FRebrickableBaseUrl := IniFile.ReadString(StrAuthenticationIniSection, 'RebrickableBaseUrl', 'https://rebrickable.com/');
+    FAuthenticationToken := IniFile.ReadString(StrAuthenticationIniSection, 'AuthenticationToken', '');
+    FRememberAuthenticationToken := IniFile.ReadBool(StrAuthenticationIniSection, 'RememberAuthenticationToken', False);
 
-    FViewRebrickableUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewRebrickableUrl', 'https://rebrickable.com/');
-    FViewBrickLinkUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickLinkUrl', 'https://www.bricklink.com/');
-    FViewBrickOwlUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickOwlUrl', 'https://www.brickowl.com/');
-    FViewBrickSetUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewBrickSetUrl', 'https://www.brickset.com/');
-    FViewLDrawUrl := IniFile.ReadString(StrRebrickableIniSection, 'ViewLDrawUrl', 'https://library.ldraw.org/');
+    FViewRebrickableUrl := IniFile.ReadString(StrExternalIniSection, 'ViewRebrickableUrl', 'https://rebrickable.com/');
+    FViewBrickLinkUrl := IniFile.ReadString(StrExternalIniSection, 'ViewBrickLinkUrl', 'https://www.bricklink.com/');
+    FViewBrickOwlUrl := IniFile.ReadString(StrExternalIniSection, 'ViewBrickOwlUrl', 'https://www.brickowl.com/');
+    FViewBrickSetUrl := IniFile.ReadString(StrExternalIniSection, 'ViewBrickSetUrl', 'https://www.brickset.com/');
+    FViewLDrawUrl := IniFile.ReadString(StrExternalIniSection, 'ViewLDrawUrl', 'https://library.ldraw.org/');
+    FDefaultViewSetOpenType := IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewSetOpenType', cOTNONE);
+    FDefaultViewPartOpenType := IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewPartOpenType', cOTNONE);
 
-    FDefaultViewSetOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewSetOpenType', cOTNONE);
-    FDefaultViewPartOpenType := IniFile.ReadInteger(StrRebrickableIniSection, 'DefaultViewPartOpenType', cOTNONE);
+    FLocalImageCachePath := ReadStringWithDefaultPath(StrLocalIniSection, 'LocalImageCachePath', FilePath, StrDefaultCachePath, IniFile);
+    FLocalLogsPath := ReadStringWithDefaultPath(StrLocalIniSection, 'LocalLogsPath', FilePath, StrDefaultLogPath, IniFile);
+    FDbasePath := ReadStringWithDefaultPath(StrLocalIniSection, 'DbasePath', FilePath, StrDefaultdDbasePath, IniFile);
+    FImportPath := ReadStringWithDefaultPath(StrLocalIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
+    FExportPath := ReadStringWithDefaultPath(StrLocalIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
 
-    FLocalImageCachePath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'LocalImageCachePath', FilePath, StrDefaultCachePath, IniFile);
-    FLocalLogsPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'LocalLogsPath', FilePath, StrDefaultLogPath, IniFile);
-    FDbasePath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'DbasePath', FilePath, StrDefaultdDbasePath, IniFile);
-    FImportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
-    FExportPath := ReadStringWithDefaultPath(StrRebrickableIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
+    FVisualStyle := IniFile.ReadString(StrWindowsIniSection, 'VisualStyle', 'Windows');
 
-    FVisualStyle := IniFile.ReadString(StrRebrickableIniSection, 'VisualStyle', 'Windows');
+    FSearchAction := IniFile.ReadInteger(StrActionIniSection, 'SearchAction', caVIEW);
+    FSetListsAction := IniFile.ReadInteger(StrActionIniSection, 'SetListsAction', caVIEW);
+    FSetsAction := IniFile.ReadInteger(StrActionIniSection, 'SetsAction', caVIEW);
 
     // Frame size/open states
-    FReOpenWindowsAfterRestart := IniFile.ReadBool(StrRebrickableIniSection, 'ReOpenWindowsAfterRestart', False);
-    FFrmSetListCollection.Load(IniFile, StrRebrickableIniSection, 'FrmSetListCollection');
-    FFrmSetList.Load(IniFile, StrRebrickableIniSection, 'FrmSetList');
-    FFrmSet.Load(IniFile, StrRebrickableIniSection, 'FrmSet');
-    FFrmParts.Load(IniFile, StrRebrickableIniSection, 'FrmParts');
-    FFrmSearch.Load(IniFile, StrRebrickableIniSection, 'FrmSearch');
+    FReOpenWindowsAfterRestart := IniFile.ReadBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', False);
+    FFrmSetListCollection.Load(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
+    FFrmSetList.Load(IniFile, StrBrickStackIniSection, 'FrmSetList');
+    FFrmSet.Load(IniFile, StrBrickStackIniSection, 'FrmSet');
+    FFrmParts.Load(IniFile, StrBrickStackIniSection, 'FrmParts');
+    FFrmSearch.Load(IniFile, StrBrickStackIniSection, 'FrmSearch');
   finally
     IniFile.Free;
   end;

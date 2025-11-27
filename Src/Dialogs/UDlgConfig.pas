@@ -100,6 +100,15 @@ type
     Button10: TButton;
     CbxVisualStyle: TComboBox;
     Label25: TLabel;
+    TsActions: TTabSheet;
+    CbxSearchAction: TComboBox;
+    CbxSetListsAction: TComboBox;
+    Label29: TLabel;
+    Label30: TLabel;
+    CbxSetsAction: TComboBox;
+    LblSearchAction: TLabel;
+    LblSetListsAction: TLabel;
+    LblSetsAction: TLabel;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -147,16 +156,40 @@ procedure TDlgConfig.FormCreate(Sender: TObject);
 
   procedure FFillPulldown(CbxOpenType: TComboBox; PartOrSet: Integer);
   begin
-    CbxOpenType.Clear;
-    CbxOpenType.AddItem(StrOTNone, TObject(cOTNONE));
-    CbxOpenType.AddItem(StrOTRebrickable, TObject(cOTREBRICKABLE));
-    CbxOpenType.AddItem(StrOTBrickLink, TObject(cOTBRICKLINK));
-    CbxOpenType.AddItem(StrOTBrickOwl, TObject(cOTBRICKOWL));
-    if PartOrSet = cTYPESET then
-      CbxOpenType.AddItem(StrOTBrickSet, TObject(cOTBRICKSET))
-    else
-      CbxOpenType.AddItem(StrOTLDraw, TObject(cOTLDRAW));
-    //CbxOpenType.AddItem(StrOTCustom, TObject(cOTCUSTOM)); // Not implemented yet
+    CbxOpenType.Items.BeginUpdate;
+    try
+      CbxOpenType.Clear;
+      CbxOpenType.AddItem(StrOTNone, TObject(cOTNONE));
+      CbxOpenType.AddItem(StrOTRebrickable, TObject(cOTREBRICKABLE));
+      CbxOpenType.AddItem(StrOTBrickLink, TObject(cOTBRICKLINK));
+      CbxOpenType.AddItem(StrOTBrickOwl, TObject(cOTBRICKOWL));
+      if PartOrSet = cTYPESET then
+        CbxOpenType.AddItem(StrOTBrickSet, TObject(cOTBRICKSET))
+      else
+        CbxOpenType.AddItem(StrOTLDraw, TObject(cOTLDRAW));
+      //CbxOpenType.AddItem(StrOTCustom, TObject(cOTCUSTOM)); // Not implemented yet
+    finally
+      CbxOpenType.Items.EndUpdate;
+    end;
+  end;
+
+  procedure FFillActions(CbxActionType: TComboBox; WindowID: Integer);
+  begin
+    CbxActionType.Items.BeginUpdate;
+    try
+      CbxActionType.Clear;
+      CbxActionType.AddItem(StrActViewSet, TObject(caVIEW));
+      if WindowID <> cACTIONSETLISTS then
+        CbxActionType.AddItem(StrActViewExternal, TObject(caVIEWEXTERNAL));
+      if WindowID <> cACTIONSEARCH then
+        CbxActionType.AddItem(StrActEditDetails, TObject(caEDITDETAILS));
+      if WindowID <> cACTIONSETLISTS then
+        CbxActionType.AddItem(StrActViewParts, TObject(caVIEWPARTS));
+      if WindowID = cACTIONSETS then
+        CbxActionType.AddItem(StrActEditParts, TObject(caEDITPARTS));
+    finally
+      CbxActionType.Items.EndUpdate;
+    end;
   end;
 
 begin
@@ -165,6 +198,10 @@ begin
 
   FFillPulldown(CbxViewSetDefault, cTYPESET);
   FFillPulldown(CbxViewPartDefault, cTYPEPART);
+
+  FFillActions(CbxSearchAction, cACTIONSEARCH);
+  FFillActions(CbxSetListsAction, cACTIONSETLISTS);
+  FFillActions(CbxSetsAction, cACTIONSETS);
 end;
 
 procedure TDlgConfig.FormShow(Sender: TObject);
@@ -181,6 +218,9 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     RootNode.Data := Pointer(TsAuthentication);
 
     // Add child nodes
+    ChildNode := TreeView1.Items.AddChild(RootNode, 'Actions');
+    ChildNode.Data := Pointer(TsActions);
+
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Authentication');
     ChildNode.Data := Pointer(TsAuthentication);
 
@@ -267,10 +307,10 @@ end;
 
 procedure TDlgConfig.FSetConfig(Config: TConfig);
 
-  function FGetItemIndexByValue(CbxOpenType: TComboBox; Value: Integer): Integer;
+  function FGetItemIndexByValue(Cbx: TComboBox; Value: Integer): Integer;
   begin
-    for var I := 0 to CbxOpenType.Items.Count-1 do begin
-      var ObjectValue := Integer(CbxOpenType.Items.Objects[I]);
+    for var I := 0 to Cbx.Items.Count-1 do begin
+      var ObjectValue := Integer(Cbx.Items.Objects[I]);
       if ObjectValue = Value then begin
         Result := I;
         Exit;
@@ -307,6 +347,11 @@ begin
 
   // Windows
   //CbxVisualStyle is set above when filling
+
+  // Actions
+  CbxSearchAction.ItemIndex := FGetItemIndexByValue(CbxSearchAction, Config.SearchAction);
+  CbxSetListsAction.ItemIndex := FGetItemIndexByValue(CbxSetListsAction, Config.SetListsAction);
+  CbxSetsAction.ItemIndex := FGetItemIndexByValue(CbxSetsAction, Config.SetsAction);
 
   PCConfig.ActivePage := TsAuthentication;
 end;
@@ -350,6 +395,11 @@ begin
 
   // Windows
   Config.VisualStyle := CbxVisualStyle.Text;
+
+  // Actions
+  Config.SearchAction := Integer(CbxSearchAction.Items.Objects[CbxSearchAction.ItemIndex]);
+  Config.SetListsAction := Integer(CbxSetListsAction.Items.Objects[CbxSetListsAction.ItemIndex]);
+  Config.SetsAction := Integer(CbxSetsAction.Items.Objects[CbxSetsAction.ItemIndex]);
 
   ModalResult := mrOK;
 end;

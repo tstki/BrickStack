@@ -22,13 +22,20 @@ const
   StrRebrickableAPIInfo = 'https://rebrickable.com/api/';
   StrIniFileName = 'BrickStack.ini';
   StrCollectionsFileName = 'Collections.ini';
-  StrRebrickableIniSection = 'Rebrickable';
   StrDefaultCachePath = 'Cache\';
   StrDefaultLogPath = 'Logs\';
   StrDBaseName = 'BrickStack.db';
   StrDefaultdDBasePath = 'DBase\' + StrDbaseName;
   StrDefaultImportPath = 'Import\';
   StrDefaultExportPath = 'Export\';
+
+  // Config - ini sections
+  StrAuthenticationIniSection = 'Authentication';
+  StrExternalIniSection = 'External';
+  StrLocalIniSection = 'Local';
+  StrWindowsIniSection = 'Windows';
+  StrActionIniSection = 'Action';
+  StrBrickStackIniSection = 'BrickStack';
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Collection - set lists';
@@ -111,6 +118,12 @@ const
   StrOTBrickSet = 'BrickSet';
   StrOTLDraw = 'LDraw';
   //StrOTCustom = 'Custom (Link)';
+
+  StrActViewSet = 'View set(s)';
+  StrActViewExternal = 'View externally';
+  StrActEditDetails = 'Edit details';
+  StrActViewParts = 'View parts inventory';
+  StrActEditParts = 'Edit parts';
 
   // Export
   StrExportCSVFilter = 'CSV Files (*.csv)|*.CSV|All Files (*.*)|*.*';

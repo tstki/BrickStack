@@ -871,6 +871,7 @@ begin
       end;
     end else if AFormClass = TFrmSetList then begin
       var FrmSetList := TFrmSetList(Child);
+      FrmSetList.Config := FConfig;
       //FrmSetList.Caption := Title;
       //FrmSetList.FSetSetList();
       if not FConfig.FrmSetList.SetFormDimensions(FrmSetList) then begin
@@ -896,7 +897,7 @@ begin
     end else if AFormClass = TFrmSearch then begin
       var FrmSearch := TFrmSearch(Child);
       FrmSearch.ImageCache := FImageCache;
-      //FrmSearch.Config := FConfig;
+      FrmSearch.Config := FConfig;
       FrmSearch.Caption := StrSearchFrameTitle;
       if not FConfig.FrmSearch.SetFormDimensions(FrmSearch) then begin
         //Set default size

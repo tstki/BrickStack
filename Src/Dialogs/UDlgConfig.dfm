@@ -650,6 +650,69 @@ object DlgConfig: TDlgConfig
         OnChange = CbxVisualStyleChange
       end
     end
+    object TsActions: TTabSheet
+      Caption = 'Actions'
+      ImageIndex = 7
+      object Label29: TLabel
+        Left = 15
+        Top = 10
+        Width = 88
+        Height = 15
+        Caption = 'Standard actions'
+      end
+      object Label30: TLabel
+        Left = 15
+        Top = 51
+        Width = 224
+        Height = 15
+        Caption = 'Standard '#39'double click'#39' action per window:'
+      end
+      object LblSearchAction: TLabel
+        Left = 15
+        Top = 75
+        Width = 35
+        Height = 15
+        Caption = 'Search'
+      end
+      object LblSetListsAction: TLabel
+        Left = 15
+        Top = 104
+        Width = 39
+        Height = 15
+        Caption = 'Set lists'
+      end
+      object LblSetsAction: TLabel
+        Left = 15
+        Top = 133
+        Width = 21
+        Height = 15
+        Caption = 'Sets'
+      end
+      object CbxSearchAction: TComboBox
+        Left = 120
+        Top = 72
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object CbxSetListsAction: TComboBox
+        Left = 120
+        Top = 101
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 1
+      end
+      object CbxSetsAction: TComboBox
+        Left = 120
+        Top = 130
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 2
+      end
+    end
   end
   object ActionList1: TActionList
     Left = 24

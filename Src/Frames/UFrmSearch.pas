@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages,
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  Contnrs, USet,
+  Contnrs, USet, UConfig,
   FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
   UImageCache, Vcl.Grids, Vcl.Menus, System.Actions, Vcl.ActnList;
@@ -117,8 +117,10 @@ type
     FImageCache: TImageCache;
     FDragStartPoint: TPoint;
     FDraggingStarted: Boolean;
+    FConfig: TConfig;
     //FCurMaxCols: Integer;
     FLastMaxCols: Integer;
+    procedure FSetConfig(Config: TConfig);
     procedure FDoSearch;
     function FGetFromYear(): Integer;
     function FGetToYear(): Integer;
@@ -131,6 +133,7 @@ type
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
+    property Config: TConfig read FConfig write FSetConfig;
   end;
 
 implementation
@@ -246,6 +249,11 @@ procedure TFrmSearch.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
   inherited;
+end;
+
+procedure TFrmSearch.FSetConfig(Config: TConfig);
+begin
+  FConfig := Config;
 end;
 
 procedure TFrmSearch.FormShow(Sender: TObject);
@@ -687,7 +695,14 @@ end;
 
 procedure TFrmSearch.DgSetsDblClick(Sender: TObject);
 begin
-  ActViewSet.Execute;
+  case FConfig.SetsAction of
+    caVIEWEXTERNAL:
+      ActViewSetExternal.Execute;
+    caVIEWPARTS:
+      ActViewParts.Execute;
+    else // caVIEW
+      ActViewSet.Execute;
+  end;
 end;
 {
 procedure TFrmSearch.ImgShowSetClick(Sender: TObject);

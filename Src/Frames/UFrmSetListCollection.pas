@@ -68,6 +68,7 @@ type
     procedure LvSetListsDragDrop(Sender: TObject; Source: TObject; X, Y: Integer);
     procedure LvSetListsAdvancedCustomDrawItem(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
     procedure PopupMenu2ItemClick(Sender: TObject);
+    procedure LvSetListsDblClick(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -610,6 +611,16 @@ end;
 procedure TFrmSetListCollection.CbxFilterChange(Sender: TObject);
 begin
   RebuildBySQL;
+end;
+
+procedure TFrmSetListCollection.LvSetListsDblClick(Sender: TObject);
+begin
+  case FConfig.SetListsAction of
+    caEDITDETAILS:
+      ActEditSetList.Execute;
+    else // caVIEW
+      ActViewCollection.Execute;
+  end;
 end;
 
 procedure TFrmSetListCollection.ActViewCollectionExecute(Sender: TObject);

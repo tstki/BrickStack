@@ -132,6 +132,7 @@ Search:
 
 Search parts in:
 - Search for parts in sets, to find sets
+- Combine multiple parts to search for
 
 Analytics:
 - Show graphs of each theme / year / part count of sets you own
@@ -139,4 +140,4 @@ Analytics:
 Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.
 -- https://stackoverflow.com/questions/7118194/how-can-i-disable-the-scroll-into-view-behavior-of-tscrollbox
-- Some images are named ".jpg" but are actually bitmaps, or png.
+- Some images are named ".jpg" but are actually bitmaps, or png. (not our fault, really!)

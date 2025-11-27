@@ -45,7 +45,7 @@ object FrmSetListCollection: TFrmSetListCollection
     OnColumnClick = LvSetListsColumnClick
     OnColumnRightClick = LvSetListsColumnRightClick
     OnData = LvSetListsData
-    OnDblClick = ActViewCollectionExecute
+    OnDblClick = LvSetListsDblClick
   end
   object Panel1: TPanel
     Left = 0
