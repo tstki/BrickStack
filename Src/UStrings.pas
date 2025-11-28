@@ -101,7 +101,7 @@ const
 
   // Option labels
   StrNameRebrickableAPI = 'Rebrickable API';
-  StrNameRebrickableCSV = 'Rebrickable CSV (2-4 columns)';
+  StrNameRebrickableCSV = 'Rebrickable CSV (4 columns)';
   StrNameBrickLinkXML = 'BrickLink XML';
   StrImportOptionMerge = 'Merge with local by ID';
   StrImportOptionAppend = 'Keep local and append new';
