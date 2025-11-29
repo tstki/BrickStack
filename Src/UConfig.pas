@@ -50,13 +50,20 @@ type
     FSetListsAction: Integer;
     FSetsAction: Integer;
 
-    // Window states (move to separate class object later) - no need to save this every time after all
+    // Parts window settings:
+    FWPartsShowPartCount: Boolean;
+    FWPartsShowPartnum: Boolean;
+    FWPartsIncludeNonSpareParts: Boolean;
+    FWPartsIncludeSpareParts: Boolean;
+    FWPartsSortByCategory: Boolean;
+    FWPartsSortByColor: Boolean;
+    FWPartsSortByHue: Boolean;
+    FWPartsSortByPart: Boolean;
+    FWPartsSortByQuantity: Boolean;
+    FWPartsSortAscending: Boolean;
+
+    // Window states
     FReOpenWindowsAfterRestart: Boolean;
-{    FFrmSetListCollectionWasOpen: Boolean;
-    FFrmSetWasOpen: String;
-    FFrmSetListWasOpen: Integer;
-    FFrmPartsWasOpen: String;
-    FFrmSearchWasOpen: Boolean; }
 
     FFrmSetListCollection: TClientFormStorage;
     FFrmSetList: TClientFormStorage;
@@ -68,7 +75,7 @@ type
     { Public declarations }
     constructor Create;
     destructor Destroy; override;
-    procedure Save;
+    procedure Save(Section: Integer);
     procedure Load;
     procedure ResetFramesOpenOnLoad;
     procedure ResetFramesDimensions;
@@ -92,6 +99,17 @@ type
     property SearchAction: Integer read FSearchAction write FSearchAction;
     property SetListsAction: Integer read FSetListsAction write FSetListsAction;
     property SetsAction: Integer read FSetsAction write FSetsAction;
+
+    property WPartsShowPartCount: Boolean read FWPartsShowPartCount write FWPartsShowPartCount;
+    property WPartsShowPartnum: Boolean read FWPartsShowPartnum write FWPartsShowPartnum;
+    property WPartsIncludeNonSpareParts: Boolean read FWPartsIncludeNonSpareParts write FWPartsIncludeNonSpareParts;
+    property WPartsIncludeSpareParts: Boolean read FWPartsIncludeSpareParts write FWPartsIncludeSpareParts;
+    property WPartsSortByCategory: Boolean read FWPartsSortByCategory write FWPartsSortByCategory;
+    property WPartsSortByColor: Boolean read FWPartsSortByColor write FWPartsSortByColor;
+    property WPartsSortByHue: Boolean read FWPartsSortByHue write FWPartsSortByHue;
+    property WPartsSortByPart: Boolean read FWPartsSortByPart write FWPartsSortByPart;
+    property WPartsSortByQuantity: Boolean read FWPartsSortByQuantity write FWPartsSortByQuantity;
+    property WPartsSortAscending: Boolean read FWPartsSortAscending write FWPartsSortAscending;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -133,6 +151,12 @@ const
   cTYPESET = 0;
   cTYPEPART = 1;
   //cTYPEMINIFIG = 2; //Not used yet
+
+  //Config sections - used for saving specific sections instead of "everything"
+  csALL = 0;
+  csCONFIGDIALOG = 1;
+  csWINDOWPOSITIONS = 2;
+  csPARTSWINDOWFILTERS = 3;
 
 implementation
 
@@ -221,43 +245,62 @@ begin
   //
 end;
 
-procedure TConfig.Save;
+procedure TConfig.Save(Section: Integer);
 begin
   var FilePath := ExtractFilePath(ParamStr(0));
   var IniFile := TIniFile.Create(FilePath + StrIniFileName);
   try
-    IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
-    IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
-    IniFile.WriteString(StrAuthenticationIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
-    IniFile.WriteBool(StrAuthenticationIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
+    if Section in [csALL, csCONFIGDIALOG] then begin
+      IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableAPIKey', FRebrickableAPIKey);
+      IniFile.WriteString(StrAuthenticationIniSection, 'RebrickableBaseUrl', FRebrickableBaseUrl);
+      IniFile.WriteString(StrAuthenticationIniSection, 'AuthenticationToken', IfThen(FRememberAuthenticationToken, FAuthenticationToken, ''));
+      IniFile.WriteBool(StrAuthenticationIniSection, 'RememberAuthenticationToken', FRememberAuthenticationToken);
 
-    IniFile.WriteString(StrExternalIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
-    IniFile.WriteString(StrExternalIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
-    IniFile.WriteString(StrExternalIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
-    IniFile.WriteString(StrExternalIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
-    IniFile.WriteString(StrExternalIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
-    IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
-    IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
+      IniFile.WriteString(StrExternalIniSection, 'ViewRebrickableUrl', FViewRebrickableUrl);
+      IniFile.WriteString(StrExternalIniSection, 'ViewBrickLinkUrl', FViewBrickLinkUrl);
+      IniFile.WriteString(StrExternalIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
+      IniFile.WriteString(StrExternalIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
+      IniFile.WriteString(StrExternalIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
+      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
+      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
 
-    IniFile.WriteString(StrLocalIniSection, 'LocalImageCachePath', FLocalImageCachePath);
-    IniFile.WriteString(StrLocalIniSection, 'LocalLogsPath', FLocalLogsPath);
-    IniFile.WriteString(StrLocalIniSection, 'DbasePath', FDbasePath);
-    IniFile.WriteString(StrLocalIniSection, 'ImportPath', FImportPath);
-    IniFile.WriteString(StrLocalIniSection, 'ExportPath', FExportPath);
+      IniFile.WriteString(StrLocalIniSection, 'LocalImageCachePath', FLocalImageCachePath);
+      IniFile.WriteString(StrLocalIniSection, 'LocalLogsPath', FLocalLogsPath);
+      IniFile.WriteString(StrLocalIniSection, 'DbasePath', FDbasePath);
+      IniFile.WriteString(StrLocalIniSection, 'ImportPath', FImportPath);
+      IniFile.WriteString(StrLocalIniSection, 'ExportPath', FExportPath);
 
-    IniFile.WriteString(StrWindowsIniSection, 'VisualStyle', FVisualStyle);
+      IniFile.WriteString(StrWindowsIniSection, 'VisualStyle', FVisualStyle);
 
-    IniFile.WriteInteger(StrActionIniSection, 'SearchAction', FSearchAction);
-    IniFile.WriteInteger(StrActionIniSection, 'SetListsAction', FSetListsAction);
-    IniFile.WriteInteger(StrActionIniSection, 'SetsAction', FSetsAction);
+      IniFile.WriteInteger(StrActionIniSection, 'SearchAction', FSearchAction);
+      IniFile.WriteInteger(StrActionIniSection, 'SetListsAction', FSetListsAction);
+      IniFile.WriteInteger(StrActionIniSection, 'SetsAction', FSetsAction);
+    end;
 
     // Frame size/open states
-    IniFile.WriteBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
-    FFrmSetListCollection.Save(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
-    FFrmSetList.Save(IniFile, StrBrickStackIniSection, 'FrmSetList');
-    FFrmSet.Save(IniFile, StrBrickStackIniSection, 'FrmSet');
-    FFrmParts.Save(IniFile, StrBrickStackIniSection, 'FrmParts');
-    FFrmSearch.Save(IniFile, StrBrickStackIniSection, 'FrmSearch');
+    if Section in [csALL, csWINDOWPOSITIONS] then begin
+      IniFile.WriteBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
+
+      FFrmSetListCollection.Save(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
+      FFrmSetList.Save(IniFile, StrBrickStackIniSection, 'FrmSetList');
+      FFrmSet.Save(IniFile, StrBrickStackIniSection, 'FrmSet');
+      FFrmParts.Save(IniFile, StrBrickStackIniSection, 'FrmParts');
+      FFrmSearch.Save(IniFile, StrBrickStackIniSection, 'FrmSearch');
+    end;
+
+    // Parts window filters and sorting
+    if Section in [csALL, csPARTSWINDOWFILTERS] then begin
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartCount', FWPartsShowPartCount);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartnum', FWPartsShowPartnum);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', FWPartsIncludeNonSpareParts);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeSpareParts', FWPartsIncludeSpareParts);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByCategory', FWPartsSortByCategory);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByColor', FWPartsSortByColor);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByHue', FWPartsSortByHue);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByPart', FWPartsSortByPart);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByQuantity', FWPartsSortByQuantity);
+      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortAscending', FWPartsSortAscending);
+    end;
   finally
     IniFile.Free;
   end;
@@ -308,6 +351,18 @@ begin
     FFrmSet.Load(IniFile, StrBrickStackIniSection, 'FrmSet');
     FFrmParts.Load(IniFile, StrBrickStackIniSection, 'FrmParts');
     FFrmSearch.Load(IniFile, StrBrickStackIniSection, 'FrmSearch');
+
+    // View parts window filters
+    FWPartsShowPartCount := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartCount', True);
+    FWPartsShowPartnum := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartnum', True);
+    FWPartsIncludeNonSpareParts := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', True);
+    FWPartsIncludeSpareParts := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeSpareParts', True);
+    FWPartsSortByCategory := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByCategory', False);
+    FWPartsSortByColor := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByColor', True);
+    FWPartsSortByHue := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByHue', False);
+    FWPartsSortByPart := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByPart', False);
+    FWPartsSortByQuantity := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByQuantity', False);
+    FWPartsSortAscending := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortAscending', False);
   finally
     IniFile.Free;
   end;

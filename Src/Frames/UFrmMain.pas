@@ -174,7 +174,7 @@ procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
   FImageCache.Free;
   try
-    FConfig.Save;
+    FConfig.Save(csWINDOWPOSITIONS);
   finally
     FConfig.Free;
   end;
@@ -470,7 +470,7 @@ begin
         var FrmParts := TFrmParts(Child);
         FrmParts.ImageCache := FImageCache;
         FrmParts.PartsMode := caView;
-        FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
+        FrmParts.LoadPartsBySet(MsgData.Set_num, False); // - multithreaded load
       end;
     end;
   finally
@@ -488,7 +488,7 @@ begin
         var FrmParts := TFrmParts(Child);
         FrmParts.ImageCache := FImageCache;
         FrmParts.PartsMode := caEdit;
-        FrmParts.LoadPartsBySet(MsgData.Set_num); // - multithreaded load
+        FrmParts.LoadPartsBySet(MsgData.Set_num, False); // - multithreaded load
         FrmParts.LoadPartCountByID(MsgData.BSSetID);
       end;
     end;
@@ -544,7 +544,7 @@ begin
             FConfig.DefaultViewSetOpenType := OpenType
           else
             FConfig.DefaultViewPartOpenType := OpenType;
-          FConfig.Save;
+          FConfig.Save(csCONFIGDIALOG);
         end;
       end;
     finally
@@ -806,7 +806,7 @@ begin
       FConfig.RememberAuthenticationToken := DlgLogin.RememberAuthenticationToken;
 
       // Store token
-      FConfig.Save;
+      FConfig.Save(csCONFIGDIALOG);
     end;
   finally
     DlgLogin.Free;
@@ -923,7 +923,7 @@ begin
     if DlgConfig.ShowModal = mrOK then
       TStyleManager.SetStyle(FConfig.VisualStyle);
   finally
-    FConfig.Save;
+    FConfig.Save(csCONFIGDIALOG);
     DlgConfig.Free;
   end;
 end;

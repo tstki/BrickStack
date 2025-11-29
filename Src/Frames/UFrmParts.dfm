@@ -11,6 +11,7 @@ object FrmParts: TFrmParts
   Visible = True
   OnClose = FormClose
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnResize = FormResize
   DesignSize = (
     628
@@ -183,41 +184,38 @@ object FrmParts: TFrmParts
     Top = 64
     object Sort1: TMenuItem
       Caption = 'Sort by'
-      object Ascending1: TMenuItem
+      object MnuSortAscending: TMenuItem
         Action = ActToggleAscending
       end
       object N1: TMenuItem
         Caption = '-'
       end
-      object Sort2: TMenuItem
+      object MnuSortByColor: TMenuItem
         Action = ActSortByColor
       end
-      object Hue1: TMenuItem
+      object MnuSortByHue: TMenuItem
         Action = ActSortByHue
       end
-      object Part1: TMenuItem
+      object MnuSortByPart: TMenuItem
         Action = ActSortByPart
       end
-      object Category1: TMenuItem
+      object MnuSortByCategory: TMenuItem
         Action = ActSortByCategory
       end
-      object Quantity1: TMenuItem
+      object MnuSortByQuantity: TMenuItem
         Action = ActSortByQuantity
       end
-      object ActSortBySpare1: TMenuItem
-        Action = ActSortBySpare
-      end
     end
-    object IncludeSpareParts: TMenuItem
+    object MnuIncludeSpareParts: TMenuItem
       Action = ActToggleIncludeSpareParts
     end
-    object ActToggleIncludeNonSpare1: TMenuItem
+    object MnuIncludeNonSpareParts: TMenuItem
       Action = ActToggleIncludeNonSpare
     end
-    object ShowPartCountAndLink: TMenuItem
+    object MnuShowPartCount: TMenuItem
       Action = ActShowCount
     end
-    object ShowPartnum: TMenuItem
+    object MnuShowPartnum: TMenuItem
       Action = ActShowPartNum
     end
   end
@@ -241,6 +239,7 @@ object FrmParts: TFrmParts
     end
     object ActToggleIncludeNonSpare: TAction
       Caption = 'Include non-spare parts'
+      OnExecute = ActToggleIncludeNonSpareExecute
     end
     object ActToggleAscending: TAction
       Caption = 'Ascending'
@@ -266,17 +265,10 @@ object FrmParts: TFrmParts
       Caption = 'Quantity'
       OnExecute = ActSortByQuantityExecute
     end
-    object ActSortBySpare: TAction
-      Caption = 'Spare'
-    end
     object ActViewPartExternal: TAction
       Caption = 'View part externally'
       ImageIndex = 17
       OnExecute = ActViewPartExternalExecute
-    end
-    object ActViewSetExternal: TAction
-      Caption = 'View set externally'
-      ImageIndex = 17
     end
     object ActPartsInvertComplete: TAction
       Caption = 'ActPartsInvertComplete'
@@ -298,9 +290,11 @@ object FrmParts: TFrmParts
     end
     object ActShowCount: TAction
       Caption = 'Show part count'
+      OnExecute = ActShowCountExecute
     end
     object ActShowPartNum: TAction
       Caption = 'Show part number'
+      OnExecute = ActShowPartNumExecute
     end
   end
   object ImageList16: TImageList

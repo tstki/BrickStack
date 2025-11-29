@@ -22,14 +22,14 @@ type
     BtnFilter: TButton;
     PopPartsFilter: TPopupMenu;
     Sort1: TMenuItem;
-    Ascending1: TMenuItem;
+    MnuSortAscending: TMenuItem;
     N1: TMenuItem;
-    Sort2: TMenuItem;
-    Hue1: TMenuItem;
-    Part1: TMenuItem;
-    Category1: TMenuItem;
-    Quantity1: TMenuItem;
-    IncludeSpareParts: TMenuItem;
+    MnuSortByColor: TMenuItem;
+    MnuSortByHue: TMenuItem;
+    MnuSortByPart: TMenuItem;
+    MnuSortByCategory: TMenuItem;
+    MnuSortByQuantity: TMenuItem;
+    MnuIncludeSpareParts: TMenuItem;
     ActionList1: TActionList;
     ActPrintParts: TAction;
     ActExport: TAction;
@@ -41,14 +41,13 @@ type
     ActSortByCategory: TAction;
     ActSortByQuantity: TAction;
     ActViewPartExternal: TAction;
-    ActViewSetExternal: TAction;
     ImageList16: TImageList;
     SbResults: TStatusBar;
     LblPartsGridSize: TLabel;
     DgSetParts: TDrawGrid;
     TbGridSize: TTrackBar;
-    ShowPartCountAndLink: TMenuItem;
-    ShowPartnum: TMenuItem;
+    MnuShowPartCount: TMenuItem;
+    MnuShowPartnum: TMenuItem;
     LblPartsGridSizePx: TLabel;
     PopGridRightClick: TPopupMenu;
     Viewpartexternally1: TMenuItem;
@@ -61,17 +60,14 @@ type
     Button3: TButton;
     Button4: TButton;
     Button5: TButton;
-    ActSortBySpare: TAction;
     ActToggleIncludeNonSpare: TAction;
-    ActSortBySpare1: TMenuItem;
-    ActToggleIncludeNonSpare1: TMenuItem;
+    MnuIncludeNonSpareParts: TMenuItem;
     ActShowCount: TAction;
     ActShowPartNum: TAction;
     procedure FormCreate(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure ActToggleCheckboxModeExecute(Sender: TObject);
     procedure ActToggleAscendingExecute(Sender: TObject);
     procedure ActSortByColorExecute(Sender: TObject);
     procedure ActSortByHueExecute(Sender: TObject);
@@ -90,6 +86,11 @@ type
     procedure ActPartsInvertCompleteExecute(Sender: TObject);
     procedure ActPartsCompleteAllExecute(Sender: TObject);
     procedure ActPartsRemoveAllExecute(Sender: TObject);
+    procedure MnuShowPartnumClick(Sender: TObject);
+    procedure ActToggleIncludeNonSpareExecute(Sender: TObject);
+    procedure ActShowCountExecute(Sender: TObject);
+    procedure ActShowPartNumExecute(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
     FPartsMode: TPartsMode;
@@ -103,6 +104,8 @@ type
     //FCheckboxMode: Boolean;
     FLastMaxCols: Integer;
 //    FLastCellAction: TCellAction;
+    procedure FSetConfig(Config: TConfig);
+    procedure FSaveSortSettings;
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
     procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
     procedure FAdjustGrid();
@@ -112,11 +115,12 @@ type
     procedure FModifyQuantity(PartObject: TPartObject; Amount: Integer; Increment: Boolean);
     procedure FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
     procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
+    procedure FUncheckAllSortExcept(Sender: TObject);
   public
     { Public declarations }
-    property Config: TConfig read FConfig write FConfig;
+    property Config: TConfig read FConfig write FSetConfig;
     property ImageCache: TImageCache read FImageCache write FImageCache;
-    procedure LoadPartsBySet(const set_num: String);
+    procedure LoadPartsBySet(const set_num: String; const ForceRefresh: Boolean);
     procedure LoadPartCountByID(const BSSetID: Integer);
     property SetNum: String read FSetNum; // Read only
     //property BSSetID: Integer read FBSSetID;
@@ -445,13 +449,20 @@ begin
   inherited;
 end;
 
-procedure TFrmParts.FormCreate(Sender: TObject);
+procedure TFrmParts.FSetConfig(Config: TConfig);
 begin
-  inherited;
-  FInventoryPanels := TObjectList.Create;
-  FInventoryPanels.OwnsObjects := True;
+  FConfig := Config;
 
-  FPartObjectList := TPartObjectList.Create;
+  MnuShowPartCount.Checked := FConfig.WPartsShowPartCount;
+  MnuShowPartnum.Checked := FConfig.WPartsShowPartnum;
+  MnuIncludeNonSpareParts.Checked := FConfig.WPartsIncludeNonSpareParts;
+  MnuIncludeSpareParts.Checked := FConfig.WPartsIncludeSpareParts;
+  MnuSortByCategory.Checked := FConfig.WPartsSortByCategory;
+  MnuSortByColor.Checked := FConfig.WPartsSortByColor;
+  MnuSortByHue.Checked := FConfig.WPartsSortByHue;
+  MnuSortByPart.Checked := FConfig.WPartsSortByPart;
+  MnuSortByQuantity.Checked := FConfig.WPartsSortByQuantity;
+  MnuSortAscending.Checked := FConfig.WPartsSortAscending;
 
   DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
   DgSetParts.DefaultRowHeight := FGetGridHeight;
@@ -461,6 +472,20 @@ begin
   FAdjustGrid;
 
   LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
+end;
+
+procedure TFrmParts.FormCreate(Sender: TObject);
+begin
+  inherited;
+  FInventoryPanels := TObjectList.Create;
+  FInventoryPanels.OwnsObjects := True;
+
+  FPartObjectList := TPartObjectList.Create;
+end;
+
+procedure TFrmParts.FormDestroy(Sender: TObject);
+begin
+  FConfig.Save(csPARTSWINDOWFILTERS);
 end;
 
 procedure TFrmParts.FormResize(Sender: TObject);
@@ -475,11 +500,17 @@ end;
 
 function TFrmParts.FGetGridHeight: Integer;
 begin
-  if DgSetParts.DefaultColWidth >= 64 then
-    Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-  else if DgSetParts.DefaultColWidth >= 48 then
-    Result := FTBGridSizePositionToPixels + 20
-  else
+  if Config <> nil then begin
+    if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+      if Config.WPartsShowPartCount then
+        Result := FTBGridSizePositionToPixels + 40  // 64 + 20 + 20
+      else
+        Result := FTBGridSizePositionToPixels + 20; // 64 + 20
+    end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
+      Result := FTBGridSizePositionToPixels + 20
+    else
+      Result := FTBGridSizePositionToPixels;
+  end else
     Result := FTBGridSizePositionToPixels;
 end;
 
@@ -535,79 +566,137 @@ begin
   CbxInventoryVersion.visible := MaxVersion > 1;
 end;
 
-procedure TFrmParts.ActSortByCategoryExecute(Sender: TObject);
+procedure TFrmParts.ActShowCountExecute(Sender: TObject);
 begin
-//
+  MnuShowPartCount.Checked := not MnuShowPartCount.Checked;
+
+  Config.WPartsShowPartCount := MnuShowPartCount.Checked;
+
+  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
+  DgSetParts.DefaultRowHeight := FGetGridHeight;
+  DgSetParts.FixedCols := 0;
+  DgSetParts.FixedRows := 0;
+
+  FAdjustGrid;
+
+  DgSetParts.Invalidate;
 end;
 
-procedure TFrmParts.ActSortByColorExecute(Sender: TObject);
+procedure TFrmParts.ActShowPartNumExecute(Sender: TObject);
 begin
-//
+  MnuShowPartnum.Checked := not MnuShowPartnum.Checked;
+
+  Config.WPartsShowPartnum := MnuShowPartnum.Checked;
+
+  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
+  DgSetParts.DefaultRowHeight := FGetGridHeight;
+  DgSetParts.FixedCols := 0;
+  DgSetParts.FixedRows := 0;
+
+  FAdjustGrid;
+
+  DgSetParts.Invalidate;
 end;
 
-procedure TFrmParts.ActSortByHueExecute(Sender: TObject);
+procedure TFrmParts.ActToggleIncludeNonSpareExecute(Sender: TObject);
 begin
-//
-end;
+  // Needs minimum of 1 checked.
+  MnuIncludeNonSpareParts.Checked := not MnuIncludeNonSpareParts.Checked;
+  if not MnuIncludeNonSpareParts.Checked and not MnuIncludeSpareParts.Checked then
+    MnuIncludeSpareParts.Checked := True;
 
-procedure TFrmParts.ActSortByPartExecute(Sender: TObject);
-begin
-//
-end;
+  FConfig.WPartsIncludeSpareParts := MnuIncludeSpareParts.Checked;
+  FConfig.WPartsIncludeNonSpareParts := MnuIncludeNonSpareParts.Checked;
 
-procedure TFrmParts.ActSortByQuantityExecute(Sender: TObject);
-begin
-//
-end;
-
-procedure TFrmParts.ActToggleAscendingExecute(Sender: TObject);
-begin
-{
-//  cPARTSORTBYCOLOR = 0;
-  cPARTSORTBYHUE = 1;
-  cPARTSORTBYPART = 2;
-  cPARTSORTBYCATEGORY = 3;
-  //cPARTSORTBYPRICE = 3; // No price info yet
-  cPARTSORTBYQUANTITY = 4; }
-
-{  CbxSortPartsBy.Clear;
-  CbxSortPartsBy.Items.Add(StrPartSortByColor); //inventory_parts.color_id
-  CbxSortPartsBy.Items.Add(StrPartSortByHue);   //colors.rgb?
-  CbxSortPartsBy.Items.Add(StrPartSortByPart);  //inventory_parts.part_num
-  CbxSortPartsBy.Items.Add(StrPartSortByCategory);  // parts.part_cat_id
-  //CbxSortPartsBy.Items.Add(StrPartSortByPrice);   // See above
-  CbxSortPartsBy.Items.Add(StrPartSortByQuantity);  //inventory_parts.quantity
-  CbxSortPartsBy.ItemIndex := 0; }
-end;
-
-procedure TFrmParts.ActToggleCheckboxModeExecute(Sender: TObject);
-begin
-//  FCheckboxMode := not FCheckboxMode;
-//  ActToggleCheckboxMode.Checked := FCheckboxMode;
-{
-  for var ResultPanel:TPanel in FInventoryPanels do begin
-    for var i := 0 to ResultPanel.ControlCount - 1 do begin
-      var Control := ResultPanel.Controls[i];
-      if Control.ClassType = TCheckbox then begin
-        var NewCheckbox := TCheckbox(Control);
-        NewCheckbox.Visible := FCheckboxMode;
-      end else if Control.ClassType = TLabel then begin
-        var NewLabel := TLabel(Control);
-        NewLabel.Visible := not FCheckboxMode;
-      end else if Control.ClassType = TImage then begin
-        var NewImage := TImage(Control);
-        if NewImage.Name <> '' then
-          NewImage.Visible := not FCheckboxMode;
-      end;
-    end;
-
-    ResultPanel.Invalidate;
-  end;   }
+  LoadPartsBySet(FSetNum, True);
 end;
 
 procedure TFrmParts.ActToggleIncludeSparePartsExecute(Sender: TObject);
 begin
-//
+  // Needs minimum of 1 checked.
+  MnuIncludeSpareParts.Checked := not MnuIncludeSpareParts.Checked;
+  if not MnuIncludeNonSpareParts.Checked and not MnuIncludeSpareParts.Checked then
+    MnuIncludeNonSpareParts.Checked := True;
+
+  FConfig.WPartsIncludeSpareParts := MnuIncludeSpareParts.Checked;
+  FConfig.WPartsIncludeNonSpareParts := MnuIncludeNonSpareParts.Checked;
+
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.FUncheckAllSortExcept(Sender: TObject);
+begin
+  if Sender <> MnuSortByCategory then
+    MnuSortByCategory.Checked := False;
+  if Sender <> MnuSortByColor then
+    MnuSortByColor.Checked := False;
+  if Sender <> MnuSortByHue then
+    MnuSortByHue.Checked := False;
+  if Sender <> MnuSortByPart then
+    MnuSortByPart.Checked := False;
+  if Sender <> MnuSortByQuantity then
+    MnuSortByQuantity.Checked := False;
+end;
+
+procedure TFrmParts.FSaveSortSettings;
+begin
+  FConfig.WPartsSortByCategory := MnuSortByCategory.Checked;
+  FConfig.WPartsSortByColor := MnuSortByColor.Checked;
+  FConfig.WPartsSortByHue := MnuSortByHue.Checked;
+  FConfig.WPartsSortByPart := MnuSortByPart.Checked;
+  FConfig.WPartsSortByQuantity := MnuSortByQuantity.Checked;
+end;
+
+procedure TFrmParts.ActSortByCategoryExecute(Sender: TObject);
+begin
+  MnuSortByCategory.Checked := not MnuSortByCategory.Checked;
+  if MnuSortByCategory.Checked then
+    FUncheckAllSortExcept(MnuSortByCategory);
+  FSaveSortSettings;
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.ActSortByColorExecute(Sender: TObject);
+begin
+  MnuSortByColor.Checked := not MnuSortByColor.Checked;
+  if MnuSortByColor.Checked then
+    FUncheckAllSortExcept(MnuSortByColor);
+  FSaveSortSettings;
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.ActSortByHueExecute(Sender: TObject);
+begin
+  MnuSortByHue.Checked := not MnuSortByHue.Checked;
+  if MnuSortByHue.Checked then
+    FUncheckAllSortExcept(MnuSortByHue);
+  FSaveSortSettings;
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.ActSortByPartExecute(Sender: TObject);
+begin
+  MnuSortByPart.Checked := not MnuSortByPart.Checked;
+  if MnuSortByPart.Checked then
+    FUncheckAllSortExcept(MnuSortByPart);
+  FSaveSortSettings;
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.ActSortByQuantityExecute(Sender: TObject);
+begin
+  MnuSortByQuantity.Checked := not MnuSortByQuantity.Checked;
+  if MnuSortByQuantity.Checked then
+    FUncheckAllSortExcept(MnuSortByQuantity);
+  FSaveSortSettings;
+  LoadPartsBySet(FSetNum, True);
+end;
+
+procedure TFrmParts.ActToggleAscendingExecute(Sender: TObject);
+begin
+  MnuSortAscending.Checked := not MnuSortAscending.Checked;
+  FConfig.WPartsSortAscending := MnuSortAscending.Checked;
+  LoadPartsBySet(FSetNum, True);
 end;
 
 procedure TFrmParts.ActViewPartExternalExecute(Sender: TObject);
@@ -845,50 +934,33 @@ begin
       DgSetParts.Canvas.FillRect(Rect);
     end;
 
-    //TPicture
+    // TPicture
     if FImageCache <> nil then begin
       var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
-    //  ImageList1.draw
+      //  ImageList1.draw
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
-        // Center the image in the cell (optional)
-  //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
-  //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
         var ImageRect := Rect;
-        if DgSetParts.DefaultColWidth >= 64 then
-          ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
-        else if DgSetParts.DefaultColWidth >= 48 then
+        if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+          if Config.WPartsShowPartCount then
+            ImageRect.Bottom := ImageRect.Bottom - 40  // 64 -20 -20
+          else
+            ImageRect.Bottom := ImageRect.Bottom - 20; // 64 -20
+        end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
           ImageRect.Bottom := ImageRect.Bottom - 20;
         DgSetParts.Canvas.StretchDraw(ImageRect, Picture.Graphic);
       end;
     end;
 
-    // Determine square color based on last action
-{    var SquareColor := clRed;
-    if (ACol = FLastCellCol) and (ARow = FLastCellRow) then begin
-      case FLastCellAction of
-        caClick:        SquareColor := clGreen;
-        caDoubleClick:  SquareColor := clBlue;
-        caRightClick:   SquareColor := clPurple;
-      end;
-    end;}
-
-    // Draw a small square (e.g., 16x16) in the top-left of the cell
-    {var SquareSize := 16;
-    SquareRect := Rect;
-    SquareRect.Right := SquareRect.Left + SquareSize;
-    SquareRect.Bottom := SquareRect.Top + SquareSize;
-    DgSetParts.Canvas.Brush.Color := SquareColor;
-    DgSetParts.Canvas.FillRect(SquareRect);}
-
-    // Inforow 1
-    // Draw example text next to the square
     DgSetParts.Canvas.Brush.Style := bsClear;
-    //ExampleText := Format('Cell %d,%d', [ACol, ARow]);
 
-    if DgSetParts.DefaultColWidth >= 64 then
-      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum);
+    if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+      if Config.WPartsShowPartCount then
+        DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum)
+      else
+        DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
+    end;
 
-    if DgSetParts.DefaultColWidth >= 48 then begin
+    if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then begin
       var PartCount := '';
       if FPartsMode = caView then
         PartCount := Format('%dx', [PartObject.MaxQuantity])
@@ -935,10 +1007,14 @@ begin
       var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
         var ImageRect := Rect;
-        if DgSetParts.DefaultColWidth >= 64 then
-          ImageRect.Bottom := ImageRect.Bottom - 40
-        else if DgSetParts.DefaultColWidth >= 48 then
+        if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+          if Config.WPartsShowPartCount then
+            ImageRect.Bottom := ImageRect.Bottom - 40
+          else
+            ImageRect.Bottom := ImageRect.Bottom - 20;
+        end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
           ImageRect.Bottom := ImageRect.Bottom - 20;
+
         ACanvas.StretchDraw(ImageRect, Picture.Graphic);
       end;
     end;
@@ -946,10 +1022,14 @@ begin
     // Draw texts
     ACanvas.Brush.Style := bsClear;
 
-    if DgSetParts.DefaultColWidth >= 64 then
-      ACanvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum);
+    if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+      if Config.WPartsShowPartCount then
+        ACanvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum)
+      else
+        ACanvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
+    end;
 
-    if DgSetParts.DefaultColWidth >= 48 then begin
+    if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then begin
       var PartCount := '';
       if FPartsMode = caView then
         PartCount := Format('%dx', [PartObject.MaxQuantity])
@@ -968,7 +1048,7 @@ begin
   end;
 end;
 
-procedure TFrmParts.LoadPartsBySet(const set_num: String);
+procedure TFrmParts.LoadPartsBySet(const set_num: String; const ForceRefresh: Boolean);
 
   procedure FQueryAndHandleSetFields(Query: TFDQuery);
   begin
@@ -976,11 +1056,11 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
                       ' FROM sets s' +
                       ' LEFT JOIN themes t ON t.id = s.theme_id' +
                       ' LEFT JOIN themes pt ON pt.id = t.parent_id' +
-                      ' WHERE s.set_num = :Param1';
+                      ' WHERE s.set_num = :set_num';
     try
       // Always use params to prevent injection and allow sql to reuse queryplans
       var Params := Query.Params;
-      Params.ParamByName('Param1').AsString := set_num;
+      Params.ParamByName('set_num').AsString := set_num;
 
       Query.Open; // Open the query to retrieve data
       try
@@ -1000,11 +1080,11 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
 
   procedure FQueryAndHandleSetInventoryVersion(Query: TFDQuery);
   begin
-    Query.SQL.Text := 'SELECT max(version) FROM inventories WHERE set_num = :Param1';
+    Query.SQL.Text := 'SELECT max(version) FROM inventories WHERE set_num = :set_num';
     try
       // Always use params to prevent injection and allow sql to reuse queryplans
       var Params := Query.Params;
-      Params.ParamByName('Param1').AsString := set_num;
+      Params.ParamByName('set_num').AsString := set_num;
 
       Query.Open; // Open the query to retrieve data
       try
@@ -1021,7 +1101,7 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String);
 
 begin
   // No point loading the same set as is already being shown.
-  if set_num = FSetNum then
+  if (set_num = FSetNum) and not ForceRefresh then
     Exit;
 
   FSetNum := set_num;
@@ -1049,15 +1129,51 @@ begin
       FDQuery.SQL.Text := 'SELECT ip.part_num, p.name as partname, ip.quantity, ip.is_spare,' +
                           ' ip.img_url, ip.color_id as colorid, ip.inventory_id' + //, c.name as colorname, c.is_trans, c.rgb
                           ' FROM inventories' +
-                          ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
-                          //' LEFT JOIN colors c ON c.id = ip.color_id' +
+                          ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id';
+      if FConfig.WPartsSortByHue then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text +
+                            ' LEFT JOIN colors c ON c.id = ip.color_id';
+      end;
+      FDQuery.SQL.Text := FDQuery.SQL.Text +
                           ' LEFT JOIN parts p ON p.part_num = ip.part_num' +
-                          ' WHERE set_num = :Param1' +
-                          ' AND version = :Param2';
-                          //Todo: expand query with join to the parts you selected for this set
+                          ' WHERE set_num = :set_num' +
+                          ' AND version = :version';
+
+      // Exclude part type:
+      if not FConfig.WPartsIncludeSpareParts then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text +
+                          ' AND is_spare = 0'
+      end else if not FConfig.WPartsIncludeNonSpareParts then begin
+        FDQuery.SQL.Text := FDQuery.SQL.Text +
+                          ' AND is_spare = 1';
+      end;
+
+      FDQuery.SQL.Text := FDQuery.SQL.Text +
+                          ' ORDER BY ip.is_spare ASC';
+
+      var SortSql := '';
+      if FConfig.WPartsSortByCategory then
+        SortSql := ', ip.part_num'
+      else if FConfig.WPartsSortByColor then
+        SortSql := ', colorid'
+      else if FConfig.WPartsSortByHue then
+        SortSql := ', c.rgb'
+      else if FConfig.WPartsSortByPart then
+        SortSql := ', p.part_cat_id'
+      else if FConfig.WPartsSortByQuantity then
+        SortSql := ', ip.quantity';
+
+      if SortSql <> '' then begin
+        if FConfig.WPartsSortAscending then
+          SortSql := SortSql + ' ASC'
+        else
+          SortSql := SortSql + ' DESC';
+      end;
+      FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
+
       var Params := FDQuery.Params;
-      Params.ParamByName('Param1').AsString := set_num;
-      Params.ParamByName('Param2').AsInteger := InventoryVersion; // TODO: Needs to be stored with the set_num and BSSetID
+      Params.ParamByName('set_num').AsString := set_num;
+      Params.ParamByName('version').AsInteger := InventoryVersion; // TODO: Needs to be stored with the set_num and BSSetID
 
       FPartObjectList.LoadFromQuery(FDQuery);
 
@@ -1076,6 +1192,11 @@ begin
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
   end;
+end;
+
+procedure TFrmParts.MnuShowPartnumClick(Sender: TObject);
+begin
+
 end;
 
 // Not used by view parts mode:

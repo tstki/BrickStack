@@ -78,13 +78,14 @@ type
 //    FPrevSelectedIndex: Integer;
     FIsDragHighlighting: Boolean;
     FDragHoverIndex: Integer;
+    procedure FSetConfig(Config: TConfig);
     function FGetSelectedObject: TSetListObject;
     function FCreateSetListInDbase(SetListObject: TSetListObject; FDQuery: TFDQuery; SqlConnection: TFDConnection): Integer;
     procedure FRebuildStatusBar;
     procedure FUpdateUI;
   public
     { Public declarations }
-    property Config: TConfig read FConfig write FConfig;
+    property Config: TConfig read FConfig write FSetConfig;
   end;
 
 const
@@ -182,6 +183,11 @@ begin
   CbxFilter.DropDownWidth := Round(CbxFilter.DropDownWidth * 1.5);
 
   FUpdateUI;
+end;
+
+procedure TFrmSetListCollection.FSetConfig(Config: TConfig);
+begin
+  FConfig := Config;
 end;
 
 procedure TFrmSetListCollection.RebuildBySQL();

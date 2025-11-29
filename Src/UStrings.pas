@@ -36,6 +36,7 @@ const
   StrWindowsIniSection = 'Windows';
   StrActionIniSection = 'Action';
   StrBrickStackIniSection = 'BrickStack';
+  StrViewSetPartsWindowIniSection = 'ViewPartsWindow';
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Collection - set lists';
