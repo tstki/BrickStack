@@ -14,6 +14,10 @@ const
   cidMAX256 = 2;
   cidMAX512 = 3;
 
+  DefaultNoImage = 'https://rebrickable.com/media/thumbs/nil.png/250x250p.png';
+  // Missing minifig default: https://rebrickable.com/static/img/nil_mf.jpg
+  // Missing part default:    https://rebrickable.com/media/thumbs/nil.png/250x250p.png
+
 type
   TImageCache = class(TObject)
   private
@@ -66,7 +70,7 @@ implementation
 
 uses
   System.SysUtils, System.Net.HttpClient, System.IOUtils, System.Net.URLClient,
-  Vcl.Imaging.jpeg;
+  Vcl.Imaging.jpeg, Vcl.Imaging.pngimage;
 
 constructor TImageCache.Create;
 begin
@@ -113,23 +117,35 @@ begin
     var FilePath := FGetLocalFilePathByUrl(Url);
     if FileExists(FilePath) then begin
       Value := TPicture.Create;
+      var LoadedOK := False;
       try
         Value.LoadFromFile(FilePath);
-        // If jpeg error 53 is thrown, this means either a corrupted file, "png loaded as png" - or insufficient memory.
-        // you can try to catch EJPEG error and check for #53 within the message.
-        Result := True;
+        LoadedOK := True;
       except
-        begin
-          // Get error, see if the image is a PNG instead of a jpg, in which case it needs to be loaded differently.
-          { Will work, but causes access violation on application close - debug later
-          var WImage := TWICImage.Create;
-          WImage.LoadFromFile(FilePath);
-          Value.Assign(WImage);
-          WImage.Free;
-          //}
-          //Value.Free;
-          Result := False;
+        // If LoadFromFile failed (commonly because the extension says .jpg but content is PNG),
+        // try to load explicitly with a PNG loader. TPngImage.LoadFromFile reads the file contents
+        // and will detect real format regardless of extension.
+        try
+          var Png := TPngImage.Create;
+          try
+            Png.LoadFromFile(FilePath);
+            Value.Assign(Png);
+            LoadedOK := True;
+          finally
+            Png.Free;
+          end;
+        except
+          // Could not load as PNG either. Fail.
+          LoadedOK := False;
         end;
+      end;
+
+      if LoadedOK then
+        Result := True
+      else begin
+        // ensure we don't leak the TPicture
+        Value.Free;
+        Result := False;
       end;
     end else
       Result := False;
@@ -138,10 +154,6 @@ begin
 end;
 
 function TImageCache.FGetFromUrl(const Url: String; var Value: TPicture): Boolean;
-const
-  DefaultNoImage = 'https://rebrickable.com/media/thumbs/nil.png/250x250p.png';
-  // Missing minifig default: https://rebrickable.com/static/img/nil_mf.jpg
-  // Missing part default:    https://rebrickable.com/media/thumbs/nil.png/250x250p.png
 begin
   var HTTPClient := THTTPClient.Create;
   try
@@ -192,9 +204,11 @@ begin
   //Sets can be limited to 256x256 : for grid
   //Individual images can be limited to 512x512 or less.
   }
-  if Url = '' then
-    Result := nil;
 
+  if Url = '' then begin
+    Result := GetImage(DefaultNoImage, ImageType);
+    Exit;
+  end;
 
   var SizeSuffix := '';
   case ImageType of
