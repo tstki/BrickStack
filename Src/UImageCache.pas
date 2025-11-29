@@ -115,7 +115,7 @@ begin
       Value := TPicture.Create;
       try
         Value.LoadFromFile(FilePath);
-        // If jpeg error 53 is thrown, this means either a corrupted file - or insufficient memory.
+        // If jpeg error 53 is thrown, this means either a corrupted file, "png loaded as png" - or insufficient memory.
         // you can try to catch EJPEG error and check for #53 within the message.
         Result := True;
       except
@@ -192,18 +192,26 @@ begin
   //Sets can be limited to 256x256 : for grid
   //Individual images can be limited to 512x512 or less.
   }
+  if Url = '' then
+    Result := nil;
+
 
   var SizeSuffix := '';
-
   case ImageType of
     cidMAX96:
-      SizeSuffix := '/96x96p.jpg';
+      SizeSuffix := '/96x96p';
     cidMAX128:
-      SizeSuffix := '/128x128p.jpg';
+      SizeSuffix := '/128x128p';
     cidMAX256:
-      SizeSuffix := '/256x256p.jpg';
+      SizeSuffix := '/256x256p';
     cidMAX512:
-      SizeSuffix := '/512x512p.jpg';
+      SizeSuffix := '/512x512p';
+  end;
+  if SizeSuffix <> '' then begin
+    var Ext := '.jpg';
+    if Url.EndsWith('.png') then
+      Ext := '.png';
+    SizeSuffix := SizeSuffix + Ext;
   end;
 
   var NewUrl := StringReplace(Url, 'https://cdn.rebrickable.com/media/', 'https://cdn.rebrickable.com/media/thumbs/', []) + SizeSuffix;
