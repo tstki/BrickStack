@@ -695,7 +695,7 @@ end;
 
 procedure TFrmSearch.DgSetsDblClick(Sender: TObject);
 begin
-  case FConfig.SetsAction of
+  case FConfig.SearchListDoubleClickAction of
     caVIEWEXTERNAL:
       ActViewSetExternal.Execute;
     caVIEWPARTS:

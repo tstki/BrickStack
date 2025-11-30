@@ -1,19 +1,19 @@
 More of a todo / idea list than a roadmap, but here goes:
 ====
+Application:
 - Note bulk downloads may be slow and need to be throttled to +- 1 per second.
 - Closing a dialog should store it's last location, not just on application close
+- Auto updater through github releases page
+-- Notify user
+-- Offer to update
 
 Welcome:
-- reference to tutorial/about and mandatory database creation steps and updating.
+- Reference to tutorial/about and mandatory database creation steps and updating.
 - Choose a language (with flag icon) - also in settings.
 
 Database:
 - Dont use "select *" but get the exact columns
-- Database updater steps:
--- Start page explaining what it's for. Press Start to start.
--- Start page, show table with current versions, if available, otherwise "no database yet", press next to download and create it.
--- First number is unix time
--- Track versions in myVersions table
+- Auto Database updater improvements
 - Comma separated search input, so you can search for sets "and / or"
 
 Optimizations:
@@ -45,23 +45,25 @@ Collection window:
 - Drag n drop to change custom order.
 - Add warning on export type, that not all settings may be supported by the receiving party. With button for "dont show again"
 - Support filtering by custom tag
-- Give custom tags a user selectable icon
+- Give custom tags / columns a user selectable icon
 - Option to open selected collections in the same window, or a new window for each. (extra work for saving dialog dimensions)
 - Right click mark as built
-- Add "all your sets" table entry to view your collection and filter from there.
+- Add (non editable) "all your sets" table entry to view your collection and filter from there.
 - Remember column widths
 - Add inventory version to set selection, so export knows what version to use rather than v1
-- Support adding figures
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
 - Export parts lists across multiple sets or inventories. so you can easily order what you need.
-- Invert selection - so you can select what you are missing and then invert.
 - Show owned sets. Show > in front of owned sets in case of multiple, and open as tree view.
 -- Sub-setlists, in collections screen.
 - Select / Edit parts from this window only. (update help to reflect this) Stored between sessions.
 - View all parts in this collection
 - View all "missing" parts in this collection. (filter?)
 - Deleting a set should also delete all parts.
+- New types:
+-- Sets collection
+-- Parts collection
+-- Figures collection
 
 Parts window:
 - Improve inventory version handling.
@@ -82,7 +84,6 @@ Settings:
 - Slider setting for delay between image downloads.
 - Search options box above treeview.
 - Caps lock is active warning in login dialog
-- Add configurable behaviour for doubleclick: "view part" / "view set" -> "ask" / "rebrickable" / "other" / "custom"
 - Default import / export path (just remember last used)
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows

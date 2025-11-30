@@ -6,7 +6,7 @@ interface
 
 const
   // Language defines:
-  lnEN = 0;
+  lnEnglish = 0;
   lnDutch = 1;
   lnGerman = 2;
   lnFrench = 3;
@@ -30,13 +30,18 @@ const
   StrDefaultExportPath = 'Export\';
 
   // Config - ini sections
+  StrApplicationIniSection = 'Application';
+  StrLocalIniSection = 'Local';
+  StrBackupIniSection = 'Backup';
+  StrHotkeyIniSection = 'Hotkeys';
   StrAuthenticationIniSection = 'Authentication';
   StrExternalIniSection = 'External';
-  StrLocalIniSection = 'Local';
   StrWindowsIniSection = 'Windows';
-  StrActionIniSection = 'Action';
-  StrBrickStackIniSection = 'BrickStack';
-  StrViewSetPartsWindowIniSection = 'ViewPartsWindow';
+  StrSearchWindowIniSection = 'SearchWindow';
+  StrCollectionWindowIniSection = 'CollectionWindow';
+  StrSetListWindowIniSection = 'SetListWindow';
+  StrSetWindowIniSection = 'SetWindow';
+  StrSetPartsWindowIniSection = 'SetPartsWindow';
 
   // Dialog and frame labels
   StrSetListFrameTitle = 'Collection - set lists';
@@ -51,6 +56,7 @@ const
   StrYouHaveSetsCollections = 'You have %d sets across %d setlists.';
   StrYes = 'Yes';
   StrNo = 'No';
+  StrSetList = 'Setlist';
 
   // Setlist filter
   StrSetListFillterShowAll = 'All';

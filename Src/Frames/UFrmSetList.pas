@@ -386,7 +386,7 @@ procedure TFrmSetList.ReloadAndRefresh();
 begin
   FSetObjectListList.Clear;
 
-  Self.Caption := 'Sets in - ' + FSetlistObject.Name;
+  Self.Caption := StrSetList + ' - ' + FSetlistObject.Name;
 //todo: remember the list of currently expanded setObjectList items so we can re-expand them after the update.
   var FDQuery := TFDQuery.Create(nil);
   try
@@ -619,7 +619,7 @@ begin
       end;
     end;
   end else if CellAction = caDoubleClick then begin
-    case FConfig.SetsAction of
+    case FConfig.SetListDoubleClickAction of
       caVIEWEXTERNAL:
         ActViewExternal.Execute;
       caEDITDETAILS:

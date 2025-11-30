@@ -2,7 +2,7 @@ object DlgConfig: TDlgConfig
   Left = 0
   Top = 0
   Caption = 'Options'
-  ClientHeight = 316
+  ClientHeight = 335
   ClientWidth = 719
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -15,11 +15,11 @@ object DlgConfig: TDlgConfig
   OnShow = FormShow
   DesignSize = (
     719
-    316)
+    335)
   TextHeight = 15
   object BtnCancel: TButton
     Left = 636
-    Top = 283
+    Top = 302
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -31,7 +31,7 @@ object DlgConfig: TDlgConfig
   end
   object BtnOK: TButton
     Left = 555
-    Top = 283
+    Top = 302
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
@@ -45,7 +45,7 @@ object DlgConfig: TDlgConfig
     Left = 8
     Top = 8
     Width = 162
-    Height = 255
+    Height = 274
     Anchors = [akLeft, akTop, akBottom]
     Indent = 19
     ReadOnly = True
@@ -57,17 +57,17 @@ object DlgConfig: TDlgConfig
     Left = 176
     Top = 8
     Width = 535
-    Height = 255
-    ActivePage = TsAuthentication
+    Height = 274
+    ActivePage = TsWindowSearch
     Anchors = [akLeft, akTop, akRight, akBottom]
     Style = tsButtons
-    TabHeight = 4
+    TabHeight = 18
     TabOrder = 3
     object TsAuthentication: TTabSheet
       Caption = 'Authentication'
       DesignSize = (
         527
-        241)
+        246)
       object LblRebrickableAPIKey: TLabel
         Left = 15
         Top = 39
@@ -158,7 +158,7 @@ object DlgConfig: TDlgConfig
       ImageIndex = 1
       DesignSize = (
         527
-        241)
+        246)
       object Label3: TLabel
         Left = 15
         Top = 10
@@ -277,7 +277,7 @@ object DlgConfig: TDlgConfig
       ImageIndex = 2
       DesignSize = (
         527
-        241)
+        246)
       object LblLocalImageCachePath: TLabel
         Left = 15
         Top = 39
@@ -593,9 +593,6 @@ object DlgConfig: TDlgConfig
     object TsWindows: TTabSheet
       Caption = 'Windows'
       ImageIndex = 5
-      DesignSize = (
-        527
-        241)
       object Label15: TLabel
         Left = 15
         Top = 10
@@ -603,44 +600,225 @@ object DlgConfig: TDlgConfig
         Height = 15
         Caption = 'Window behaviour'
       end
-      object Label16: TLabel
-        Left = 55
-        Top = 50
-        Width = 145
+      object CbxRememberWindowPositions: TCheckBox
+        Left = 31
+        Top = 36
+        Width = 258
+        Height = 17
+        Caption = 'Remember sub-window size and positions'
+        TabOrder = 0
+      end
+    end
+    object TsWindowSearch: TTabSheet
+      Caption = 'Search'
+      ImageIndex = 8
+      object Label31: TLabel
+        Left = 15
+        Top = 10
+        Width = 80
         Height = 15
-        Caption = 'Allow multiple set windows'
+        Caption = 'Search window'
+      end
+      object LblSearchAction: TLabel
+        Left = 15
+        Top = 39
+        Width = 65
+        Height = 15
+        Caption = 'Double click'
+      end
+      object CbxSearchListDoubleClickAction: TComboBox
+        Left = 120
+        Top = 36
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 0
+      end
+    end
+    object TsWindowCollection: TTabSheet
+      Caption = 'Collection'
+      ImageIndex = 9
+      object Label32: TLabel
+        Left = 15
+        Top = 10
+        Width = 84
+        Height = 15
+        Caption = 'Set lists window'
+      end
+      object LblSetListsAction: TLabel
+        Left = 15
+        Top = 39
+        Width = 65
+        Height = 15
+        Caption = 'Double click'
+      end
+      object CbxCollectionListDoubleClickAction: TComboBox
+        Left = 120
+        Top = 36
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 0
+      end
+    end
+    object TsWindowSetList: TTabSheet
+      Caption = 'Set list'
+      ImageIndex = 10
+      object Label33: TLabel
+        Left = 15
+        Top = 10
+        Width = 79
+        Height = 15
+        Caption = 'Set list window'
+      end
+      object Label36: TLabel
+        Left = 15
+        Top = 39
+        Width = 65
+        Height = 15
+        Caption = 'Double click'
+      end
+      object CbxSetListDoubleClickAction: TComboBox
+        Left = 120
+        Top = 36
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 0
+      end
+    end
+    object TsWindowParts: TTabSheet
+      Caption = 'Parts'
+      ImageIndex = 10
+      object Label19: TLabel
+        Left = 15
+        Top = 10
+        Width = 71
+        Height = 15
+        Caption = 'Parts window'
+      end
+      object Label16: TLabel
+        Left = 15
+        Top = 39
+        Width = 65
+        Height = 15
+        Caption = 'Double click'
       end
       object Label17: TLabel
-        Left = 55
-        Top = 71
-        Width = 187
+        Left = 15
+        Top = 74
+        Width = 453
         Height = 15
-        Caption = 'Allow multiple collections windows'
+        Caption = 
+          'Edit inventory - increment (LMB) / decrement (RMB) owned parts, ' +
+          'mouse click values:'
       end
       object Label18: TLabel
-        Left = 55
-        Top = 92
-        Width = 160
+        Left = 15
+        Top = 107
+        Width = 40
         Height = 15
-        Caption = 'Allow multiple setlist windows'
+        Caption = 'Normal'
       end
-      object Label19: TLabel
-        Left = 55
-        Top = 113
-        Width = 227
+      object Label34: TLabel
+        Left = 15
+        Top = 136
+        Width = 24
         Height = 15
-        Caption = 'Remember all open windows and positions'
+        Caption = 'Shift'
+      end
+      object Label35: TLabel
+        Left = 199
+        Top = 107
+        Width = 19
+        Height = 15
+        Caption = 'Ctrl'
+      end
+      object Label37: TLabel
+        Left = 199
+        Top = 136
+        Width = 51
+        Height = 15
+        Caption = 'Ctrl+Shift'
+      end
+      object Label38: TLabel
+        Left = 271
+        Top = 39
+        Width = 177
+        Height = 15
+        Caption = '(Only for viewing parts inventory)'
+      end
+      object CbxPartsListDoubleClickAction: TComboBox
+        Left = 120
+        Top = 36
+        Width = 145
+        Height = 23
+        Style = csDropDownList
+        TabOrder = 0
+      end
+      object EditPartIncrementClick: TEdit
+        Left = 120
+        Top = 104
+        Width = 57
+        Height = 23
+        TabOrder = 1
+      end
+      object EditPartIncrementShiftClick: TEdit
+        Left = 120
+        Top = 133
+        Width = 57
+        Height = 23
+        TabOrder = 2
+      end
+      object EditPartIncrementCtrlClick: TEdit
+        Left = 264
+        Top = 104
+        Width = 57
+        Height = 23
+        TabOrder = 3
+      end
+      object EditPartIncrementCtrlShiftClick: TEdit
+        Left = 264
+        Top = 133
+        Width = 57
+        Height = 23
+        TabOrder = 4
+      end
+    end
+    object TsHotkeys: TTabSheet
+      Caption = 'Hotkeys'
+      ImageIndex = 11
+      object Label29: TLabel
+        Left = 15
+        Top = 10
+        Width = 234
+        Height = 15
+        Caption = 'Keyboard shortcut and hotkey configuration'
+      end
+    end
+    object TsApplication: TTabSheet
+      Caption = 'Application'
+      ImageIndex = 12
+      DesignSize = (
+        527
+        246)
+      object Label30: TLabel
+        Left = 15
+        Top = 10
+        Width = 105
+        Height = 15
+        Caption = 'Application settings'
       end
       object Label25: TLabel
         Left = 15
-        Top = 168
+        Top = 39
         Width = 58
         Height = 15
         Caption = 'Visual style'
       end
       object CbxVisualStyle: TComboBox
-        Left = 79
-        Top = 165
+        Left = 119
+        Top = 36
         Width = 207
         Height = 23
         Style = csDropDownList
@@ -650,73 +828,10 @@ object DlgConfig: TDlgConfig
         OnChange = CbxVisualStyleChange
       end
     end
-    object TsActions: TTabSheet
-      Caption = 'Actions'
-      ImageIndex = 7
-      object Label29: TLabel
-        Left = 15
-        Top = 10
-        Width = 88
-        Height = 15
-        Caption = 'Standard actions'
-      end
-      object Label30: TLabel
-        Left = 15
-        Top = 51
-        Width = 224
-        Height = 15
-        Caption = 'Standard '#39'double click'#39' action per window:'
-      end
-      object LblSearchAction: TLabel
-        Left = 15
-        Top = 75
-        Width = 35
-        Height = 15
-        Caption = 'Search'
-      end
-      object LblSetListsAction: TLabel
-        Left = 15
-        Top = 104
-        Width = 39
-        Height = 15
-        Caption = 'Set lists'
-      end
-      object LblSetsAction: TLabel
-        Left = 15
-        Top = 133
-        Width = 21
-        Height = 15
-        Caption = 'Sets'
-      end
-      object CbxSearchAction: TComboBox
-        Left = 120
-        Top = 72
-        Width = 145
-        Height = 23
-        Style = csDropDownList
-        TabOrder = 0
-      end
-      object CbxSetListsAction: TComboBox
-        Left = 120
-        Top = 101
-        Width = 145
-        Height = 23
-        Style = csDropDownList
-        TabOrder = 1
-      end
-      object CbxSetsAction: TComboBox
-        Left = 120
-        Top = 130
-        Width = 145
-        Height = 23
-        Style = csDropDownList
-        TabOrder = 2
-      end
-    end
   end
   object ActionList1: TActionList
     Left = 24
-    Top = 264
+    Top = 288
     object ActLogin: TAction
       Caption = 'Login'
       OnExecute = ActLoginExecute

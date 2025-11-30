@@ -621,7 +621,7 @@ end;
 
 procedure TFrmSetListCollection.LvSetListsDblClick(Sender: TObject);
 begin
-  case FConfig.SetListsAction of
+  case FConfig.CollectionListDoubleClickAction of
     caEDITDETAILS:
       ActEditSetList.Execute;
     else // caVIEW

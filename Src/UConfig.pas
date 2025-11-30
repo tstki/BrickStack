@@ -46,9 +46,10 @@ type
     FImportPath: String;
     FExportPath: String;
     FVisualStyle: String;
-    FSearchAction: Integer;
-    FSetListsAction: Integer;
-    FSetsAction: Integer;
+    FSearchListDoubleClickAction: Integer;
+    FCollectionListDoubleClickAction: Integer;
+    FSetListDoubleClickAction: Integer;
+    FPartsListDoubleClickAction: Integer;
 
     // Parts window settings:
     FWPartsShowPartCount: Boolean;
@@ -61,6 +62,11 @@ type
     FWPartsSortByPart: Boolean;
     FWPartsSortByQuantity: Boolean;
     FWPartsSortAscending: Boolean;
+
+    FPartIncrementClick: Integer;
+    FPartIncrementShiftClick: Integer;
+    FPartIncrementCtrlClick: Integer;
+    FPartIncrementCtrlShiftClick: Integer;
 
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
@@ -96,9 +102,10 @@ type
     property ImportPath: String read FImportPath write FImportPath;
     property ExportPath: String read FExportPath write FExportPath;
     property VisualStyle: String read FVisualStyle write FVisualStyle;
-    property SearchAction: Integer read FSearchAction write FSearchAction;
-    property SetListsAction: Integer read FSetListsAction write FSetListsAction;
-    property SetsAction: Integer read FSetsAction write FSetsAction;
+    property SearchListDoubleClickAction: Integer read FSearchListDoubleClickAction write FSearchListDoubleClickAction;
+    property CollectionListDoubleClickAction: Integer read FCollectionListDoubleClickAction write FCollectionListDoubleClickAction;
+    property SetListDoubleClickAction: Integer read FSetListDoubleClickAction write FSetListDoubleClickAction;
+    property PartsListDoubleClickAction: Integer read FPartsListDoubleClickAction write FPartsListDoubleClickAction;
 
     property WPartsShowPartCount: Boolean read FWPartsShowPartCount write FWPartsShowPartCount;
     property WPartsShowPartnum: Boolean read FWPartsShowPartnum write FWPartsShowPartnum;
@@ -110,6 +117,11 @@ type
     property WPartsSortByPart: Boolean read FWPartsSortByPart write FWPartsSortByPart;
     property WPartsSortByQuantity: Boolean read FWPartsSortByQuantity write FWPartsSortByQuantity;
     property WPartsSortAscending: Boolean read FWPartsSortAscending write FWPartsSortAscending;
+
+    property PartIncrementClick: Integer read FPartIncrementClick write FPartIncrementClick;
+    property PartIncrementShiftClick: Integer read FPartIncrementShiftClick write FPartIncrementShiftClick;
+    property PartIncrementCtrlClick: Integer read FPartIncrementCtrlClick write FPartIncrementCtrlClick;
+    property PartIncrementCtrlShiftClick: Integer read FPartIncrementCtrlShiftClick write FPartIncrementCtrlShiftClick;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -137,9 +149,9 @@ const
 
   // Doubleclick action windows
   cACTIONSEARCH = 0;
-  cACTIONSETLISTS = 1;
-  cACTIONSETS = 2;
-  //cACTIONPARTS = 3; // Only view parts, not edit parts.
+  cACTIONCOLLECTION = 1;
+  cACTIONSETLIST = 2;
+  cACTIONPARTS = 3; // Only view parts, not edit parts.
 
   caVIEW = 0;
   caVIEWEXTERNAL = 1;
@@ -270,36 +282,41 @@ begin
       IniFile.WriteString(StrLocalIniSection, 'ImportPath', FImportPath);
       IniFile.WriteString(StrLocalIniSection, 'ExportPath', FExportPath);
 
-      IniFile.WriteString(StrWindowsIniSection, 'VisualStyle', FVisualStyle);
+      IniFile.WriteString(StrApplicationIniSection, 'VisualStyle', FVisualStyle);
+      IniFile.WriteBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
 
-      IniFile.WriteInteger(StrActionIniSection, 'SearchAction', FSearchAction);
-      IniFile.WriteInteger(StrActionIniSection, 'SetListsAction', FSetListsAction);
-      IniFile.WriteInteger(StrActionIniSection, 'SetsAction', FSetsAction);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', FSearchListDoubleClickAction);
+      IniFile.WriteInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', FCollectionListDoubleClickAction);
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', FSetListDoubleClickAction);
+      IniFile.WriteInteger(StrSetPartsWindowIniSection, 'PartsListDoubleClickAction', FPartsListDoubleClickAction);
+
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementClick', FPartIncrementClick);
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementShiftClick', FPartIncrementShiftClick);
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementCtrlClick', FPartIncrementCtrlClick);
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementCtrlShiftClick', FPartIncrementCtrlShiftClick);
     end;
 
     // Frame size/open states
     if Section in [csALL, csWINDOWPOSITIONS] then begin
-      IniFile.WriteBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
-
-      FFrmSetListCollection.Save(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
-      FFrmSetList.Save(IniFile, StrBrickStackIniSection, 'FrmSetList');
-      FFrmSet.Save(IniFile, StrBrickStackIniSection, 'FrmSet');
-      FFrmParts.Save(IniFile, StrBrickStackIniSection, 'FrmParts');
-      FFrmSearch.Save(IniFile, StrBrickStackIniSection, 'FrmSearch');
+      FFrmSetListCollection.Save(IniFile, StrCollectionWindowIniSection, 'FrmSetListCollection');
+      FFrmSetList.Save(IniFile, StrSetListWindowIniSection, 'FrmSetList');
+      FFrmSet.Save(IniFile, StrSetWindowIniSection, 'FrmSet');
+      FFrmParts.Save(IniFile, StrSetPartsWindowIniSection, 'FrmParts');
+      FFrmSearch.Save(IniFile, StrSearchWindowIniSection, 'FrmSearch');
     end;
 
     // Parts window filters and sorting
     if Section in [csALL, csPARTSWINDOWFILTERS] then begin
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartCount', FWPartsShowPartCount);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartnum', FWPartsShowPartnum);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', FWPartsIncludeNonSpareParts);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeSpareParts', FWPartsIncludeSpareParts);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByCategory', FWPartsSortByCategory);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByColor', FWPartsSortByColor);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByHue', FWPartsSortByHue);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByPart', FWPartsSortByPart);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortByQuantity', FWPartsSortByQuantity);
-      IniFile.WriteBool(StrViewSetPartsWindowIniSection, 'WPartsSortAscending', FWPartsSortAscending);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsShowPartCount', FWPartsShowPartCount);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsShowPartnum', FWPartsShowPartnum);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', FWPartsIncludeNonSpareParts);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsIncludeSpareParts', FWPartsIncludeSpareParts);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByCategory', FWPartsSortByCategory);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByColor', FWPartsSortByColor);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByHue', FWPartsSortByHue);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByPart', FWPartsSortByPart);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByQuantity', FWPartsSortByQuantity);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', FWPartsSortAscending);
     end;
   finally
     IniFile.Free;
@@ -338,31 +355,38 @@ begin
     FImportPath := ReadStringWithDefaultPath(StrLocalIniSection, 'ImportPath', FilePath, StrDefaultImportPath, IniFile);
     FExportPath := ReadStringWithDefaultPath(StrLocalIniSection, 'ExportPath', FilePath, StrDefaultExportPath, IniFile);
 
-    FVisualStyle := IniFile.ReadString(StrWindowsIniSection, 'VisualStyle', 'Windows');
-
-    FSearchAction := IniFile.ReadInteger(StrActionIniSection, 'SearchAction', caVIEW);
-    FSetListsAction := IniFile.ReadInteger(StrActionIniSection, 'SetListsAction', caVIEW);
-    FSetsAction := IniFile.ReadInteger(StrActionIniSection, 'SetsAction', caVIEW);
+    FPartIncrementClick := IniFile.ReadInteger(StrExternalIniSection, 'PartIncrementClick', 1);
+    FPartIncrementShiftClick := IniFile.ReadInteger(StrExternalIniSection, 'PartIncrementShiftClick', 10);
+    FPartIncrementCtrlClick := IniFile.ReadInteger(StrExternalIniSection, 'PartIncrementCtrlClick', 50);
+    FPartIncrementCtrlShiftClick := IniFile.ReadInteger(StrExternalIniSection, 'PartIncrementCtrlShiftClick', 100);
 
     // Frame size/open states
-    FReOpenWindowsAfterRestart := IniFile.ReadBool(StrBrickStackIniSection, 'ReOpenWindowsAfterRestart', False);
-    FFrmSetListCollection.Load(IniFile, StrBrickStackIniSection, 'FrmSetListCollection');
-    FFrmSetList.Load(IniFile, StrBrickStackIniSection, 'FrmSetList');
-    FFrmSet.Load(IniFile, StrBrickStackIniSection, 'FrmSet');
-    FFrmParts.Load(IniFile, StrBrickStackIniSection, 'FrmParts');
-    FFrmSearch.Load(IniFile, StrBrickStackIniSection, 'FrmSearch');
+    FVisualStyle := IniFile.ReadString(StrApplicationIniSection, 'VisualStyle', 'Windows');
+    FReOpenWindowsAfterRestart := IniFile.ReadBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', False);
+
+    FSearchListDoubleClickAction := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', caVIEW);
+    FCollectionListDoubleClickAction := IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', caVIEW);
+    FSetListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', caVIEW);
+    FPartsListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'PartListDoubleClickAction', caVIEWEXTERNAL);
+
+    // Window positions
+    FFrmSearch.Load(IniFile, StrSearchWindowIniSection, 'FrmSearch');
+    FFrmSetListCollection.Load(IniFile, StrCollectionWindowIniSection, 'FrmSetListCollection');
+    FFrmSetList.Load(IniFile, StrSetListWindowIniSection, 'FrmSetList');
+    FFrmParts.Load(IniFile, StrSetPartsWindowIniSection, 'FrmParts');
+    FFrmSet.Load(IniFile, StrSetWindowIniSection, 'FrmSet');
 
     // View parts window filters
-    FWPartsShowPartCount := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartCount', True);
-    FWPartsShowPartnum := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsShowPartnum', True);
-    FWPartsIncludeNonSpareParts := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', True);
-    FWPartsIncludeSpareParts := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsIncludeSpareParts', True);
-    FWPartsSortByCategory := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByCategory', False);
-    FWPartsSortByColor := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByColor', True);
-    FWPartsSortByHue := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByHue', False);
-    FWPartsSortByPart := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByPart', False);
-    FWPartsSortByQuantity := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortByQuantity', False);
-    FWPartsSortAscending := IniFile.ReadBool(StrViewSetPartsWindowIniSection, 'WPartsSortAscending', False);
+    FWPartsShowPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsShowPartCount', True);
+    FWPartsShowPartnum := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsShowPartnum', True);
+    FWPartsIncludeNonSpareParts := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', True);
+    FWPartsIncludeSpareParts := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsIncludeSpareParts', True);
+    FWPartsSortByCategory := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByCategory', False);
+    FWPartsSortByColor := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByColor', True);
+    FWPartsSortByHue := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByHue', False);
+    FWPartsSortByPart := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByPart', False);
+    FWPartsSortByQuantity := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByQuantity', False);
+    FWPartsSortAscending := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', False);
   finally
     IniFile.Free;
   end;

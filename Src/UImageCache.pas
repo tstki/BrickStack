@@ -112,12 +112,13 @@ begin
 end;
 
 function TImageCache.FGetFromDisk(const Url: String; var Value: TPicture): Boolean;
+var
+  LoadedOK: Boolean;
 begin
   if Config.LocalImageCachePath <> '' then begin
     var FilePath := FGetLocalFilePathByUrl(Url);
     if FileExists(FilePath) then begin
       Value := TPicture.Create;
-      var LoadedOK := False;
       try
         Value.LoadFromFile(FilePath);
         LoadedOK := True;

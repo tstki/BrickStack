@@ -52,10 +52,6 @@ type
     Label14: TLabel;
     TsWindows: TTabSheet;
     Label15: TLabel;
-    Label16: TLabel;
-    Label17: TLabel;
-    Label18: TLabel;
-    Label19: TLabel;
     Label20: TLabel;
     EditDbasePath: TEdit;
     Button1: TButton;
@@ -98,17 +94,39 @@ type
     ListView1: TListView;
     Button9: TButton;
     Button10: TButton;
-    CbxVisualStyle: TComboBox;
-    Label25: TLabel;
-    TsActions: TTabSheet;
-    CbxSearchAction: TComboBox;
-    CbxSetListsAction: TComboBox;
-    Label29: TLabel;
-    Label30: TLabel;
-    CbxSetsAction: TComboBox;
+    TsWindowSearch: TTabSheet;
+    TsWindowCollection: TTabSheet;
+    TsWindowSetList: TTabSheet;
+    Label31: TLabel;
+    Label32: TLabel;
+    Label33: TLabel;
+    Label36: TLabel;
     LblSearchAction: TLabel;
+    CbxSearchListDoubleClickAction: TComboBox;
     LblSetListsAction: TLabel;
-    LblSetsAction: TLabel;
+    CbxCollectionListDoubleClickAction: TComboBox;
+    CbxSetListDoubleClickAction: TComboBox;
+    CbxRememberWindowPositions: TCheckBox;
+    TsWindowParts: TTabSheet;
+    Label19: TLabel;
+    TsHotkeys: TTabSheet;
+    Label29: TLabel;
+    TsApplication: TTabSheet;
+    Label30: TLabel;
+    Label25: TLabel;
+    CbxVisualStyle: TComboBox;
+    Label16: TLabel;
+    CbxPartsListDoubleClickAction: TComboBox;
+    Label17: TLabel;
+    EditPartIncrementClick: TEdit;
+    Label18: TLabel;
+    Label34: TLabel;
+    EditPartIncrementShiftClick: TEdit;
+    Label35: TLabel;
+    EditPartIncrementCtrlClick: TEdit;
+    Label37: TLabel;
+    EditPartIncrementCtrlShiftClick: TEdit;
+    Label38: TLabel;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -178,14 +196,15 @@ procedure TDlgConfig.FormCreate(Sender: TObject);
     CbxActionType.Items.BeginUpdate;
     try
       CbxActionType.Clear;
-      CbxActionType.AddItem(StrActViewSet, TObject(caVIEW));
-      if WindowID <> cACTIONSETLISTS then
+      if WindowID in [cACTIONSEARCH, cACTIONCOLLECTION, cACTIONSETLIST] then
+        CbxActionType.AddItem(StrActViewSet, TObject(caVIEW));
+      if WindowID in [cACTIONSEARCH, cACTIONSETLIST, cACTIONPARTS] then
         CbxActionType.AddItem(StrActViewExternal, TObject(caVIEWEXTERNAL));
-      if WindowID <> cACTIONSEARCH then
+      if WindowID in [cACTIONCOLLECTION, cACTIONSETLIST] then
         CbxActionType.AddItem(StrActEditDetails, TObject(caEDITDETAILS));
-      if WindowID <> cACTIONSETLISTS then
+      if WindowID in [cACTIONSEARCH, cACTIONCOLLECTION] then
         CbxActionType.AddItem(StrActViewParts, TObject(caVIEWPARTS));
-      if WindowID = cACTIONSETS then
+      if WindowID in [cACTIONSETLIST] then
         CbxActionType.AddItem(StrActEditParts, TObject(caEDITPARTS));
     finally
       CbxActionType.Items.EndUpdate;
@@ -199,9 +218,10 @@ begin
   FFillPulldown(CbxViewSetDefault, cTYPESET);
   FFillPulldown(CbxViewPartDefault, cTYPEPART);
 
-  FFillActions(CbxSearchAction, cACTIONSEARCH);
-  FFillActions(CbxSetListsAction, cACTIONSETLISTS);
-  FFillActions(CbxSetsAction, cACTIONSETS);
+  FFillActions(CbxSearchListDoubleClickAction, cACTIONSEARCH);
+  FFillActions(CbxCollectionListDoubleClickAction, cACTIONCOLLECTION);
+  FFillActions(CbxSetListDoubleClickAction, cACTIONSETLIST);
+  FFillACtions(CbxPartsListDoubleClickAction, cACTIONPARTS);
 end;
 
 procedure TDlgConfig.FormShow(Sender: TObject);
@@ -218,8 +238,14 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     RootNode.Data := Pointer(TsAuthentication);
 
     // Add child nodes
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Actions');
-    ChildNode.Data := Pointer(TsActions);
+    var ApplicationNode := TreeView1.Items.AddChild(RootNode, 'Application');
+    ApplicationNode.Data := Pointer(TsApplication);
+    ChildNode := TreeView1.Items.AddChild(ApplicationNode, 'Local');
+    ChildNode.Data := Pointer(TsLocal);
+    ChildNode := TreeView1.Items.AddChild(ApplicationNode, 'Backup');
+    ChildNode.Data := Pointer(TsBackup);
+    ChildNode := TreeView1.Items.AddChild(ApplicationNode, 'Hotkeys');
+    ChildNode.Data := Pointer(TsHotkeys);
 
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Authentication');
     ChildNode.Data := Pointer(TsAuthentication);
@@ -227,20 +253,23 @@ procedure TDlgConfig.FormShow(Sender: TObject);
     ChildNode := TreeView1.Items.AddChild(RootNode, 'External');
     ChildNode.Data := Pointer(TsExternal);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Local');
-    ChildNode.Data := Pointer(TsLocal);
-
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom set list tags');
     ChildNode.Data := Pointer(TsCustomSetListTags);
 
     ChildNode := TreeView1.Items.AddChild(RootNode, 'Custom set tags');
     ChildNode.Data := Pointer(TsCustomSetTags);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Backup');
-    ChildNode.Data := Pointer(TsBackup);
+    var WindowNode := TreeView1.Items.AddChild(RootNode, 'Windows');
+    WindowNode.Data := Pointer(TsWindows);
 
-    ChildNode := TreeView1.Items.AddChild(RootNode, 'Windows');
-    ChildNode.Data := Pointer(TsWindows);
+    ChildNode := TreeView1.Items.AddChild(WindowNode, 'Search');
+    ChildNode.Data := Pointer(TsWindowSearch);
+    ChildNode := TreeView1.Items.AddChild(WindowNode, 'Collection');
+    ChildNode.Data := Pointer(TsWindowCollection);
+    ChildNode := TreeView1.Items.AddChild(WindowNode, 'Set list');
+    ChildNode.Data := Pointer(TsWindowSetList);
+    ChildNode := TreeView1.Items.AddChild(WindowNode, 'Parts');
+    ChildNode.Data := Pointer(TsWindowParts);
 
     // Optionally, you can continue adding child nodes to ChildNode if needed
     //TreeView.Items.AddChild(ChildNode, 'Grandchild 1');
@@ -348,10 +377,16 @@ begin
   // Windows
   //CbxVisualStyle is set above when filling
 
+  EditPartIncrementClick.Text := IntToStr(Config.PartIncrementClick);
+  EditPartIncrementShiftClick.Text := IntToStr(Config.PartIncrementShiftClick);
+  EditPartIncrementCtrlClick.Text := IntToStr(Config.PartIncrementCtrlClick);
+  EditPartIncrementCtrlShiftClick.Text := IntToStr(Config.PartIncrementCtrlShiftClick);
+
   // Actions
-  CbxSearchAction.ItemIndex := FGetItemIndexByValue(CbxSearchAction, Config.SearchAction);
-  CbxSetListsAction.ItemIndex := FGetItemIndexByValue(CbxSetListsAction, Config.SetListsAction);
-  CbxSetsAction.ItemIndex := FGetItemIndexByValue(CbxSetsAction, Config.SetsAction);
+  CbxSearchListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxSearchListDoubleClickAction, Config.SearchListDoubleClickAction);
+  CbxCollectionListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxCollectionListDoubleClickAction, Config.CollectionListDoubleClickAction);
+  CbxSetListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxSetListDoubleClickAction, Config.SetListDoubleClickAction);
+  CbxPartsListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxPartsListDoubleClickAction, Config.PartsListDoubleClickAction);
 
   PCConfig.ActivePage := TsAuthentication;
 end;
@@ -396,10 +431,16 @@ begin
   // Windows
   Config.VisualStyle := CbxVisualStyle.Text;
 
+  Config.PartIncrementClick := StrToIntDef(EditPartIncrementClick.Text, 1);
+  Config.PartIncrementShiftClick := StrToIntDef(EditPartIncrementShiftClick.Text, 1);
+  Config.PartIncrementCtrlClick := StrToIntDef(EditPartIncrementCtrlClick.Text, 1);
+  Config.PartIncrementCtrlShiftClick := StrToIntDef(EditPartIncrementCtrlShiftClick.Text, 1);
+
   // Actions
-  Config.SearchAction := Integer(CbxSearchAction.Items.Objects[CbxSearchAction.ItemIndex]);
-  Config.SetListsAction := Integer(CbxSetListsAction.Items.Objects[CbxSetListsAction.ItemIndex]);
-  Config.SetsAction := Integer(CbxSetsAction.Items.Objects[CbxSetsAction.ItemIndex]);
+  Config.SearchListDoubleClickAction := Integer(CbxSearchListDoubleClickAction.Items.Objects[CbxSearchListDoubleClickAction.ItemIndex]);
+  Config.CollectionListDoubleClickAction := Integer(CbxCollectionListDoubleClickAction.Items.Objects[CbxCollectionListDoubleClickAction.ItemIndex]);
+  Config.SetListDoubleClickAction := Integer(CbxSetListDoubleClickAction.Items.Objects[CbxSetListDoubleClickAction.ItemIndex]);
+  Config.PartsListDoubleClickAction := Integer(CbxPartsListDoubleClickAction.Items.Objects[CbxPartsListDoubleClickAction.ItemIndex]);
 
   ModalResult := mrOK;
 end;

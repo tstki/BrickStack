@@ -4,13 +4,15 @@ Version: (0.0.0.9)
 - CSV import overhaul.
 - Use image thumbnails instead of full size for better performance, less disk space and reduced memory footprint.
 - Added doubleclick action setting.
-- Reorganized BrickStack.ini into sections - NOTE: Your old settings will be unavailable due to this! You can manually move them to the sections by editing the .ini
 - Parts list sorting and filtering.
+- Added several more settings and reorganized the config dialog.
+- Reorganized BrickStack.ini into sections - NOTE: Your old settings will be unavailable due to this! You can manually move them to the sections by editing the .ini
 - Config file load/save optimizations.
 Fixes:
 - Delete set fixed.
 - Scroll wheel causing click fixed.
 - RB CSV export fixed.
+- Improve loading .png files that are somehow named .jpg in the database.
 
 Version: 20251122.1201 (0.0.0.8)
 - Database version checking.

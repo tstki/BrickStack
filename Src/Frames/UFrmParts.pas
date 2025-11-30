@@ -743,17 +743,27 @@ begin
   var Idx := FGetIndexByRowAndCol(Col, Row);
   if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
     // Ignore doubleclick here.
-    if CellAction = caDoubleClick then
-      Exit;
+    if CellAction = caDoubleClick then begin
+      if FPartsMode = caEdit then
+        Exit
+      else begin
+        case FConfig.PartsListDoubleClickAction of
+          caVIEWEXTERNAL:
+            ActViewPartExternal.Execute;
+          //else // caVIEW
+            //ActViewPart.Execute;
+        end;
+      end;
+    end;
 
     var PartObject := FPartObjectList[Idx];
-    var Qty := 1;
+    var Qty := Config.PartIncrementClick;
     if IsCtrlDown and IsShiftDown then
-      Qty := 100
+      Qty := Config.PartIncrementCtrlShiftClick
     else if IsCtrlDown then
-      Qty := 50
+      Qty := Config.PartIncrementCtrlClick
     else if IsShiftDown then
-      Qty := 10;
+      Qty := Config.PartIncrementShiftClick;
 
     FModifyQuantity(PartObject, Qty, (CellAction = caLeftClick) or (CellAction = caDoubleClick));
     FInvalidateGridCell(DgSetParts, Col, Row);
@@ -764,9 +774,7 @@ begin
 - shift: +10/-10
 - ctrl: +50/-50
 - ctrl+shift: +100/-100
-  Or maybe set an incrementor button/mode.
-  add button to invert "complete" selection.
-  background colors?
+  Or maybe set an incrementor button/mode. Also keyboard, +/- button
 }
 end;
 
