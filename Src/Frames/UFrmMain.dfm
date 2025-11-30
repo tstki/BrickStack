@@ -178,7 +178,7 @@ object FrmMain: TFrmMain
         Caption = '-'
       end
       object Search1: TMenuItem
-        Action = ActSearch
+        Action = ActSearchSets
       end
     end
     object Window1: TMenuItem
@@ -348,11 +348,11 @@ object FrmMain: TFrmMain
       Caption = 'Authenticate...'
       OnExecute = ActAuthenticateExecute
     end
-    object ActSearch: TAction
+    object ActSearchSets: TAction
       Category = 'Lego'
-      Caption = '&Search...'
+      Caption = '&Search sets...'
       ShortCut = 16454
-      OnExecute = ActSearchExecute
+      OnExecute = ActSearchSetsExecute
     end
     object ActHelp: TAction
       Category = 'Help'

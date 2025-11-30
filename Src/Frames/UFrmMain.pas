@@ -80,7 +80,7 @@ type
     ActAuthenticate: TAction;
     Database1: TMenuItem;
     Search1: TMenuItem;
-    ActSearch: TAction;
+    ActSearchSets: TAction;
     ActHelp: TAction;
     Help2: TMenuItem;
     ActUpdateDatabase: TAction;
@@ -96,7 +96,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ActAuthenticateExecute(Sender: TObject);
-    procedure ActSearchExecute(Sender: TObject);
+    procedure ActSearchSetsExecute(Sender: TObject);
     procedure ActHelpExecute(Sender: TObject);
     procedure WMShowSet(var Msg: TMessage); message WM_SHOW_SET;
     procedure WMShowPartsList(var Msg: TMessage); message WM_SHOW_PARTSLIST;
@@ -414,7 +414,7 @@ begin
   // Don't allow dialogs that require the database if there is no database.
   var DbasePath := FConfig.DbasePath;
   ActCollection.Enabled := FileExists(DbasePath);
-  ActSearch.Enabled := ActCollection.Enabled;
+  ActSearchSets.Enabled := ActCollection.Enabled;
   FileOpen1.Enabled := ActCollection.Enabled;
 
 end;
@@ -910,7 +910,7 @@ begin
   end;
 end;
 
-procedure TFrmMain.ActSearchExecute(Sender: TObject);
+procedure TFrmMain.ActSearchSetsExecute(Sender: TObject);
 begin
   ShowSearchWindow;
 end;
