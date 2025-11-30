@@ -1,5 +1,8 @@
 BrickStack
 ====
+Version: (0.0.0.10)
+-
+
 Version: 20251130.1915 (0.0.0.9)
 - CSV import overhaul.
 - Use image thumbnails instead of full size for better performance, less disk space and reduced memory footprint.
