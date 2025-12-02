@@ -127,6 +127,9 @@ type
     Label37: TLabel;
     EditPartIncrementCtrlShiftClick: TEdit;
     Label38: TLabel;
+    TrackResultLimit: TTrackBar;
+    LblTrackResultLimit: TLabel;
+    Label39: TLabel;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -147,6 +150,7 @@ type
     procedure EditLocalImageCachePathChange(Sender: TObject);
     procedure CbxVisualStyleChange(Sender: TObject);
     procedure BtnCancelClick(Sender: TObject);
+    procedure TrackResultLimitChange(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -382,6 +386,9 @@ begin
   EditPartIncrementCtrlClick.Text := IntToStr(Config.PartIncrementCtrlClick);
   EditPartIncrementCtrlShiftClick.Text := IntToStr(Config.PartIncrementCtrlShiftClick);
 
+  // Search
+  TrackResultLimit.Position := Config.SearchLimit;
+
   // Actions
   CbxSearchListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxSearchListDoubleClickAction, Config.SearchListDoubleClickAction);
   CbxCollectionListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxCollectionListDoubleClickAction, Config.CollectionListDoubleClickAction);
@@ -389,6 +396,14 @@ begin
   CbxPartsListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxPartsListDoubleClickAction, Config.PartsListDoubleClickAction);
 
   PCConfig.ActivePage := TsAuthentication;
+
+  TrackResultLimitChange(Self);
+end;
+
+procedure TDlgConfig.TrackResultLimitChange(Sender: TObject);
+begin
+  // Also see: FDoSearch
+  LblTrackResultLimit.Caption := IntToStr(10 + TrackResultLimit.Position * 10);
 end;
 
 procedure TDlgConfig.TreeView1Change(Sender: TObject; Node: TTreeNode);

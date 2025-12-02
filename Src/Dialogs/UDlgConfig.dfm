@@ -626,6 +626,20 @@ object DlgConfig: TDlgConfig
         Height = 15
         Caption = 'Double click'
       end
+      object LblTrackResultLimit: TLabel
+        Left = 271
+        Top = 69
+        Width = 45
+        Height = 15
+        Caption = 'LimitRes'
+      end
+      object Label39: TLabel
+        Left = 15
+        Top = 69
+        Width = 94
+        Height = 15
+        Caption = 'Search result limit'
+      end
       object CbxSearchListDoubleClickAction: TComboBox
         Left = 120
         Top = 36
@@ -633,6 +647,16 @@ object DlgConfig: TDlgConfig
         Height = 23
         Style = csDropDownList
         TabOrder = 0
+      end
+      object TrackResultLimit: TTrackBar
+        Left = 120
+        Top = 65
+        Width = 145
+        Height = 27
+        Max = 9
+        Position = 2
+        TabOrder = 1
+        OnChange = TrackResultLimitChange
       end
     end
     object TsWindowCollection: TTabSheet

@@ -31,10 +31,7 @@ type
     EditSearchText: TEdit;
     ImgSearch: TImage;
     Label6: TLabel;
-    Label7: TLabel;
     LblSearch: TLabel;
-    LblTrackResultLimit: TLabel;
-    TrackResultLimit: TTrackBar;
     Label2: TLabel;
     SbResults: TStatusBar;
     DgSets: TDrawGrid;
@@ -84,6 +81,7 @@ type
     Viewparts1: TMenuItem;
     N3: TMenuItem;
     TbGridSizePx: TLabel;
+    CbxSearchInMyCollection: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -557,21 +555,22 @@ begin
       try
         var SearchSubject := '';
         if CbxSearchWhat.ItemIndex = cSetNum then
-          SearchSubject := 'set_num'
+          SearchSubject := 's.set_num'
         else
-          SearchSubject := 'name';
+          SearchSubject := 's.name';
 
         var SearchLikeOrExact := '';
         if CbxSearchStyle.ItemIndex = cSearchExact then
           SearchLikeOrExact := '='
         else
-          SearchLikeOrExact := 'like';
+          SearchLikeOrExact := 'LIKE';
 
         // Set up the query
         FDQuery.Connection := SqlConnection;
-        FDQuery.SQL.Text := 'SELECT set_num, name, year, img_url, num_parts' + //, theme_id
-                            ' FROM Sets where (year between :fromyear and :toyear) AND' +
-                            ' (num_parts BETWEEN :fromparts AND :toparts) AND ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+        FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
+                            ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
+                            ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                            ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
         if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
         FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
@@ -580,10 +579,18 @@ begin
         if CbxThemes.ItemIndex <> 0 then begin
           ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
           if ThemeID > 0 then
-            FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND theme_id = :themeid';
+            FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
         end;
 
-        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + TrackResultLimit.Position * 10);
+        if CbxSearchInMyCollection.Checked then begin
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
+                                                 ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
+            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+          FDQuery.SQL.Text := FDQuery.SQL.Text + '))';
+        end;
+
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
 
         var Params := FDQuery.Params;
         var SearchValue1 := EditSearchText.Text;
@@ -751,8 +758,6 @@ end;
 
 procedure TFrmSearch.TrackChange(Sender: TObject);
 begin
-  LblTrackResultLimit.Caption := IntToStr(10 + TrackResultLimit.Position * 10);
-
   // Restrict year selections so they can't have the same value.
   if TrackYearFrom.Position >= TrackYearTo.Position then begin
     if Sender = TrackYearFrom then

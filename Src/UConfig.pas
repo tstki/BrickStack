@@ -68,6 +68,8 @@ type
     FPartIncrementCtrlClick: Integer;
     FPartIncrementCtrlShiftClick: Integer;
 
+    FSearchLimit: Integer;
+
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
 
@@ -123,6 +125,8 @@ type
     property PartIncrementCtrlClick: Integer read FPartIncrementCtrlClick write FPartIncrementCtrlClick;
     property PartIncrementCtrlShiftClick: Integer read FPartIncrementCtrlShiftClick write FPartIncrementCtrlShiftClick;
 
+    property SearchLimit: Integer read FSearchLimit write FSearchLimit;
+
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
     property FrmSetListWasOpen: Integer read FFrmSetListWasOpen write FFrmSetListWasOpen;
@@ -140,7 +144,7 @@ type
 const
   // Open Types for links to external sites:
   cOTNONE = 0;        // None selected yet
-  cOTREBRICKABLE = 1; // Parts and sets            1
+  cOTREBRICKABLE = 1; // Parts and sets
   cOTBRICKLINK = 2;   //
   cOTBRICKOWL = 3;    //
   cOTBRICKSET = 4;    // Sets
@@ -286,6 +290,8 @@ begin
       IniFile.WriteBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
 
       IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', FSearchListDoubleClickAction);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchLimit', FSearchLimit);
+
       IniFile.WriteInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', FCollectionListDoubleClickAction);
       IniFile.WriteInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', FSetListDoubleClickAction);
       IniFile.WriteInteger(StrSetPartsWindowIniSection, 'PartsListDoubleClickAction', FPartsListDoubleClickAction);
@@ -365,6 +371,8 @@ begin
     FReOpenWindowsAfterRestart := IniFile.ReadBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', False);
 
     FSearchListDoubleClickAction := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', caVIEW);
+    FSearchLimit := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchLimit', 4);
+
     FCollectionListDoubleClickAction := IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', caVIEW);
     FSetListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', caVIEW);
     FPartsListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'PartListDoubleClickAction', caVIEWEXTERNAL);

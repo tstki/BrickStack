@@ -203,13 +203,6 @@ object FrmSearch: TFrmSearch
       Height = 15
       Caption = 'What'
     end
-    object Label7: TLabel
-      Left = 410
-      Top = 11
-      Width = 27
-      Height = 15
-      Caption = 'Limit'
-    end
     object LblSearch: TLabel
       Left = 8
       Top = 11
@@ -217,23 +210,15 @@ object FrmSearch: TFrmSearch
       Height = 15
       Caption = 'Search'
     end
-    object LblTrackResultLimit: TLabel
-      Left = 560
-      Top = 11
-      Width = 45
-      Height = 15
-      Alignment = taRightJustify
-      Caption = 'LimitRes'
-    end
     object Label2: TLabel
-      Left = 276
-      Top = 40
+      Left = 515
+      Top = 11
       Width = 53
       Height = 15
       Caption = 'Year/parts'
     end
     object Label8: TLabel
-      Left = 393
+      Left = 398
       Top = 41
       Width = 44
       Height = 15
@@ -248,8 +233,8 @@ object FrmSearch: TFrmSearch
       Caption = 'Px'
     end
     object BtnExpandOptions: TButton
-      Left = 335
-      Top = 37
+      Left = 574
+      Top = 8
       Width = 30
       Height = 23
       Caption = 'v'
@@ -281,16 +266,6 @@ object FrmSearch: TFrmSearch
       TabOrder = 3
       OnKeyPress = HandleKeyPress
     end
-    object TrackResultLimit: TTrackBar
-      Left = 443
-      Top = 8
-      Width = 111
-      Height = 27
-      Max = 4
-      Position = 2
-      TabOrder = 4
-      OnChange = TrackChange
-    end
     object BtnFilter: TButton
       Left = 371
       Top = 8
@@ -298,7 +273,7 @@ object FrmSearch: TFrmSearch
       Height = 23
       ImageIndex = 0
       Images = ImageList1
-      TabOrder = 5
+      TabOrder = 4
     end
     object TbGridSize: TTrackBar
       Left = 445
@@ -308,8 +283,17 @@ object FrmSearch: TFrmSearch
       Max = 14
       PageSize = 1
       Position = 4
-      TabOrder = 6
+      TabOrder = 5
       OnChange = TbGridSizeChange
+    end
+    object CbxSearchInMyCollection: TCheckBox
+      Left = 255
+      Top = 38
+      Width = 111
+      Height = 17
+      Hint = 'In my collections only'
+      Caption = 'In my collection'
+      TabOrder = 6
     end
   end
   object SbResults: TStatusBar
@@ -354,7 +338,7 @@ object FrmSearch: TFrmSearch
   object ImageList1: TImageList
     ColorDepth = cd32Bit
     Height = 32
-    Left = 216
+    Left = 208
     Top = 136
     Bitmap = {
       494C010104000800040010002000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
@@ -995,7 +979,7 @@ object FrmSearch: TFrmSearch
     ColorDepth = cd32Bit
     Height = 32
     Width = 32
-    Left = 216
+    Left = 208
     Top = 200
     Bitmap = {
       494C010104000800040020002000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600

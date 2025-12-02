@@ -130,6 +130,7 @@ Search:
 - "3001pr004" and other parts with different external references does not allow part lookup at this time.
 -- Should be available in the API
 - Add "force refresh from external" button for sets under a setlist.
+- When searching in my collection, also show what collection the search results are in - and how many sets/items are there.
 
 Search parts in:
 - Search for parts in sets, to find sets
