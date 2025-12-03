@@ -23,9 +23,12 @@ type
     FHaveSpareParts: Integer;     //ms.HaveSpareParts,
     FBuilt: Integer;              //ms.Built,
     FNote: String;                //ms.Notes from BSSets ms'+
+    FBSSetListName: String;       // Used in UFrmSearch
+    FBSSetListID: Integer;        // Used in UFrmSearch
+    FQuantity: Integer;           // Used in UFrmSearch
     //FLoaded: Boolean; // Not saved. Used to indicate whether the collection content was loaded into this object yet (for performance)
   public
-    procedure ReadFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
+    procedure ReadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
 
     { Public declarations }
     property BSSetID: Integer read FBSSetID write FBSSetID;
@@ -39,6 +42,9 @@ type
     property HaveSpareParts: Integer read FHaveSpareParts write FHaveSpareParts;
     property Built: Integer read FBuilt write FBuilt;
     property Note: String read FNote write FNote;
+    property BSSetListName: String read FBSSetListName write FBSSetListName;
+    property BSSetListID: Integer read FBSSetListID write FBSSetListID;
+    property Quantity: Integer read FQuantity write FQuantity;
   end;
 
   //todo: convert these to TDictionary Later.
@@ -58,7 +64,7 @@ type
     function FGetSetImgUrl: String;
   public
     procedure AddFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
-    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
     //procedure LoadFromExternal;
     //procedure LoadFromFile;
     //procedure SaveToFile(ReWrite: Boolean);
@@ -109,7 +115,7 @@ uses
 
 /// TSetObject
 
-procedure TSetObject.ReadFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
+procedure TSetObject.ReadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
 begin
   if IncludeBSSetID then begin
     Self.BSSetID := FDQuery.FieldByName('id').AsInteger;
@@ -124,6 +130,11 @@ begin
   //Self.SetThemeName := FDQuery.FieldByName('name_1').AsString;
   Self.SetNumParts := FDQuery.FieldByName('num_parts').AsInteger;
   Self.SetImgUrl := FDQuery.FieldByName('img_url').AsString;
+  if SearchedInOwnedSets then begin
+    Self.BSSetListName := FDQuery.FieldByName('BSSetListName').AsString;
+    Self.BSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
+    Self.Quantity := FDQuery.FieldByName('quantity').AsInteger;
+  end;
 end;
 
 /// TSetObjectList
@@ -131,18 +142,18 @@ end;
 procedure TSetObjectList.AddFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
 begin
   var SetObject := TSetObject.Create;
-  SetObject.ReadFromQuery(FDQuery, IncludeBSSetID);
+  SetObject.ReadFromQuery(FDQuery, IncludeBSSetID, False);
 
   Self.Add(SetObject);
 end;
 
-procedure TSetObjectList.LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID: Boolean);
+procedure TSetObjectList.LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
 begin
   FDQuery.Open;
 
   while not FDQuery.Eof do begin
     var SetObject := TSetObject.Create;
-    SetObject.ReadFromQuery(FDQuery, IncludeBSSetID);
+    SetObject.ReadFromQuery(FDQuery, IncludeBSSetID, SearchedInOwnedSets);
     Self.Add(SetObject);
     FDQuery.Next;
   end;

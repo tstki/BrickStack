@@ -108,6 +108,7 @@ type
     procedure ActViewPartsExecute(Sender: TObject);
     procedure ActViewSetExternalExecute(Sender: TObject);
     procedure ActAddSetToCollectionExecute(Sender: TObject);
+    procedure CbxSearchInMyCollectionClick(Sender: TObject);
   private
     { Private declarations }
     FSetObjectList: TSetObjectList; // Stored locally from query result.
@@ -340,13 +341,16 @@ end;
 
 function TFrmSearch.FGetGridHeight: Integer;
 begin
+  var InfoRowCount := 0;
   if DgSets.DefaultColWidth >= 64 then begin
+    Inc(InfoRowCount);
     if PnlSearchOptions.Visible then
-      Result := FTBGridSizePositionToPixels + 40 // 64 + 20 + 20 //todo: make extra info rows optional
-    else
-      Result := FTBGridSizePositionToPixels + 20; // 64 + 20
-  end else
-    Result := FTBGridSizePositionToPixels;
+      Inc(InfoRowCount);
+  end;
+  if CbxSearchInMyCollection.Checked then
+    Inc(InfoRowCount);
+
+  Result := FTBGridSizePositionToPixels + (InfoRowCount*20);
 end;
 
 procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
@@ -375,6 +379,13 @@ begin
   DgSets.Invalidate;
 end;
 
+procedure TFrmSearch.CbxSearchInMyCollectionClick(Sender: TObject);
+begin
+  DgSets.DefaultRowHeight := FGetGridHeight;
+
+  DgSets.Invalidate;
+end;
+
 procedure TFrmSearch.DgSetsClick(Sender: TObject);
 begin
   //determine if special buttons are active, and where they are shown.
@@ -396,6 +407,15 @@ begin
     var SetObject := FSetObjectList[Idx];
     var ImageUrl := SetObject.SetImgUrl;
 
+    var InfoRowCount := 0;
+    if DgSets.DefaultColWidth >= 64 then begin
+      Inc(InfoRowCount);
+      if PnlSearchOptions.Visible then
+        Inc(InfoRowCount);
+    end;
+    if CbxSearchInMyCollection.Checked then
+      Inc(InfoRowCount);
+
     //TPicture
     if FImageCache <> nil then begin
       var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
@@ -404,12 +424,12 @@ begin
   //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
   //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
         var ImageRect := Rect;
-        if DgSets.DefaultColWidth >= 64 then begin
-          if PnlSearchOptions.Visible then
-            ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
-          else
-            ImageRect.Bottom := ImageRect.Bottom - 20;
-        end;
+//        if DgSets.DefaultColWidth >= 64 then begin
+//          if PnlSearchOptions.Visible then
+//            ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
+//          else
+            ImageRect.Bottom := ImageRect.Bottom - (20*InfoRowCount);
+//        end;
         DgSets.Canvas.StretchDraw(ImageRect, Picture.Graphic);
   //      DgSetParts.Canvas.StretchDraw(Rect, Picture.Graphic);
       end;
@@ -446,7 +466,28 @@ begin
         end;
       end;
     end;
+
+    // Search in my collection inforow 3
+    if (DgSets.DefaultColWidth >= 64) and CbxSearchInMyCollection.Checked then begin
+      var YPosition := 0;
+      if PnlSearchOptions.Visible then
+        YPosition := Rect.Bottom - 58
+      else
+        YPosition := Rect.Bottom - 38;
+
+      DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.Quantity) + 'x');
+      var BSSetID := IntToStr(SetObject.BSSetListID);
+      var TextWidth := DgSets.Canvas.TextWidth(BSSetID);
+      DgSets.Canvas.TextOut(Rect.Right-TextWidth-2, YPosition, BSSetID);
+    end;
   end;
+
+  //
+
+  // Info row count
+  //BSSetListName
+  //Quantity
+  // Info row BS Set
 end;
 
 procedure TFrmSearch.DgSetsMouseLeave(Sender: TObject);
@@ -527,7 +568,10 @@ begin
     var Year := '';
     If SetObject.SetYear <> 0 then
       Year := Format(' (%d)', [SetObject.SetYear]);
-    SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IFThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName]);
+    var MyCollectionInfo := '';
+    if CbxSearchInMyCollection.Checked then
+      MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
+    SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName, IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
   end else
     SbResults.Panels[1].Text := '';
 end;
@@ -567,29 +611,52 @@ begin
 
         // Set up the query
         FDQuery.Connection := SqlConnection;
-        FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
-                            ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
-                            ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
-                            ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-        if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
-          FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-        FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
 
         var ThemeID := 0;
-        if CbxThemes.ItemIndex <> 0 then begin
-          ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
-          if ThemeID > 0 then
-            FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
-        end;
 
+        // Build the query
         if CbxSearchInMyCollection.Checked then begin
+          FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
+                              ' FROM BSSets bss'+
+                              ' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
+                              ' INNER JOIN BSSetLists bl on bl.id = bss.BSSetListID' +
+                              ' WHERE (year between :fromyear and :toyear) AND' +
+                              ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                              ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
+            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+          if CbxThemes.ItemIndex <> 0 then begin
+            ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+            if ThemeID > 0 then
+              FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
+          end;
+
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
                                                  ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
           if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
             FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-          FDQuery.SQL.Text := FDQuery.SQL.Text + '))';
+          FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
+                                                 ' GROUP BY bss.BSSetListID, s.set_num'+
+                                                 ' ORDER BY s.set_num, bss.bssetlistid';
+        end else begin
+          FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
+                              ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
+                              ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                              ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
+            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+          FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+          if CbxThemes.ItemIndex <> 0 then begin
+            ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+            if ThemeID > 0 then
+              FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
+          end;
         end;
 
+        // Limit results
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
 
         var Params := FDQuery.Params;
@@ -616,7 +683,7 @@ begin
         if ThemeID > 0 then
           Params.ParamByName('themeid').AsInteger := ThemeID;
 
-        FSetObjectList.LoadFromQuery(FDQuery, False);
+        FSetObjectList.LoadFromQuery(FDQuery, False, CbxSearchInMyCollection.Checked);
 
         FLastMaxCols := -1; // Force an invalidate
         FAdjustGrid;

@@ -294,6 +294,7 @@ object FrmSearch: TFrmSearch
       Hint = 'In my collections only'
       Caption = 'In my collection'
       TabOrder = 6
+      OnClick = CbxSearchInMyCollectionClick
     end
   end
   object SbResults: TStatusBar
