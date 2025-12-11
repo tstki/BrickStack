@@ -81,6 +81,7 @@ type
     FWSearchSortByNumber: Boolean;
     FWSearchSortByPartCount: Boolean;
     FWSearchSortByYear: Boolean;
+    FWSearchMyCollection: Boolean;
 
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
@@ -150,6 +151,7 @@ type
     property WSearchSortByPartCount: Boolean read FWSearchSortByPartCount write FWSearchSortByPartCount;
     property WSearchSortByName: Boolean read FWSearchSortByName write FWSearchSortByName;
     property WSearchSortByYear: Boolean read FWSearchSortByYear write FWSearchSortByYear;
+    property WSearchMyCollection: Boolean read FWSearchMyCollection write FWSearchMyCollection;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -350,6 +352,7 @@ begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByPartCount', FWSearchSortByPartCount);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByName', FWSearchSortByName);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', FWSearchSortByYear);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', FWSearchMyCollection);
     end;
 
     // Parts window filters and sorting
@@ -425,6 +428,7 @@ begin
     FWSearchSortByPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByPartCount', False);
     FWSearchSortByName := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByName', False);
     FWSearchSortByYear := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', False);
+    FWSearchMyCollection := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', False);
 
     FCollectionListDoubleClickAction := IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', caVIEW);
     FSetListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', caVIEW);

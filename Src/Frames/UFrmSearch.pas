@@ -297,6 +297,8 @@ begin
   MnuSortByPartCount.Checked := FConfig.WSearchSortByPartCount;
   MnuSortByYear.Checked := FConfig.WSearchSortByYear;
 
+  CbxSearchInMyCollection.Checked := FConfig.WSearchMyCollection;
+
   MnuGrid64.Checked := FConfig.WSearchGridSize = 64;
   MnuGrid96.Checked := FConfig.WSearchGridSize = 96;
   MnuGrid128.Checked := FConfig.WSearchGridSize = 128;
@@ -409,7 +411,7 @@ begin
       Inc(InfoRowCount);
     if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
       Inc(InfoRowCount);
-    if CbxSearchInMyCollection.Checked and
+    if FConfig.WSearchMyCollection and
       (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
       Inc(InfoRowCount);
   end;
@@ -434,8 +436,9 @@ end;
 
 procedure TFrmSearch.CbxSearchInMyCollectionClick(Sender: TObject);
 begin
-  DgSets.DefaultRowHeight := FGetGridHeight;
+  FConfig.WSearchMyCollection := CbxSearchInMyCollection.Checked;
 
+  DgSets.DefaultRowHeight := FGetGridHeight;
   DgSets.Invalidate;
 end;
 
@@ -465,7 +468,7 @@ begin
         Inc(InfoRowCount);
       if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
         Inc(InfoRowCount);
-      if CbxSearchInMyCollection.Checked and
+      if FConfig.WSearchMyCollection and
         (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
         Inc(InfoRowCount);
     end;
@@ -535,7 +538,7 @@ begin
       end;
 
       // Inforow 3 - Search in my collection - always at the bottom
-      if CbxSearchInMyCollection.Checked and
+      if FConfig.WSearchMyCollection and
          (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
         YPosition := Rect.Bottom - 18;
 
@@ -629,7 +632,7 @@ begin
     If SetObject.SetYear <> 0 then
       Year := Format(' (%d)', [SetObject.SetYear]);
     var MyCollectionInfo := '';
-    if CbxSearchInMyCollection.Checked then
+    if FConfig.WSearchMyCollection then
       MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
     SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName, IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
   end else
@@ -677,7 +680,7 @@ begin
         var ThemeID := 0;
 
         // Build the query
-        if CbxSearchInMyCollection.Checked then begin
+        if FConfig.WSearchMyCollection then begin
           FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
                               ' FROM BSSets bss'+
                               ' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
@@ -737,7 +740,7 @@ begin
             SortSql := 'ORDER BY ' + SortSql + ' DESC';
         end;
 
-        if CbxSearchInMyCollection.Checked then begin
+        if FConfig.WSearchMyCollection then begin
           if SortSql <> '' then
             SortSql := SortSql + ', s.set_num, bss.bssetlistid'
           else
@@ -773,7 +776,7 @@ begin
         if ThemeID > 0 then
           Params.ParamByName('themeid').AsInteger := ThemeID;
 
-        FSetObjectList.LoadFromQuery(FDQuery, False, CbxSearchInMyCollection.Checked);
+        FSetObjectList.LoadFromQuery(FDQuery, False, FConfig.WSearchMyCollection);
 
         FLastMaxCols := -1; // Force an invalidate
         FAdjustGrid;
