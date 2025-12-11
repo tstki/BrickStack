@@ -27,20 +27,16 @@ type
     Panel1: TPanel;
     BtnExpandOptions: TButton;
     CbxSearchStyle: TComboBox;
-    CbxSearchWhat: TComboBox;
+    CbxSearchBy: TComboBox;
     EditSearchText: TEdit;
-    ImgSearch: TImage;
     Label6: TLabel;
     LblSearch: TLabel;
-    Label2: TLabel;
     SbResults: TStatusBar;
     DgSets: TDrawGrid;
     BtnFilter: TButton;
     ImageList1: TImageList;
     CbxThemes: TComboBox;
     Label1: TLabel;
-    Label8: TLabel;
-    TbGridSize: TTrackBar;
     ActionList1: TActionList;
     ActToggleIncludeSpareParts: TAction;
     ActToggleAscending: TAction;
@@ -49,26 +45,20 @@ type
     ActSortByPartCount: TAction;
     ActSortByYear: TAction;
     ActViewSetExternal: TAction;
-    PopPartsFilter: TPopupMenu;
+    PopSetsFilter: TPopupMenu;
     Sort1: TMenuItem;
-    Ascending1: TMenuItem;
+    MnuSortAscending: TMenuItem;
     N1: TMenuItem;
-    Sort2: TMenuItem;
-    Hue1: TMenuItem;
-    Part1: TMenuItem;
-    Category1: TMenuItem;
-    ShowSetNum: TMenuItem;
+    MnuSortByTheme: TMenuItem;
+    MnuSortByNumber: TMenuItem;
+    MnuSortByPartCount: TMenuItem;
+    MnuSortByYear: TMenuItem;
+    MnuShowNumber: TMenuItem;
     ActSortByName: TAction;
-    Name1: TMenuItem;
-    ActShowSetName: TAction;
+    MnuSortByName: TMenuItem;
     ActShowSetNum: TAction;
-    ActShowIcons: TAction;
-    ActShowTheme: TAction;
     ActShowYear: TAction;
-    ActShowYear1: TMenuItem;
-    ActShowIcons1: TMenuItem;
-    Setname1: TMenuItem;
-    heme1: TMenuItem;
+    MnuShowYear: TMenuItem;
     ImageList2: TImageList;
     PopGridRightClick: TPopupMenu;
     Viewsetexternally1: TMenuItem;
@@ -80,8 +70,31 @@ type
     ActViewParts: TAction;
     Viewparts1: TMenuItem;
     N3: TMenuItem;
-    TbGridSizePx: TLabel;
     CbxSearchInMyCollection: TCheckBox;
+    Button1: TButton;
+    ActSearch: TAction;
+    ActExpandFilter: TAction;
+    MnuShowQuantity: TMenuItem;
+    MnuShowCollectionID: TMenuItem;
+    Grid1: TMenuItem;
+    MnuGrid64: TMenuItem;
+    MnuGrid96: TMenuItem;
+    MnuGrid128: TMenuItem;
+    MnuGrid256: TMenuItem;
+    MnuGrid192: TMenuItem;
+    ActSetGridSize64: TAction;
+    ActSetGridSize96: TAction;
+    ActSetGridSize128: TAction;
+    ActSetGridSize192: TAction;
+    ActSetGridSize256: TAction;
+    ActShowSetQuantity: TAction;
+    ActShowCollectionID: TAction;
+    Label2: TLabel;
+    CbxSearchWhat: TComboBox;
+    ActSpecialSearch: TAction;
+    Useinspecialsearch1: TMenuItem;
+    ActShowPartCount: TAction;
+    MnuShowPartCount: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -93,13 +106,11 @@ type
     procedure SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure TrackChange(Sender: TObject);
-    procedure BtnExpandOptionsClick(Sender: TObject);
     procedure DgSetsClick(Sender: TObject);
     procedure DgSetsDblClick(Sender: TObject);
     procedure DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
     procedure DgSetsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure FormResize(Sender: TObject);
-    procedure TbGridSizeChange(Sender: TObject);
     procedure DgSetsMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure DgSetsMouseLeave(Sender: TObject);
     procedure DgSetsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -109,6 +120,25 @@ type
     procedure ActViewSetExternalExecute(Sender: TObject);
     procedure ActAddSetToCollectionExecute(Sender: TObject);
     procedure CbxSearchInMyCollectionClick(Sender: TObject);
+    procedure BtnFilterClick(Sender: TObject);
+    procedure ActSearchExecute(Sender: TObject);
+    procedure ActExpandFilterExecute(Sender: TObject);
+    procedure ActSetGridSize64Execute(Sender: TObject);
+    procedure ActSetGridSize96Execute(Sender: TObject);
+    procedure ActSetGridSize128Execute(Sender: TObject);
+    procedure ActSetGridSize192Execute(Sender: TObject);
+    procedure ActSetGridSize256Execute(Sender: TObject);
+    procedure ActSortByThemeExecute(Sender: TObject);
+    procedure ActSortBySetNumExecute(Sender: TObject);
+    procedure ActSortByPartCountExecute(Sender: TObject);
+    procedure ActSortByNameExecute(Sender: TObject);
+    procedure ActSortByYearExecute(Sender: TObject);
+    procedure ActShowSetNumExecute(Sender: TObject);
+    procedure ActShowYearExecute(Sender: TObject);
+    procedure ActShowSetQuantityExecute(Sender: TObject);
+    procedure ActShowCollectionIDExecute(Sender: TObject);
+    procedure ActToggleAscendingExecute(Sender: TObject);
+    procedure ActShowPartCountExecute(Sender: TObject);
   private
     { Private declarations }
     FSetObjectList: TSetObjectList; // Stored locally from query result.
@@ -127,8 +157,12 @@ type
     function FGetToParts(): Integer;
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: LongInt): Integer;
-    function FTBGridSizePositionToPixels: Integer;
     function FGetGridHeight: Integer;
+    function FGetGridWidth: Integer;
+    procedure FHandleUpdateGridSize(const NewSize: Integer);
+    procedure FSaveSortSettings;
+    procedure FUncheckAllSortExcept(Sender: TObject);
+    procedure FSetDefaultColumnDimensionsAndAdjustGrid;
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -167,10 +201,9 @@ const
   //cTYPEMINIFIG = 2; //Not used yet
 
   // Search what
+  //cSetNumNameOrTheme = 0;
   cSetNum = 0;
   cName = 1;
-  //cOwnedSetsByNumber = 2;
-  //cOwnedSetsByName = 3;
 
   // Search style for others:
   cSearchAll = 0;    // "%SearchText%" // May find a lot more unrelated stuff
@@ -191,9 +224,16 @@ begin
   CbxSearchStyle.ItemIndex := 0;
 
   CbxSearchWhat.Clear;
-  CbxSearchWhat.Items.Add(StrSearchSetNum);
-  CbxSearchWhat.Items.Add(StrSearchName);
+  CbxSearchWhat.Items.Add(StrSearchSets);
+  //StrSearchMinifigures
+  //StrSearchParts
+  //StrAny
   CbxSearchWhat.ItemIndex := 0;
+
+  CbxSearchBy.Clear;
+  CbxSearchBy.Items.Add(StrSearchSetNum);
+  CbxSearchBy.Items.Add(StrSearchName);
+  CbxSearchBy.ItemIndex := 0;
 
   //This whole dialog is themed for search in sets.
 {  CbxSearchType.Clear;
@@ -223,21 +263,12 @@ begin
   FSetObjectList := TSetObjectList.Create;
 
 //  SbSearchResults.UseWheelForScrolling := True;
-  BtnExpandOptionsClick(Self);
-
-  DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
-  DgSets.DefaultRowHeight := FGetGridHeight;
-  DgSets.FixedCols := 0;
-  DgSets.FixedRows := 0;
-
-  TbGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
-
-  FLastMaxCols := -1;
-  FAdjustGrid;
 end;
 
 procedure TFrmSearch.FormDestroy(Sender: TObject);
 begin
+  FConfig.Save(csSEARCHWINDOWFILTERS);
+
   FResultPanels.Free;
   FSetObjectList.Free;
 
@@ -253,6 +284,32 @@ end;
 procedure TFrmSearch.FSetConfig(Config: TConfig);
 begin
   FConfig := Config;
+
+  MnuShowNumber.Checked := FConfig.WSearchShowNumber;
+  MnuShowYear.Checked := FConfig.WSearchShowYear;
+  MnuShowQuantity.Checked := FConfig.WSearchShowSetQuantity;
+  MnuShowCollectionID.Checked := FConfig.WSearchShowCollectionID;
+  MnuShowPartCount.Checked := FConfig.WSearchShowPartCount;
+  MnuSortAscending.Checked := FConfig.WSearchSortAscending;
+  MnuSortByName.Checked := FConfig.WSearchSortByName;
+  MnuSortByNumber.Checked := FConfig.WSearchSortByNumber;
+  MnuSortByTheme.Checked := FConfig.WSearchSortByTheme;
+  MnuSortByPartCount.Checked := FConfig.WSearchSortByPartCount;
+  MnuSortByYear.Checked := FConfig.WSearchSortByYear;
+
+  MnuGrid64.Checked := FConfig.WSearchGridSize = 64;
+  MnuGrid96.Checked := FConfig.WSearchGridSize = 96;
+  MnuGrid128.Checked := FConfig.WSearchGridSize = 128;
+  MnuGrid192.Checked := FConfig.WSearchGridSize = 192;
+  MnuGrid256.Checked := FConfig.WSearchGridSize = 256;
+
+  DgSets.DefaultColWidth := FGetGridWidth;
+  DgSets.DefaultRowHeight := FGetGridHeight;
+  DgSets.FixedCols := 0;
+  DgSets.FixedRows := 0;
+
+  FLastMaxCols := -1;
+  FAdjustGrid;
 end;
 
 procedure TFrmSearch.FormShow(Sender: TObject);
@@ -261,7 +318,7 @@ begin
   EditSearchText.SetFocus;
 
   // Research this more later - mdi child anchors are weird.
-  Width := 640;
+  Width := 626;
   Height := 480;
   DgSets.Anchors := [TAnchorKind.akLeft, TAnchorKind.akTop, TAnchorKind.akRight, TAnchorKind.akBottom];
 
@@ -309,16 +366,13 @@ begin
   end;
 
   CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
+
+  ActExpandFilter.Execute;
 end;
 
 procedure TFrmSearch.FormResize(Sender: TObject);
 begin
   FAdjustGrid;
-end;
-
-function TFrmSearch.FTBGridSizePositionToPixels: Integer;
-begin
-  Result := 32 + (TbGridSize.Position*16);
 end;
 
 procedure TFrmSearch.FAdjustGrid();
@@ -339,44 +393,43 @@ begin
   FLastMaxCols := DgSets.ColCount;
 end;
 
+procedure TFrmSearch.FSetDefaultColumnDimensionsAndAdjustGrid;
+begin
+  DgSets.DefaultColWidth := FGetGridWidth;
+  DgSets.DefaultRowHeight := FGetGridHeight;
+
+  FAdjustGrid;
+end;
+
 function TFrmSearch.FGetGridHeight: Integer;
 begin
   var InfoRowCount := 0;
   if DgSets.DefaultColWidth >= 64 then begin
-    Inc(InfoRowCount);
-    if PnlSearchOptions.Visible then
+    if FConfig.WSearchShowNumber then
+      Inc(InfoRowCount);
+    if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
+      Inc(InfoRowCount);
+    if CbxSearchInMyCollection.Checked and
+      (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
       Inc(InfoRowCount);
   end;
-  if CbxSearchInMyCollection.Checked then
-    Inc(InfoRowCount);
 
-  Result := FTBGridSizePositionToPixels + (InfoRowCount*20);
+  Result := FGetGridWidth + (InfoRowCount*20);
 end;
 
-procedure TFrmSearch.TbGridSizeChange(Sender: TObject);
+function TFrmSearch.FGetGridWidth: Integer;
 begin
-  DgSets.DefaultColWidth := FTBGridSizePositionToPixels;
-  DgSets.DefaultRowHeight := FGetGridHeight;
-  FAdjustGrid;
-
-  TbGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
+  if FConfig = nil then
+    Result := 96
+  else
+    Result := FConfig.WSearchGridSize;
 end;
 
-procedure TFrmSearch.BtnExpandOptionsClick(Sender: TObject);
+procedure TFrmSearch.BtnFilterClick(Sender: TObject);
 begin
-  var OldTop := DgSets.Top;
-  PnlSearchOptions.Visible := not PnlSearchOptions.Visible;
-  if PnlSearchOptions.Visible then begin
-    DgSets.Top := PnlSearchOptions.Top + PnlSearchOptions.Height + 2;
-    DgSets.Height := DgSets.Height - (DgSets.Top-OldTop);
-  end else begin
-    DgSets.Top := PnlSearchOptions.Top;
-    DgSets.Height := DgSets.Height + (OldTop-DgSets.Top);
-  end;
-
-  DgSets.DefaultRowHeight := FGetGridHeight;
-
-  DgSets.Invalidate;
+  var P := Mouse.CursorPos;
+  // Show the popup menu at the mouse cursor position
+  PopSetsFilter.Popup(P.X, P.Y);
 end;
 
 procedure TFrmSearch.CbxSearchInMyCollectionClick(Sender: TObject);
@@ -398,9 +451,8 @@ begin
 end;
 
 procedure TFrmSearch.DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
-//var
-//  SquareRect: TRect;
-  //ExampleText: String;
+var
+  YPosition: Integer;
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
   if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
@@ -409,12 +461,18 @@ begin
 
     var InfoRowCount := 0;
     if DgSets.DefaultColWidth >= 64 then begin
-      Inc(InfoRowCount);
-      if PnlSearchOptions.Visible then
+      if FConfig.WSearchShowNumber then
+        Inc(InfoRowCount);
+      if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
+        Inc(InfoRowCount);
+      if CbxSearchInMyCollection.Checked and
+        (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
         Inc(InfoRowCount);
     end;
-    if CbxSearchInMyCollection.Checked then
-      Inc(InfoRowCount);
+
+  // set number
+  // year                      // part count
+  // count of set in bsset     // bssetid
 
     //TPicture
     if FImageCache <> nil then begin
@@ -442,52 +500,54 @@ begin
     else
       ExampleText := Format('%dx', [SetObject.Quantity]); // todo: 999/999
 }
+    // "More info" icon
+    //ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 18, 1, True);
 
-    if DgSets.DefaultColWidth >= 64 then begin    
-      if PnlSearchOptions.Visible then
-        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 38, SetObject.SetNum)
-      else
-        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 18, SetObject.SetNum);
-    end;
+    //visual:
+    // count of set in bsset     // bssetid
+    // set number
+    // year                      // part count
 
-    if DgSets.DefaultColWidth >= 32 then begin
-      // "More info" icon
-      //ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 18, 1, True);
-    end;
+    if DgSets.DefaultColWidth >= 64 then begin
+      // Inforow 1
+      if FConfig.WSearchShowNumber then
+        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - (InfoRowCount*20) + 2, SetObject.SetNum);
 
-    // Inforow 2
-    if PnlSearchOptions.Visible then begin
-      if DgSets.DefaultColWidth >= 48 then begin
-        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - 18, IntToStr(SetObject.SetYear));
-        if DgSets.DefaultColWidth >= 64 then begin
-          var SetNumPartsText := IntToStr(SetObject.SetNumParts);
-          var TextWidth := DgSets.Canvas.TextWidth(SetNumPartsText);
-          DgSets.Canvas.TextOut(Rect.Right-TextWidth-2, Rect.Bottom - 18, SetNumPartsText);
+      // Inforow 2
+      if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then begin
+        if InfoRowCount = 3 then
+          YPosition := Rect.Bottom - 38    // This is the middle row
+        else if InfoRowCount = 2 then begin
+          if FConfig.WSearchShowNumber then
+            YPosition := Rect.Bottom - 18  // This is the bottom row
+          else
+            YPosition := Rect.Bottom - 38; // This is the top row
+        end else // This is the only row.
+          YPosition := Rect.Bottom - 18;
+
+        if FConfig.WSearchShowYear then
+          DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.SetYear));
+        var SetNumPartsText := IntToStr(SetObject.SetNumParts);
+        var TextWidth1 := DgSets.Canvas.TextWidth(SetNumPartsText);
+        if FConfig.WSearchShowPartCount then begin
+          DgSets.Canvas.TextOut(Rect.Right-TextWidth1-2, YPosition, SetNumPartsText);
         end;
       end;
-    end;
 
-    // Search in my collection inforow 3
-    if (DgSets.DefaultColWidth >= 64) and CbxSearchInMyCollection.Checked then begin
-      var YPosition := 0;
-      if PnlSearchOptions.Visible then
-        YPosition := Rect.Bottom - 58
-      else
-        YPosition := Rect.Bottom - 38;
+      // Inforow 3 - Search in my collection - always at the bottom
+      if CbxSearchInMyCollection.Checked and
+         (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
+        YPosition := Rect.Bottom - 18;
 
-      DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.Quantity) + 'x');
-      var BSSetID := IntToStr(SetObject.BSSetListID);
-      var TextWidth := DgSets.Canvas.TextWidth(BSSetID);
-      DgSets.Canvas.TextOut(Rect.Right-TextWidth-2, YPosition, BSSetID);
+        if FConfig.WSearchShowSetQuantity then
+          DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.Quantity) + 'x');
+        var BSSetID := IntToStr(SetObject.BSSetListID);
+        var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
+        if FConfig.WSearchShowCollectionID then
+          DgSets.Canvas.TextOut(Rect.Right-TextWidth2-2, YPosition, BSSetID);
+      end;
     end;
   end;
-
-  //
-
-  // Info row count
-  //BSSetListName
-  //Quantity
-  // Info row BS Set
 end;
 
 procedure TFrmSearch.DgSetsMouseLeave(Sender: TObject);
@@ -598,10 +658,12 @@ begin
       var FDQuery := TFDQuery.Create(nil);
       try
         var SearchSubject := '';
-        if CbxSearchWhat.ItemIndex = cSetNum then
+        if CbxSearchBy.ItemIndex = cSetNum then
           SearchSubject := 's.set_num'
-        else
+        else // cName
           SearchSubject := 's.name';
+        //cSetNumNameOrTheme
+        // special handling
 
         var SearchLikeOrExact := '';
         if CbxSearchStyle.ItemIndex = cSearchExact then
@@ -638,8 +700,7 @@ begin
           if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
             FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
           FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
-                                                 ' GROUP BY bss.BSSetListID, s.set_num'+
-                                                 ' ORDER BY s.set_num, bss.bssetlistid';
+                                                 ' GROUP BY bss.BSSetListID, s.set_num ';
         end else begin
           FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
                               ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
@@ -655,6 +716,35 @@ begin
               FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
           end;
         end;
+
+        //order by
+        var SortSql := '';
+        if FConfig.WSearchSortByNumber then
+          SortSql := 's.set_num'
+        else if FConfig.WSearchSortByName then
+          SortSql := 's.name'
+        else if FConfig.WSearchSortByYear then
+          SortSql := 's.year'
+        else if FConfig.WSearchSortByTheme then
+          SortSql := 's.theme_id'
+        else if FConfig.WSearchSortByPartCount then
+          SortSql := 's.num_parts';
+
+        if SortSql <> '' then begin
+          if FConfig.WPartsSortAscending then
+            SortSql := 'ORDER BY ' + SortSql + ' ASC'
+          else
+            SortSql := 'ORDER BY ' + SortSql + ' DESC';
+        end;
+
+        if CbxSearchInMyCollection.Checked then begin
+          if SortSql <> '' then
+            SortSql := SortSql + ', s.set_num, bss.bssetlistid'
+          else
+            SortSql := 'ORDER BY s.set_num, bss.bssetlistid';
+        end;
+
+        FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
 
         // Limit results
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
@@ -743,6 +833,202 @@ begin
     var SetObject := FSetObjectList[Idx];
     TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
   end;
+end;
+
+procedure TFrmSearch.ActExpandFilterExecute(Sender: TObject);
+begin
+  var OldTop := DgSets.Top;
+  PnlSearchOptions.Visible := not PnlSearchOptions.Visible;
+  if PnlSearchOptions.Visible then begin
+    DgSets.Top := PnlSearchOptions.Top + PnlSearchOptions.Height + 2;
+    DgSets.Height := DgSets.Height - (DgSets.Top-OldTop);
+  end else begin
+    DgSets.Top := PnlSearchOptions.Top;
+    DgSets.Height := DgSets.Height + (OldTop-DgSets.Top);
+  end;
+
+  DgSets.DefaultRowHeight := FGetGridHeight;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActSearchExecute(Sender: TObject);
+begin
+  FDoSearch;
+end;
+
+procedure TFrmSearch.FHandleUpdateGridSize(const NewSize: Integer);
+begin
+  if FConfig <> nil then begin
+    if NewSize <> 0 then
+      FConfig.WSearchGridSize := NewSize;
+
+    MnuGrid64.Checked := FConfig.WSearchGridSize = 64;
+    MnuGrid96.Checked := FConfig.WSearchGridSize = 96;
+    MnuGrid128.Checked := FConfig.WSearchGridSize = 128;
+    MnuGrid192.Checked := FConfig.WSearchGridSize = 192;
+    MnuGrid256.Checked := FConfig.WSearchGridSize = 256;
+  end;
+
+  DgSets.DefaultColWidth := FGetGridWidth;
+  DgSets.DefaultRowHeight := FGetGridHeight;
+  FAdjustGrid;
+end;
+
+procedure TFrmSearch.ActSetGridSize64Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(64);
+end;
+
+procedure TFrmSearch.ActSetGridSize96Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(96);
+end;
+
+procedure TFrmSearch.ActShowCollectionIDExecute(Sender: TObject);
+begin
+  MnuShowCollectionID.Checked := not MnuShowCollectionID.Checked;
+
+  Config.WSearchShowCollectionID := MnuShowCollectionID.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActShowPartCountExecute(Sender: TObject);
+begin
+  MnuShowPartCount.Checked := not MnuShowPartCount.Checked;
+
+  Config.WSearchShowPartCount := MnuShowPartCount.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActShowSetNumExecute(Sender: TObject);
+begin
+  MnuShowNumber.Checked := not MnuShowNumber.Checked;
+
+  Config.WSearchShowNumber := MnuShowNumber.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActShowSetQuantityExecute(Sender: TObject);
+begin
+  MnuShowQuantity.Checked := not MnuShowQuantity.Checked;
+
+  Config.WSearchShowSetQuantity := MnuShowQuantity.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActShowYearExecute(Sender: TObject);
+begin
+  MnuShowYear.Checked := not MnuShowYear.Checked;
+
+  Config.WSearchShowYear := MnuShowYear.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActSortByNameExecute(Sender: TObject);
+begin
+  MnuSortByName.Checked := not MnuSortByName.Checked;
+  if MnuSortByName.Checked then
+    FUncheckAllSortExcept(MnuSortByName);
+  FSaveSortSettings;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.ActSortByPartCountExecute(Sender: TObject);
+begin
+  MnuSortByPartCount.Checked := not MnuSortByPartCount.Checked;
+  if MnuSortByPartCount.Checked then
+    FUncheckAllSortExcept(MnuSortByPartCount);
+  FSaveSortSettings;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.ActSortBySetNumExecute(Sender: TObject);
+begin
+  MnuSortByNumber.Checked := not MnuSortByNumber.Checked;
+  if MnuSortByNumber.Checked then
+    FUncheckAllSortExcept(MnuSortByNumber);
+  FSaveSortSettings;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.ActSortByThemeExecute(Sender: TObject);
+begin
+  MnuSortByTheme.Checked := not MnuSortByTheme.Checked;
+  if MnuSortByTheme.Checked then
+    FUncheckAllSortExcept(MnuSortByTheme);
+  FSaveSortSettings;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.ActSortByYearExecute(Sender: TObject);
+begin
+  MnuSortByYear.Checked := not MnuSortByYear.Checked;
+  if MnuSortByYear.Checked then
+    FUncheckAllSortExcept(MnuSortByYear);
+  FSaveSortSettings;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.ActToggleAscendingExecute(Sender: TObject);
+begin
+  MnuSortAscending.Checked := not MnuSortAscending.Checked;
+  FConfig.WPartsSortAscending := MnuSortAscending.Checked;
+  FDoSearch;
+end;
+
+procedure TFrmSearch.FUncheckAllSortExcept(Sender: TObject);
+begin
+  if Sender <> MnuSortByName then
+    MnuSortByName.Checked := False;
+  if Sender <> MnuSortByNumber then
+    MnuSortByNumber.Checked := False;
+  if Sender <> MnuSortByTheme then
+    MnuSortByTheme.Checked := False;
+  if Sender <> MnuSortByPartCount then
+    MnuSortByPartCount.Checked := False;
+  if Sender <> MnuSortByYear then
+    MnuSortByYear.Checked := False;
+end;
+
+procedure TFrmSearch.FSaveSortSettings;
+begin
+  FConfig.WSearchSortAscending := MnuSortAscending.Checked;
+  FConfig.WSearchSortByName := MnuSortByName.Checked;
+  FConfig.WSearchSortByNumber := MnuSortByNumber.Checked;
+  FConfig.WSearchSortByTheme := MnuSortByTheme.Checked;
+  FConfig.WSearchSortByPartCount := MnuSortByPartCount.Checked;
+  FConfig.WSearchSortByYear := MnuSortByYear.Checked;
+end;
+
+procedure TFrmSearch.ActSetGridSize128Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(128);
+end;
+
+procedure TFrmSearch.ActSetGridSize192Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(192);
+end;
+
+procedure TFrmSearch.ActSetGridSize256Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(256);
 end;
 
 procedure TFrmSearch.ActViewPartsExecute(Sender: TObject);

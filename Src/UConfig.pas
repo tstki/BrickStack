@@ -69,6 +69,18 @@ type
     FPartIncrementCtrlShiftClick: Integer;
 
     FSearchLimit: Integer;
+    FWSearchGridSize: Integer;
+    FWSearchShowNumber: Boolean;
+    FWSearchShowYear: Boolean;
+    FWSearchShowSetQuantity: Boolean;
+    FWSearchShowCollectionID: Boolean;
+    FWSearchShowPartCount: Boolean;
+    FWSearchSortAscending: Boolean;
+    FWSearchSortByName: Boolean;
+    FWSearchSortByTheme: Boolean;
+    FWSearchSortByNumber: Boolean;
+    FWSearchSortByPartCount: Boolean;
+    FWSearchSortByYear: Boolean;
 
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
@@ -126,6 +138,18 @@ type
     property PartIncrementCtrlShiftClick: Integer read FPartIncrementCtrlShiftClick write FPartIncrementCtrlShiftClick;
 
     property SearchLimit: Integer read FSearchLimit write FSearchLimit;
+    property WSearchGridSize: Integer read FWSearchGridSize write FWSearchGridSize;
+    property WSearchShowYear: Boolean read FWSearchShowYear write FWSearchShowYear;
+    property WSearchShowNumber: Boolean read FWSearchShowNumber write FWSearchShowNumber;
+    property WSearchShowSetQuantity: Boolean read FWSearchShowSetQuantity write FWSearchShowSetQuantity;
+    property WSearchShowCollectionID: Boolean read FWSearchShowCollectionID write FWSearchShowCollectionID;
+    property WSearchShowPartCount: Boolean read FWSearchShowPartCount write FWSearchShowPartCount;
+    property WSearchSortAscending: Boolean read FWSearchSortAscending write FWSearchSortAscending;
+    property WSearchSortByTheme: Boolean read FWSearchSortByTheme write FWSearchSortByTheme;
+    property WSearchSortByNumber: Boolean read FWSearchSortByNumber write FWSearchSortByNumber;
+    property WSearchSortByPartCount: Boolean read FWSearchSortByPartCount write FWSearchSortByPartCount;
+    property WSearchSortByName: Boolean read FWSearchSortByName write FWSearchSortByName;
+    property WSearchSortByYear: Boolean read FWSearchSortByYear write FWSearchSortByYear;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -173,6 +197,7 @@ const
   csCONFIGDIALOG = 1;
   csWINDOWPOSITIONS = 2;
   csPARTSWINDOWFILTERS = 3;
+  csSEARCHWINDOWFILTERS = 4;
 
 implementation
 
@@ -311,6 +336,22 @@ begin
       FFrmSearch.Save(IniFile, StrSearchWindowIniSection, 'FrmSearch');
     end;
 
+    // Search window filters and sorting
+    if Section in [csALL, csSEARCHWINDOWFILTERS] then begin
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchGridSize', FWSearchGridSize);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortAscending', FWSearchSortAscending);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowNumber', FWSearchShowNumber);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowYear', FWSearchShowYear);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowSetQuantity', FWSearchShowSetQuantity);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowCollectionID', FWSearchShowCollectionID);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowPartCount', FWSearchShowPartCount);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByTheme', FWSearchSortByTheme);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByNumber', FWSearchSortByNumber);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByPartCount', FWSearchSortByPartCount);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByName', FWSearchSortByName);
+      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', FWSearchSortByYear);
+    end;
+
     // Parts window filters and sorting
     if Section in [csALL, csPARTSWINDOWFILTERS] then begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsShowPartCount', FWPartsShowPartCount);
@@ -372,6 +413,18 @@ begin
 
     FSearchListDoubleClickAction := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', caVIEW);
     FSearchLimit := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchLimit', 4);
+    FWSearchGridSize := IniFile.ReadInteger(StrSearchWindowIniSection, 'WSearchGridSize', 64);
+    FWSearchShowNumber := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowNumber', True);
+    FWSearchShowYear := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowYear', True);
+    FWSearchShowSetQuantity := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowSetQuantity', True);
+    FWSearchShowCollectionID := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowCollectionID', True);
+    FWSearchShowPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowPartCount', True);
+    FWSearchSortAscending := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortAscending', False);
+    FWSearchSortByTheme := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByTheme', False);
+    FWSearchSortByNumber := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByNumber', False);
+    FWSearchSortByPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByPartCount', False);
+    FWSearchSortByName := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByName', False);
+    FWSearchSortByYear := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', False);
 
     FCollectionListDoubleClickAction := IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', caVIEW);
     FSetListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', caVIEW);

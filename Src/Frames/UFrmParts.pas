@@ -110,12 +110,13 @@ type
     procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
-    function FTBGridSizePositionToPixels: Integer;
+    function FGetGridWidth: Integer;
     function FGetGridHeight: Integer;
     procedure FModifyQuantity(PartObject: TPartObject; Amount: Integer; Increment: Boolean);
     procedure FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
     procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
     procedure FUncheckAllSortExcept(Sender: TObject);
+    procedure FSetDefaultColumnDimensionsAndAdjustGrid;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FSetConfig;
@@ -449,6 +450,14 @@ begin
   inherited;
 end;
 
+procedure TFrmParts.FSetDefaultColumnDimensionsAndAdjustGrid;
+begin
+  DgSetParts.DefaultColWidth := FGetGridWidth;
+  DgSetParts.DefaultRowHeight := FGetGridHeight;
+
+  FAdjustGrid;
+end;
+
 procedure TFrmParts.FSetConfig(Config: TConfig);
 begin
   FConfig := Config;
@@ -464,14 +473,11 @@ begin
   MnuSortByQuantity.Checked := FConfig.WPartsSortByQuantity;
   MnuSortAscending.Checked := FConfig.WPartsSortAscending;
 
-  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
-  DgSetParts.DefaultRowHeight := FGetGridHeight;
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
+  FSetDefaultColumnDimensionsAndAdjustGrid;
 
-  FAdjustGrid;
-
-  LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px';
+  LblPartsGridSizePx.Caption := IntToStr(FGetGridWidth) + 'px';
 end;
 
 procedure TFrmParts.FormCreate(Sender: TObject);
@@ -493,7 +499,7 @@ begin
   FAdjustGrid;
 end;
 
-function TFrmParts.FTBGridSizePositionToPixels: Integer;
+function TFrmParts.FGetGridWidth: Integer;
 begin
   Result := 32 + (TbGridSize.Position*16);
 end;
@@ -503,15 +509,15 @@ begin
   if Config <> nil then begin
     if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
       if Config.WPartsShowPartCount then
-        Result := FTBGridSizePositionToPixels + 40  // 64 + 20 + 20
+        Result := FGetGridWidth + 40  // 64 + 20 + 20
       else
-        Result := FTBGridSizePositionToPixels + 20; // 64 + 20
+        Result := FGetGridWidth + 20; // 64 + 20
     end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
-      Result := FTBGridSizePositionToPixels + 20
+      Result := FGetGridWidth + 20
     else
-      Result := FTBGridSizePositionToPixels;
+      Result := FGetGridWidth;
   end else
-    Result := FTBGridSizePositionToPixels;
+    Result := FGetGridWidth;
 end;
 
 procedure TFrmParts.FAdjustGrid();
@@ -534,11 +540,11 @@ end;
 
 procedure TFrmParts.TbGridSizeChange(Sender: TObject);
 begin
-  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
+  DgSetParts.DefaultColWidth := FGetGridWidth;
   DgSetParts.DefaultRowHeight := FGetGridHeight;
   FAdjustGrid;
 
-  LblPartsGridSizePx.Caption := IntToStr(FTBGridSizePositionToPixels) + 'px'
+  LblPartsGridSizePx.Caption := IntToStr(FGetGridWidth) + 'px'
 end;
 
 procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
@@ -572,12 +578,7 @@ begin
 
   Config.WPartsShowPartCount := MnuShowPartCount.Checked;
 
-  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
-  DgSetParts.DefaultRowHeight := FGetGridHeight;
-  DgSetParts.FixedCols := 0;
-  DgSetParts.FixedRows := 0;
-
-  FAdjustGrid;
+  FSetDefaultColumnDimensionsAndAdjustGrid;
 
   DgSetParts.Invalidate;
 end;
@@ -588,12 +589,7 @@ begin
 
   Config.WPartsShowPartnum := MnuShowPartnum.Checked;
 
-  DgSetParts.DefaultColWidth := FTBGridSizePositionToPixels;
-  DgSetParts.DefaultRowHeight := FGetGridHeight;
-  DgSetParts.FixedCols := 0;
-  DgSetParts.FixedRows := 0;
-
-  FAdjustGrid;
+  FSetDefaultColumnDimensionsAndAdjustGrid;
 
   DgSetParts.Invalidate;
 end;

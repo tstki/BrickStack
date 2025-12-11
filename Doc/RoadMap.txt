@@ -3,9 +3,10 @@ More of a todo / idea list than a roadmap, but here goes:
 Application:
 - Note bulk downloads may be slow and need to be throttled to +- 1 per second.
 - Closing a dialog should store it's last location, not just on application close
+-- Add option for this, since MDIs are kinda jumpy when reloading location.
 - Auto updater through github releases page
--- Notify user
--- Offer to update
+-- Show dialog on startup if detected, ask user if they want to update - and give option to not remind again for this version.
+-- exe can replace itself through rename.
 
 Welcome:
 - Reference to tutorial/about and mandatory database creation steps and updating.
@@ -74,8 +75,8 @@ Parts collection:
 - Special search window filter.
 - Import / export parts
 
-Collection:
-- Deleting a collection should ask the user to move all sets to a new inventory, or delete (including all parts)
+Cleanup:
+- Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
 
 Settings:
 - Add option to show/hide columns for collection / setlist.
@@ -88,7 +89,7 @@ Settings:
 - Option to allow multiple collections windows
 - Option to allow multiple collection windows
 - Check for updates / autoupdater (through github binary distribution)
-- Sliders for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
+- Options for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
 - Choose UI elements in search results / parts (several template layouts, with example)
 - Option to treat newly added sets as having all parts
 
@@ -123,14 +124,11 @@ Logging:
 Search:
 - Option to show search as image panels or table with text, and image on hover
 - Prevent text overlap (cut off by replacing text with ..."
-- Search add next results button.
 - Also to future part search dialogs
 - When searching for minifigs, also search "in sets"
 - Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
-- "3001pr004" and other parts with different external references does not allow part lookup at this time.
 -- Should be available in the API
-- Add "force refresh from external" button for sets under a setlist.
-- When searching in my collection, also show what collection the search results are in - and how many sets/items are there.
+- Add "force refresh from external" button for sets / images under a setlist.
 
 Search parts in:
 - Search for parts in sets, to find sets
@@ -143,3 +141,4 @@ Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.
 -- https://stackoverflow.com/questions/7118194/how-can-i-disable-the-scroll-into-view-behavior-of-tscrollbox
 - Some images are named ".jpg" but are actually bitmaps, or png. (not our fault, really!)
+- "3001pr004" and other parts with different external references do not allow part lookup at this time.
