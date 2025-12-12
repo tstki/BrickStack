@@ -1,6 +1,6 @@
-More of a todo / idea list than a roadmap, but here goes:
-====
-Application:
+# More of a todo / idea list than a roadmap, but here goes:
+
+## Application:
 - Note bulk downloads may be slow and need to be throttled to +- 1 per second.
 - Closing a dialog should store it's last location, not just on application close
 -- Add option for this, since MDIs are kinda jumpy when reloading location.
@@ -8,16 +8,22 @@ Application:
 -- Show dialog on startup if detected, ask user if they want to update - and give option to not remind again for this version.
 -- exe can replace itself through rename.
 
-Welcome:
+### Welcome:
 - Reference to tutorial/about and mandatory database creation steps and updating.
 - Choose a language (with flag icon) - also in settings.
 
-Database:
+### Logging:
+- Optional log files for communication and debugging.
+- Make sure passwords are not logged to the _token endpoint
+- Make sure any token is not logged.
+### Database:
 - Dont use "select *" but get the exact columns
 - Auto Database updater improvements
 - Comma separated search input, so you can search for sets "and / or"
+- Add DB column and rename BSSetLists to BSCollection, add column for type
+- Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
 
-Optimizations:
+### Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
 - Implement FastMM5 for memory leak checking and object creation performance. https://github.com/pleriche/FastMM5/releases
 - Inline small functions.
@@ -26,21 +32,51 @@ Optimizations:
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller
 
-Throttling and request slowing:
+### Throttling and request slowing:
 - Handle error 429: Add a mandatory delay between requests
 - Request was throttled - you are sending too many requests too fast.
 - Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
 - Example response: { "detail": "Request was throttled. Expected available in 2 seconds." }
 - Parts call: /lego/parts/?part_nums=3001,3002,3003&inc_part_details=1
 
-Get user's inventory
+### Analytics:
+- Show graphs of each theme / year / part count of sets you own
+
+## API
+### Get user's inventory
 - Ability to export inventory per group to rebrickable csv/xml
 
-Configure desired columns when printing parts - preferably on the dialog itself by showing the config dialog and it's related settings.
+## Windows
+- Collection details (shows selected collection's details / custom fields / statistics)
+- Collection content (shows selected collection's set content)
+- Multiple collections (vertical and horizontal)
+- "layout" set for all windows to switch window placements configured by the user.
+- Hamburger menu if window size is too thin.
+- Expand about screen
+- Fix window sizes and anchors
+- Helpfile / tutorial / common shortcuts
+- Sorting grids
+
+### Settings:
+- Add option to show/hide columns for collection / setlist.
+- Add ability to add custom fields.
+- Option to store backup files on changes / periodically.
+- Slider setting for delay between image downloads.
+- Search options box above treeview.
+- Caps lock is active warning in login dialog
+- Default import / export path (just remember last used)
+- Option to allow multiple collections windows
+- Option to allow multiple collection windows
+- Check for updates / autoupdater (through github binary distribution)
+- Options for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
+- Choose UI elements in search results / parts (several template layouts, with example)
+- Option to treat newly added sets as having all parts
+
+### Configure desired columns when printing - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview
 - Look into Skia library https://github.com/skia4delphi/skia4delphi
 
-Collection window:
+### Collection window:
 - Import from CSV/Xml and other sources.
 - Edit (change current selected row) -> show dialog with options such as: icon / name / description / custom fields
 - Drag n drop to change custom order.
@@ -61,67 +97,24 @@ Collection window:
 - View all parts in this collection
 - View all "missing" parts in this collection. (filter?)
 - Deleting a set should also delete all parts.
-- New types:
--- Sets collection
--- Parts collection
--- Figures collection
 
-Parts window:
+### Parts window:
 - Improve inventory version handling.
 - Export parts.
+- Add to collection
+- Show minifigures as part of the set parts
+- Export set parts - CSV
 
-Parts collection:
-- Separate frame for loose parts
-- Special search window filter.
-- Import / export parts
-
-Cleanup:
-- Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
-
-Settings:
-- Add option to show/hide columns for collection / setlist.
-- Add ability to add custom fields.
-- Option to store backup files on changes / periodically.
-- Slider setting for delay between image downloads.
-- Search options box above treeview.
-- Caps lock is active warning in login dialog
-- Default import / export path (just remember last used)
-- Option to allow multiple collections windows
-- Option to allow multiple collection windows
-- Check for updates / autoupdater (through github binary distribution)
-- Options for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
-- Choose UI elements in search results / parts (several template layouts, with example)
-- Option to treat newly added sets as having all parts
-
-Windows:
-- Collection details (shows selected collection's details / custom fields / statistics)
-- Collection content (shows selected collection's set content)
-- Multiple collections (vertical and horizontal)
-- "layout" set for all windows to switch window placements configured by the user.
-- Hamburger menu if window size is too thin.
-- Expand about screen
-- Fix window sizes and anchors
-- Helpfile / tutorial / common shortcuts
-- Sorting grids
-
+### Collections:
 Export collection:
 - Choose format
 - Choose overwrite / keep
-
-Export set parts:
-- CSV
-
 Import collection:
 - Choose format
 - Choose overwrite / keep
 - Import as bulk input (line separated set numbers, part numbers or minifigure IDs)
 
-Logging:
-- Optional log files for communication and debugging.
-- Make sure passwords are not logged to the _token endpoint
-- Make sure any token is not logged.
-
-Search:
+## Search:
 - Option to show search as image panels or table with text, and image on hover
 - Prevent text overlap (cut off by replacing text with ..."
 - Also to future part search dialogs
@@ -129,15 +122,18 @@ Search:
 - Configure next/prev page results, in case results are a lot. (limit 10 offset 10) or load while scrolling.
 -- Should be available in the API
 - Add "force refresh from external" button for sets / images under a setlist.
+- Minifigure search and enrichment:
+-- Search set, links to minifig.
+-- Set has theme available for filtering, and year. Search figure by name or "number"
+-- select * from inventories where set_num = '4200-1';
+-- select * from inventory_minifigs where inventory_id = 9677;
+-- select * from minifigs where fig_num = 'fig-001386';
 
-Search parts in:
+### Search parts in:
 - Search for parts in sets, to find sets
 - Combine multiple parts to search for
 
-Analytics:
-- Show graphs of each theme / year / part count of sets you own
-
-Known issues:
+## Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.
 -- https://stackoverflow.com/questions/7118194/how-can-i-disable-the-scroll-into-view-behavior-of-tscrollbox
 - Some images are named ".jpg" but are actually bitmaps, or png. (not our fault, really!)
