@@ -643,6 +643,20 @@ procedure TFrmSearch.FDoSearch;
 begin
   if EditSearchText.Text = '' then
     Exit;
+{
+select * from sets where set_num = ‘4200-1’; – one set, 102 parts
+select * from inventories where set_num = ‘4200-1’; – 9677
+
+select * from inventory_parts where inventory_id = 9677; – the set inventory
+
+select * from inventory_minifigs where inventory_id = 9677; – fig-001386
+select * from inventories where set_num = ‘fig-001386’; – 52201
+select * from minifigs where fig_num = ‘fig-001386’; – 1 figure with 5 parts.
+select * from inventory_parts where inventory_id = 52201; – the minifig parts
+
+select * from inventory_sets where set_num = ‘4200-1’; – 1726, is the “set box” this set and 4 others are a part of
+select * from inventory_sets where inventory_id = 1726; – is a list of sets in a set box
+}
 
   // Hide scrollbox while drawing
 //  SbSearchResults.Visible := False;

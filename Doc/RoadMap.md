@@ -16,6 +16,7 @@
 - Optional log files for communication and debugging.
 - Make sure passwords are not logged to the _token endpoint
 - Make sure any token is not logged.
+
 ### Database:
 - Dont use "select *" but get the exact columns
 - Auto Database updater improvements
