@@ -4,6 +4,7 @@ interface
 
 uses
   FireDAC.Comp.Client,
+  UPart, USet, USetList, //UMinifig,
   System.Classes, Generics.Collections;
 
 type
@@ -13,12 +14,12 @@ type
                   cSEARCHTYPEMINIFIG = 2    // Not used yet
                 );
 
-  TSearchBy = ( //cNUMORNAME = 0,
+  TSearchBy = ( //cNUMBERORNAME = 0,
                 cNUMBER = 0,
                 cNAME = 2
               );
 
-  TSearchStyle = ( // Searech style for others
+  TSearchStyle = ( // Search style for others
                    cSearchAll = 0,        // "%SearchText%" // May find a lot more unrelated stuff
                    // Search style for sets
                    cSearchPrefix = 1,     // "SearchText%" // Also gets all versions// Search style for sets:
@@ -30,18 +31,23 @@ type
   TSearchResult = class(TObject)
   private
     { Private declarations }
-    FID: Integer;
+    FSearchType: TSearchWhat;
     //searchtype
     //own list
     //input fields
 
     // List of results, filled based on searchtype
-    //FSets: TSetListObjectList;
+    FSetObjectList: TSetObjectList;
     //FParts: TPartObjectList;
     //FMinifigs: TMinifigureObjectList;
   public
+    constructor Create;
+    destructor Destroy; override;
     { Public declarations }
-    property ID: Integer read FID write FID;
+    procedure Clear;
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
+    property SearchType: TSearchWhat read FSearchType write FSearchType;
+    property SetObjectList: TSetObjectList read FSetObjectList;
   end;
 
 implementation
@@ -51,10 +57,29 @@ uses
   SysUtils, IniFiles, UFrmMain, USqLiteConnection, Data.DB,
   UStrings;
 
-//procedure TSearchResult.LoadByID(ID: Integer);
-//begin
-//
-//end;
+constructor TSearchResult.Create;
+begin
+  inherited;
 
+  FSetObjectList := TSetObjectList.Create;
+end;
+
+destructor TSearchResult.Destroy;
+begin
+  FSetObjectList.Free;
+
+  inherited;
+end;
+
+procedure TSearchResult.Clear;
+begin
+  FSetObjectList.Clear;
+end;
+
+procedure TSearchResult.LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
+begin
+  if FSearchType = cSEARCHTYPESET then
+    FSetObjectList.LoadFromQuery(FDQuery, IncludeBSSetID, SearchedInOwnedSets);
+end;
 
 end.

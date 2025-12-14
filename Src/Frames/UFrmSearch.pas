@@ -142,8 +142,7 @@ type
     procedure ActShowPartCountExecute(Sender: TObject);
   private
     { Private declarations }
-    FSetObjectList: TSetObjectList; // Stored locally from query result.
-    FResultPanels: TObjectList;
+    FSearchResult: TSearchResult; // Stored locally from query result.
     FImageCache: TImageCache;
     FDragStartPoint: TPoint;
     FDraggingStarted: Boolean;
@@ -191,6 +190,8 @@ procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
   inherited;
 
+  FSearchResult := TSearchResult.Create;
+
   CbxSearchStyle.Clear;
   CbxSearchStyle.Items.Add(StrSearchAll);
   CbxSearchStyle.Items.Add(StrSearchPrefix);
@@ -227,11 +228,6 @@ begin
   TrackYearFrom.Max := Round(numYearTicks+0.5);
   TrackYearTo.Max := TrackYearFrom.Max;
 
-  FResultPanels := TObjectList.Create;
-  FResultPanels.OwnsObjects := True;
-
-  FSetObjectList := TSetObjectList.Create;
-
 //  SbSearchResults.UseWheelForScrolling := True;
 end;
 
@@ -239,8 +235,7 @@ procedure TFrmSearch.FormDestroy(Sender: TObject);
 begin
   FConfig.Save(csSEARCHWINDOWFILTERS);
 
-  FResultPanels.Free;
-  FSetObjectList.Free;
+  FSearchResult.Free;
 
   inherited;
 end;
@@ -350,14 +345,14 @@ end;
 procedure TFrmSearch.FAdjustGrid();
 begin
   // recalculate visible column and rowcount for DgSetParts
-  if FSetObjectList.Count = 0 then begin
+  if FSearchResult.SetObjectList.Count = 0 then begin
     DgSets.ColCount := 0;
     DgSets.RowCount := 0;
   end else
     DgSets.ColCount := Max(1, Floor(DgSets.ClientWidth div (DgSets.DefaultColWidth+1)));
 
   if DgSets.ColCount <> FLastMaxCols then begin
-    DgSets.RowCount := Ceil(FSetObjectList.Count / DgSets.ColCount);
+    DgSets.RowCount := Ceil(FSearchResult.SetObjectList.Count / DgSets.ColCount);
     FLastMaxCols := DgSets.ColCount;
     DgSets.Invalidate;
   end;
@@ -428,8 +423,8 @@ var
   YPosition: Integer;
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     var ImageUrl := SetObject.SetImgUrl;
 
     var InfoRowCount := 0;
@@ -539,10 +534,10 @@ begin
       var Col, Row: Integer;
       DgSets.MouseToCell(X, Y, Col, Row);
       var Idx := FGetIndexByRowAndCol(Col, Row);
-      if (Idx >= 0) and (Idx < FSetObjectList.Count) then begin
+      if (Idx >= 0) and (Idx < FSearchResult.SetObjectList.Count) then begin
         // Populate drag data
         ClearDragData;
-        var SetObj := FSetObjectList[Idx];
+        var SetObj := FSearchResult.SetObjectList[Idx];
         if Assigned(SetObj) then begin
           if SetObj.BSSetID <> 0 then
             DraggedBSSetIDs.Add(SetObj.BSSetID)
@@ -577,7 +572,7 @@ begin
       DgSets.Selection := TGridRect(Rect(Col, Row, Col, Row));
 
     var Idx := FGetIndexByRowAndCol(Col, Row);
-    if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
+    if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
       // show context menu:
       var Pt := Point(X, Y);
       Pt := DgSets.ClientToScreen(Pt);
@@ -592,8 +587,8 @@ end;
 procedure TFrmSearch.DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     //"40211-1 (partcount), This is a set name (Year) - Theme name"
     var NumParts := '';
     If SetObject.SetNumParts <> 0 then
@@ -744,10 +739,7 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
 //  SbSearchResults.Visible := False;
   try
     // Clean up the list before adding new results
-    for var I:=FResultPanels.Count-1 downto 0 do
-      FResultPanels.Delete(I);
-
-    FSetObjectList.Clear;
+    FSearchResult.Clear;
 
     //Get tickcount for performance monitoring.
     //var Stopwatch := TStopWatch.Create;
@@ -783,12 +775,12 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
         end;
 
         // Run the query, and add the results into the ObjectList
-        FSetObjectList.LoadFromQuery(FDQuery, False, FConfig.WSearchMyCollection);
+        FSearchResult.LoadFromQuery(FDQuery, False, FConfig.WSearchMyCollection);
 
         FLastMaxCols := -1; // Force an invalidate
         FAdjustGrid;
 
-        SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSetObjectList.Count);
+        SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSearchResult.SetObjectList.Count);
       finally
         FDQuery.Free;
         FrmMain.ReleaseConnection(SqlConnection);
@@ -820,8 +812,8 @@ procedure TFrmSearch.ActAddSetToCollectionExecute(Sender: TObject);
 begin
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     var DlgAddToSetList := TDlgAddToSetList.Create(Self);
     try
       DlgAddToSetList.BSSetID := 0; // New
@@ -839,8 +831,8 @@ procedure TFrmSearch.ActViewSetExternalExecute(Sender: TObject);
 begin
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
   end;
 end;
@@ -1046,8 +1038,8 @@ begin
   // Open parts window
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     TFrmMain.ShowPartsWindow(SetObject.SetNum);
   end;
 end;
@@ -1057,8 +1049,8 @@ begin
   // Open set
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSetObjectList.Count) then begin
-    var SetObject := FSetObjectList[Idx];
+  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    var SetObject := FSearchResult.SetObjectList[Idx];
     TFrmMain.ShowSetWindow(SetObject.SetNum);
   end;
 end;
@@ -1083,7 +1075,7 @@ end;        }
 
 procedure TFrmSearch.SbSearchResultsMouseWheelDown(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
 begin
-// SbSearchResults.UseWheelForScrolling := True;//then
+// SbSearchResults.UseWheelForScrolling := True; //then
 end;
 
 procedure TFrmSearch.SbSearchResultsMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
