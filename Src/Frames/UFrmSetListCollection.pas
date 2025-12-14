@@ -13,6 +13,21 @@ uses
   USetList, USet, System.Generics.Collections;
 
 type
+  TExternalTypeFilters = (
+                         cETFALL = 0,
+                         cETFLOCAL = 1,       // So, not actually external
+                         cETFREBRICKABLE = 2, // Imported from Rebrickable
+                         cETFHASSETS = 3,
+                         cETFNOSETS = 4
+                       );
+
+  TColumns = (
+               colNAME = 0,
+               colSETS = 1,
+               colUSEINBUILD = 2,
+               colSORTINDEX = 3
+             );
+
   TFrmSetListCollection = class(TForm)
     ActionList1: TActionList;
     LvSetLists: TListView;
@@ -73,7 +88,7 @@ type
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
-    FSortColumn: Integer;
+    FSortColumn: TColumns;
     FSortDesc: Boolean;
 //    FPrevSelectedIndex: Integer;
     FIsDragHighlighting: Boolean;
@@ -89,18 +104,6 @@ type
   end;
 
 const
-  // External Type filters
-  cETFALL = 0;
-  cETFLOCAL = 1;       // So, not actually external
-  cETFREBRICKABLE = 2; // Imported from Rebrickable
-  cETFHASSETS = 3;
-  cETFNOSETS = 4;
-
-  colNAME = 0;
-  colSETS = 1;
-  colUSEINBUILD = 2;
-  colSORTINDEX = 3;
-
   // Size of ID batches when performing parameterized updates
   CHUNK_SIZE = 50;
 
@@ -206,13 +209,13 @@ begin
                         ' (select count(*) FROM BSSets s WHERE s.BSSetListID = m.ID) AS SetCount' +
                         ' FROM BSSetLists m';
 
-    if CbxFilter.ItemIndex = cETFLOCAL then
+    if CbxFilter.ItemIndex = Integer(cETFLOCAL) then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE ExternalID IS NULL'
-    else if CbxFilter.ItemIndex = cETFREBRICKABLE then
+    else if CbxFilter.ItemIndex = Integer(cETFREBRICKABLE) then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE ExternalID IS NOT NULL'
-    else if CbxFilter.ItemIndex = cETFHASSETS then
+    else if CbxFilter.ItemIndex = Integer(cETFHASSETS) then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE SetCount <> 0'
-    else if CbxFilter.ItemIndex = cETFNOSETS then
+    else if CbxFilter.ItemIndex = Integer(cETFNOSETS) then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' WHERE SetCount = 0';
     // Else, no filter.
 
@@ -266,9 +269,9 @@ end;
 
 procedure TFrmSetListCollection.LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
 begin
-  if FSortColumn = Column.Index then
+  if FSortColumn = TColumns(Column.Index) then
     FSortDesc := not FSortDesc;
-  FSortColumn := Column.Index;
+  FSortColumn := TColumns(Column.Index);
 
   //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
 

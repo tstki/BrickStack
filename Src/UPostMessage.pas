@@ -3,7 +3,8 @@ unit UPostMessage;
 interface
 
 uses
-  Windows, Messages;
+  Windows, Messages,
+  UConfig;
 
 type
   TShowSetData = record
@@ -28,7 +29,7 @@ type
   PShowOrUpdateSetListData = ^TShowOrUpdateSetListData;
 
   TOpenExternalData = record
-    ObjectType: Integer;
+    ObjectType: TViewExternalType;
     ObjectID: String;
   end;
   POpenExternalData = ^TOpenExternalData;

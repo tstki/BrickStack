@@ -5,7 +5,13 @@ unit UBSSQL;
 interface
 
 uses
-  USQLUpdate, SysUtils;
+  SysUtils;
+
+type
+  TTableSQL = record
+    TableName: String;
+    SQL: String;
+  end;
 
 const
   // Database version and changes:

@@ -7,8 +7,9 @@ uses
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
   Contnrs, USet, UConfig,
-  FireDAC.Stan.Param,
+  FireDAC.Comp.Client, FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
+  USearchResult,
   UImageCache, Vcl.Grids, Vcl.Menus, System.Actions, Vcl.ActnList;
 
 type
@@ -163,6 +164,9 @@ type
     procedure FSaveSortSettings;
     procedure FUncheckAllSortExcept(Sender: TObject);
     procedure FSetDefaultColumnDimensionsAndAdjustGrid;
+    procedure FBuildSetQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
+    procedure FBuiltPartQuery();
+    procedure FBuiltMinifigureQuery();
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -177,40 +181,11 @@ uses
   Math, Diagnostics, System.Types,
   Data.DB,
   StrUtils,
-  FireDAC.Comp.Client,
   USQLiteConnection,
   UDlgAddToSetList,
   UDragData,
   DateUtils,
   UFrmMain, UStrings;
-
-const
-  // Search locations
-  cYourCollections = 0;  // All the things. Locally                   // Generic search
-  cDatabase = 1;         // All the things. Database                  //
-  cYourSets = 2;         // Just your sets                            // Set search
-  cDatabaseSets = 3;     // Sets in the database (imported by csv)    //
-  cYourParts = 4;        // Just the parts in your collection         // Parts search
-  cDatabaseParts = 5;    // Parts in the database                     //
-  cYourMinifigs = 6;     // Your minifigs / minifigs in your sets     // Minifig search
-  cDatabaseMinifigs = 7; // Minifigs in the database                  //
-
-  //View External types:
-  cTYPESET = 0;
-  cTYPEPART = 1;
-  //cTYPEMINIFIG = 2; //Not used yet
-
-  // Search what
-  //cSetNumNameOrTheme = 0;
-  cSetNum = 0;
-  cName = 1;
-
-  // Search style for others:
-  cSearchAll = 0;    // "%SearchText%" // May find a lot more unrelated stuff
-  // Search style for sets:
-  cSearchPrefix = 1; // "SearchText%" // Also gets all versions
-  cSearchSuffix = 2; // "%SearchText" and "%Searchtext-1" // Find parts of sets
-  cSearchExact = 3; // "SearchText"
 
 procedure TFrmSearch.FormCreate(Sender: TObject);
 begin
@@ -223,24 +198,19 @@ begin
   CbxSearchStyle.Items.Add(StrSearchExact);
   CbxSearchStyle.ItemIndex := 0;
 
+  // This whole dialog is themed for search in sets, but we'll expand on that
   CbxSearchWhat.Clear;
-  CbxSearchWhat.Items.Add(StrSearchSets);
+  CbxSearchWhat.Items.Add(StrSearchSets);  //cSEARCHTYPESET
+  CbxSearchWhat.Items.Add(StrSearchParts); //cSEARCHTYPEPART
   //StrSearchMinifigures
-  //StrSearchParts
   //StrAny
   CbxSearchWhat.ItemIndex := 0;
 
   CbxSearchBy.Clear;
-  CbxSearchBy.Items.Add(StrSearchSetNum);
-  CbxSearchBy.Items.Add(StrSearchName);
+  CbxSearchBy.Items.Add(StrSearchNumber); // cNUMBER
+  CbxSearchBy.Items.Add(StrSearchName);   // cNAME
+  //cAny
   CbxSearchBy.ItemIndex := 0;
-
-  //This whole dialog is themed for search in sets.
-{  CbxSearchType.Clear;
-  CbxSearchType.Items.Add(StrSearchSets);
-  CbxSearchType.Items.Add(StrSearchMinifigs);
-  CbxSearchType.Items.Add(StrSearchParts);
-  CbxSearchType.ItemIndex := 0;    }
 
   // Template used for other results:
   //PnlTemplateResult.Parent := nil;
@@ -639,6 +609,118 @@ begin
     SbResults.Panels[1].Text := '';
 end;
 
+procedure TFrmSearch.FBuildSetQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
+begin
+  var ThemeID := 0;
+
+  if OwnCollection then begin
+    FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
+                        ' FROM BSSets bss'+
+                        ' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
+                        ' INNER JOIN BSSetLists bl on bl.id = bss.BSSetListID' +
+                        ' WHERE (year between :fromyear and :toyear) AND' +
+                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                        ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+    if CbxThemes.ItemIndex <> 0 then begin
+      ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+      if ThemeID > 0 then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
+    end;
+
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
+                                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
+                                           ' GROUP BY bss.BSSetListID, s.set_num ';
+  end else begin
+    FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
+                        ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
+                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                        ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+    if CbxThemes.ItemIndex <> 0 then begin
+      ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+      if ThemeID > 0 then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
+    end;
+  end;
+
+  //order by
+  var SortSql := '';
+  if FConfig.WSearchSortByNumber then
+    SortSql := 's.set_num'
+  else if FConfig.WSearchSortByName then
+    SortSql := 's.name'
+  else if FConfig.WSearchSortByYear then
+    SortSql := 's.year'
+  else if FConfig.WSearchSortByTheme then
+    SortSql := 's.theme_id'
+  else if FConfig.WSearchSortByPartCount then
+    SortSql := 's.num_parts';
+
+  if SortSql <> '' then begin
+    if FConfig.WPartsSortAscending then
+      SortSql := 'ORDER BY ' + SortSql + ' ASC'
+    else
+      SortSql := 'ORDER BY ' + SortSql + ' DESC';
+  end;
+
+  if FConfig.WSearchMyCollection then begin
+    if SortSql <> '' then
+      SortSql := SortSql + ', s.set_num, bss.bssetlistid'
+    else
+      SortSql := 'ORDER BY s.set_num, bss.bssetlistid';
+  end;
+
+  FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
+
+  // Limit results
+  FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
+
+  // Fill the params
+  var Params := FDQuery.Params;
+  var SearchValue1 := EditSearchText.Text;
+  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchAll then
+    SearchValue1 := '%' + EditSearchText.Text + '%'
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchPrefix then
+    SearchValue1 := EditSearchText.Text + '%'
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchSuffix then
+    SearchValue1 := '%' + EditSearchText.Text
+  else
+    SearchValue1 := EditSearchText.Text;
+
+  var SearchValue2 := SearchValue1 + '-1';
+  Params.ParamByName('Param1').AsString := SearchValue1;
+
+  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    Params.ParamByName('Param2').AsString := SearchValue2;
+
+  Params.ParamByName('fromyear').AsInteger := FGetFromYear;
+  Params.ParamByName('toyear').AsInteger := FGetToYear;
+  Params.ParamByName('fromparts').AsInteger := FGetFromParts;
+  Params.ParamByName('toparts').AsInteger := FGetToParts;
+  if ThemeID > 0 then
+    Params.ParamByName('themeid').AsInteger := ThemeID;
+end;
+
+procedure TFrmSearch.FBuiltPartQuery();
+begin
+//
+end;
+
+procedure TFrmSearch.FBuiltMinifigureQuery();
+begin
+//
+end;
+
 procedure TFrmSearch.FDoSearch;
 begin
   if EditSearchText.Text = '' then
@@ -675,15 +757,15 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
       var FDQuery := TFDQuery.Create(nil);
       try
         var SearchSubject := '';
-        if CbxSearchBy.ItemIndex = cSetNum then
+        if TSearchBy(CbxSearchStyle.ItemIndex) = cNUMBER then
           SearchSubject := 's.set_num'
-        else // cName
+        else // cNAME
           SearchSubject := 's.name';
-        //cSetNumNameOrTheme
+        //cNUMORNAME
         // special handling
 
         var SearchLikeOrExact := '';
-        if CbxSearchStyle.ItemIndex = cSearchExact then
+        if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchExact then
           SearchLikeOrExact := '='
         else
           SearchLikeOrExact := 'LIKE';
@@ -691,105 +773,16 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
         // Set up the query
         FDQuery.Connection := SqlConnection;
 
-        var ThemeID := 0;
-
-        // Build the query
-        if FConfig.WSearchMyCollection then begin
-          FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
-                              ' FROM BSSets bss'+
-                              ' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
-                              ' INNER JOIN BSSetLists bl on bl.id = bss.BSSetListID' +
-                              ' WHERE (year between :fromyear and :toyear) AND' +
-                              ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
-                              ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
-            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-          FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
-
-          if CbxThemes.ItemIndex <> 0 then begin
-            ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
-            if ThemeID > 0 then
-              FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
-          end;
-
-          FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
-                                                 ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
-            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-          FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
-                                                 ' GROUP BY bss.BSSetListID, s.set_num ';
-        end else begin
-          FDQuery.SQL.Text := 'SELECT s.set_num, s.name, s.year, s.img_url, s.num_parts' + //, theme_id
-                              ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
-                              ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
-                              ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-          if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
-            FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-          FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
-
-          if CbxThemes.ItemIndex <> 0 then begin
-            ThemeID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
-            if ThemeID > 0 then
-              FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.theme_id = :themeid';
-          end;
+        //CbxSearchWhat
+        if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPESET then
+          FBuildSetQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
+        else begin // cTYPEPART
+          //FBuiltPartQuery()
+        //end else begin // cTYPEMINIFIGURE
+          //FBuiltMinifigureQuery()
         end;
 
-        //order by
-        var SortSql := '';
-        if FConfig.WSearchSortByNumber then
-          SortSql := 's.set_num'
-        else if FConfig.WSearchSortByName then
-          SortSql := 's.name'
-        else if FConfig.WSearchSortByYear then
-          SortSql := 's.year'
-        else if FConfig.WSearchSortByTheme then
-          SortSql := 's.theme_id'
-        else if FConfig.WSearchSortByPartCount then
-          SortSql := 's.num_parts';
-
-        if SortSql <> '' then begin
-          if FConfig.WPartsSortAscending then
-            SortSql := 'ORDER BY ' + SortSql + ' ASC'
-          else
-            SortSql := 'ORDER BY ' + SortSql + ' DESC';
-        end;
-
-        if FConfig.WSearchMyCollection then begin
-          if SortSql <> '' then
-            SortSql := SortSql + ', s.set_num, bss.bssetlistid'
-          else
-            SortSql := 'ORDER BY s.set_num, bss.bssetlistid';
-        end;
-
-        FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
-
-        // Limit results
-        FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
-
-        var Params := FDQuery.Params;
-        var SearchValue1 := EditSearchText.Text;
-        if CbxSearchStyle.ItemIndex = cSearchAll then
-          SearchValue1 := '%' + EditSearchText.Text + '%'
-        else if CbxSearchStyle.ItemIndex = cSearchPrefix then
-          SearchValue1 := EditSearchText.Text + '%'
-        else if CbxSearchStyle.ItemIndex = cSearchSuffix then
-          SearchValue1 := '%' + EditSearchText.Text
-        else
-          SearchValue1 := EditSearchText.Text;
-
-        var SearchValue2 := SearchValue1 + '-1';
-        Params.ParamByName('Param1').AsString := SearchValue1;
-
-        if CbxSearchStyle.ItemIndex in [cSearchSuffix, cSearchExact] then
-          Params.ParamByName('Param2').AsString := SearchValue2;
-
-        Params.ParamByName('fromyear').AsInteger := FGetFromYear;
-        Params.ParamByName('toyear').AsInteger := FGetToYear;
-        Params.ParamByName('fromparts').AsInteger := FGetFromParts;
-        Params.ParamByName('toparts').AsInteger := FGetToParts;
-        if ThemeID > 0 then
-          Params.ParamByName('themeid').AsInteger := ThemeID;
-
+        // Run the query, and add the results into the ObjectList
         FSetObjectList.LoadFromQuery(FDQuery, False, FConfig.WSearchMyCollection);
 
         FLastMaxCols := -1; // Force an invalidate

@@ -4,6 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  UConfig,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
 
 type
@@ -20,15 +21,15 @@ type
     procedure FormShow(Sender: TObject);
   private
     { Private declarations }
-    FPartOrSet: Integer;
+    FPartOrSet: TViewExternalType;
     FPartOrSetNumber: String;
-    FOpenType: Integer;
+    FOpenType: TExternalOpenType;
     FCheckState: Boolean;
   public
     { Public declarations }
-    property PartOrSet: Integer read FPartOrSet write FPartOrSet;
+    property PartOrSet: TViewExternalType read FPartOrSet write FPartOrSet;
     property PartOrSetNumber: String read FPartOrSetNumber write FPartOrSetNumber;
-    property OpenType: Integer read FOpenType;
+    property OpenType: TExternalOpenType read FOpenType;
     property CheckState: Boolean read FCheckState;
   end;
 
@@ -37,7 +38,6 @@ implementation
 {$R *.dfm}
 
 uses
-  UConfig,
   UStrings;
 
 procedure TDlgViewExternal.FormShow(Sender: TObject);
@@ -59,7 +59,7 @@ end;
 
 procedure TDlgViewExternal.BtnOKClick(Sender: TObject);
 begin
-  FOpenType := Integer(CbxOpenType.Items.Objects[CbxOpenType.ItemIndex]);
+  FOpenType := TExternalOpenType(CbxOpenType.Items.Objects[CbxOpenType.ItemIndex]);
   FCheckState := ChkOpenWhereNewDefault.Checked;
 end;
 

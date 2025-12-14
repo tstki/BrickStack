@@ -97,8 +97,8 @@ const
   StrSearchSuffix = '% suffix';
   StrSearchExact = 'Exact';
 
-  StrSearchSetNum = 'Set number';
-  StrSearchName = 'Set name';
+  StrSearchNumber = 'Number';
+  StrSearchName = 'Name';
 
   StrSearchSets = 'Sets';
   StrSearchMinifigs = 'Minifigures';

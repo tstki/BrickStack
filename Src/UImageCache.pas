@@ -8,17 +8,19 @@ uses
   UConfig;
 
 const
-  // Image dimensions
-  cidMAX96 = 0;
-  cidMAX128 = 1;
-  cidMAX256 = 2;
-  cidMAX512 = 3;
-
   DefaultNoImage = 'https://rebrickable.com/media/thumbs/nil.png/250x250p.png';
   // Missing minifig default: https://rebrickable.com/static/img/nil_mf.jpg
   // Missing part default:    https://rebrickable.com/media/thumbs/nil.png/250x250p.png
 
 type
+  // Image dimensions
+  TImagedimensions = (
+                       cidMAX96 = 0,
+                       cidMAX128 = 1,
+                       cidMAX256 = 2,
+                       cidMAX512 = 3
+                     );
+
   TImageCache = class(TObject)
   private
     { Private declarations }
@@ -33,7 +35,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure AddImage(const Url: string; Picture: TPicture);
-    function GetImage(const Url: string; const ImageType: Integer): TPicture;
+    function GetImage(const Url: string; const Imagedimension: TImagedimensions): TPicture;
     procedure SaveImage(const Url: String; Picture: TPicture);
     property Config: TConfig read FConfig write FConfig;
   end;
@@ -190,7 +192,7 @@ begin
   end;
 end;
 
-function TImageCache.GetImage(const Url: string; const ImageType: Integer): TPicture;
+function TImageCache.GetImage(const Url: string; const Imagedimension: TImagedimensions): TPicture;
 begin
   // todo: add width/height param.
   // parse URL to get thumbnail instead of full size image.
@@ -207,12 +209,12 @@ begin
   }
 
   if Url = '' then begin
-    Result := GetImage(DefaultNoImage, ImageType);
+    Result := GetImage(DefaultNoImage, Imagedimension);
     Exit;
   end;
 
   var SizeSuffix := '';
-  case ImageType of
+  case Imagedimension of
     cidMAX96:
       SizeSuffix := '/96x96p';
     cidMAX128:

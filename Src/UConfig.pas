@@ -6,6 +6,48 @@ uses
   System.Classes, Forms, IniFiles;
 
 type
+  // Open Types for links to external sites:
+  TExternalOpenType = ( // Source
+                        cOTNONE = 0,        // None selected yet
+                        cOTREBRICKABLE = 1, // Parts and sets
+                        cOTBRICKLINK = 2,   //
+                        cOTBRICKOWL = 3,    //
+                        cOTBRICKSET = 4,    // Sets
+                        cOTLDRAW = 5,       // Parts
+                        cOTCUSTOM = 6       // Parts and sets (probably)
+                      );
+
+  // Doubleclick action windows
+  TDoubleClickActionType = (
+                             cACTIONSEARCH = 0,
+                             cACTIONCOLLECTION = 1,
+                             cACTIONSETLIST = 2,
+                             cACTIONPARTS = 3      // Only view parts, not edit parts.
+                           );
+
+  TDoubleClickAction = (
+                         caVIEW = 0,
+                         caVIEWEXTERNAL = 1,
+                         caEDITDETAILS = 2,
+                         caVIEWPARTS = 3,
+                         caEDITPARTS = 4
+                       );
+
+  //View External types:
+  TViewExternalType = (
+                        cTYPESET = 0,
+                        cTYPEPART = 1,
+                        cTYPEMINIFIG = 2 // Not used yet
+                      );
+
+  //Config sections - used for saving specific sections instead of "everything"
+  TConfigSection = (  csALL = 0,
+                      csCONFIGDIALOG = 1,
+                      csWINDOWPOSITIONS = 2,
+                      csPARTSWINDOWFILTERS = 3,
+                      csSEARCHWINDOWFILTERS = 4
+                    );
+  
   TClientFormStorage = class(TObject)
   private
     FOpenOnLoad: String;
@@ -40,16 +82,16 @@ type
     FViewBrickOwlUrl: String;
     FViewBrickSetUrl: String;
     FViewLDrawUrl: String;
-    FDefaultViewSetOpenType: Integer;
-    FDefaultViewPartOpenType: Integer;
+    FDefaultViewSetOpenType: TExternalOpenType;
+    FDefaultViewPartOpenType: TExternalOpenType;
     FDbasePath: String;
     FImportPath: String;
     FExportPath: String;
     FVisualStyle: String;
-    FSearchListDoubleClickAction: Integer;
-    FCollectionListDoubleClickAction: Integer;
-    FSetListDoubleClickAction: Integer;
-    FPartsListDoubleClickAction: Integer;
+    FSearchListDoubleClickAction: TDoubleClickAction;
+    FCollectionListDoubleClickAction: TDoubleClickAction;
+    FSetListDoubleClickAction: TDoubleClickAction;
+    FPartsListDoubleClickAction: TDoubleClickAction;
 
     // Parts window settings:
     FWPartsShowPartCount: Boolean;
@@ -96,7 +138,7 @@ type
     { Public declarations }
     constructor Create;
     destructor Destroy; override;
-    procedure Save(Section: Integer);
+    procedure Save(Section: TConfigSection);
     procedure Load;
     procedure ResetFramesOpenOnLoad;
     procedure ResetFramesDimensions;
@@ -111,16 +153,16 @@ type
     property ViewBrickOwlUrl: String read FViewBrickOwlUrl write FViewBrickOwlUrl;
     property ViewBrickSetUrl: String read FViewBrickSetUrl write FViewBrickSetUrl;
     property ViewLDrawUrl: String read FViewLDrawUrl write FViewLDrawUrl;
-    property DefaultViewSetOpenType: Integer read FDefaultViewSetOpenType write FDefaultViewSetOpenType;
-    property DefaultViewPartOpenType: Integer read FDefaultViewPartOpenType write FDefaultViewPartOpenType;
+    property DefaultViewSetOpenType: TExternalOpenType read FDefaultViewSetOpenType write FDefaultViewSetOpenType;
+    property DefaultViewPartOpenType: TExternalOpenType read FDefaultViewPartOpenType write FDefaultViewPartOpenType;
     property DbasePath: String read FDbasePath write FDbasePath;
     property ImportPath: String read FImportPath write FImportPath;
     property ExportPath: String read FExportPath write FExportPath;
     property VisualStyle: String read FVisualStyle write FVisualStyle;
-    property SearchListDoubleClickAction: Integer read FSearchListDoubleClickAction write FSearchListDoubleClickAction;
-    property CollectionListDoubleClickAction: Integer read FCollectionListDoubleClickAction write FCollectionListDoubleClickAction;
-    property SetListDoubleClickAction: Integer read FSetListDoubleClickAction write FSetListDoubleClickAction;
-    property PartsListDoubleClickAction: Integer read FPartsListDoubleClickAction write FPartsListDoubleClickAction;
+    property SearchListDoubleClickAction: TDoubleClickAction read FSearchListDoubleClickAction write FSearchListDoubleClickAction;
+    property CollectionListDoubleClickAction: TDoubleClickAction read FCollectionListDoubleClickAction write FCollectionListDoubleClickAction;
+    property SetListDoubleClickAction: TDoubleClickAction read FSetListDoubleClickAction write FSetListDoubleClickAction;
+    property PartsListDoubleClickAction: TDoubleClickAction read FPartsListDoubleClickAction write FPartsListDoubleClickAction;
 
     property WPartsShowPartCount: Boolean read FWPartsShowPartCount write FWPartsShowPartCount;
     property WPartsShowPartnum: Boolean read FWPartsShowPartnum write FWPartsShowPartnum;
@@ -166,40 +208,6 @@ type
     property FrmParts: TClientFormStorage read FFrmParts write FFrmParts;
     property FrmSearch: TClientFormStorage read FFrmSearch write FFrmSearch;
   end;
-
-const
-  // Open Types for links to external sites:
-  cOTNONE = 0;        // None selected yet
-  cOTREBRICKABLE = 1; // Parts and sets
-  cOTBRICKLINK = 2;   //
-  cOTBRICKOWL = 3;    //
-  cOTBRICKSET = 4;    // Sets
-  cOTLDRAW = 5;       // Parts
-  cOTCUSTOM = 6;      // Parts and sets (probably)
-
-  // Doubleclick action windows
-  cACTIONSEARCH = 0;
-  cACTIONCOLLECTION = 1;
-  cACTIONSETLIST = 2;
-  cACTIONPARTS = 3; // Only view parts, not edit parts.
-
-  caVIEW = 0;
-  caVIEWEXTERNAL = 1;
-  caEDITDETAILS = 2;
-  caVIEWPARTS = 3;
-  caEDITPARTS = 4;
-
-  //View External types:
-  cTYPESET = 0;
-  cTYPEPART = 1;
-  //cTYPEMINIFIG = 2; //Not used yet
-
-  //Config sections - used for saving specific sections instead of "everything"
-  csALL = 0;
-  csCONFIGDIALOG = 1;
-  csWINDOWPOSITIONS = 2;
-  csPARTSWINDOWFILTERS = 3;
-  csSEARCHWINDOWFILTERS = 4;
 
 implementation
 
@@ -288,7 +296,7 @@ begin
   //
 end;
 
-procedure TConfig.Save(Section: Integer);
+procedure TConfig.Save(Section: TConfigSection);
 begin
   var FilePath := ExtractFilePath(ParamStr(0));
   var IniFile := TIniFile.Create(FilePath + StrIniFileName);
@@ -304,8 +312,8 @@ begin
       IniFile.WriteString(StrExternalIniSection, 'ViewBrickOwlUrl', FViewBrickOwlUrl);
       IniFile.WriteString(StrExternalIniSection, 'ViewBrickSetUrl', FViewBrickSetUrl);
       IniFile.WriteString(StrExternalIniSection, 'ViewLDrawUrl', FViewLDrawUrl);
-      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewSetOpenType', FDefaultViewSetOpenType);
-      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewPartOpenType', FDefaultViewPartOpenType);
+      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewSetOpenType', Integer(FDefaultViewSetOpenType));
+      IniFile.WriteInteger(StrExternalIniSection, 'DefaultViewPartOpenType', Integer(FDefaultViewPartOpenType));
 
       IniFile.WriteString(StrLocalIniSection, 'LocalImageCachePath', FLocalImageCachePath);
       IniFile.WriteString(StrLocalIniSection, 'LocalLogsPath', FLocalLogsPath);
@@ -316,12 +324,12 @@ begin
       IniFile.WriteString(StrApplicationIniSection, 'VisualStyle', FVisualStyle);
       IniFile.WriteBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', FReOpenWindowsAfterRestart);
 
-      IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', FSearchListDoubleClickAction);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', Integer(FSearchListDoubleClickAction));
       IniFile.WriteInteger(StrSearchWindowIniSection, 'SearchLimit', FSearchLimit);
 
-      IniFile.WriteInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', FCollectionListDoubleClickAction);
-      IniFile.WriteInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', FSetListDoubleClickAction);
-      IniFile.WriteInteger(StrSetPartsWindowIniSection, 'PartsListDoubleClickAction', FPartsListDoubleClickAction);
+      IniFile.WriteInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', Integer(FCollectionListDoubleClickAction));
+      IniFile.WriteInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', Integer(FSetListDoubleClickAction));
+      IniFile.WriteInteger(StrSetPartsWindowIniSection, 'PartsListDoubleClickAction', Integer(FPartsListDoubleClickAction));
 
       IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementClick', FPartIncrementClick);
       IniFile.WriteInteger(StrSetlistWindowIniSection, 'PartIncrementShiftClick', FPartIncrementShiftClick);
@@ -396,8 +404,8 @@ begin
     FViewBrickOwlUrl := IniFile.ReadString(StrExternalIniSection, 'ViewBrickOwlUrl', 'https://www.brickowl.com/');
     FViewBrickSetUrl := IniFile.ReadString(StrExternalIniSection, 'ViewBrickSetUrl', 'https://www.brickset.com/');
     FViewLDrawUrl := IniFile.ReadString(StrExternalIniSection, 'ViewLDrawUrl', 'https://library.ldraw.org/');
-    FDefaultViewSetOpenType := IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewSetOpenType', cOTNONE);
-    FDefaultViewPartOpenType := IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewPartOpenType', cOTNONE);
+    FDefaultViewSetOpenType := TExternalOpenType(IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewSetOpenType', Integer(cOTNONE)));
+    FDefaultViewPartOpenType := TExternalOpenType(IniFile.ReadInteger(StrExternalIniSection, 'DefaultViewPartOpenType', Integer(cOTNONE)));
 
     FLocalImageCachePath := ReadStringWithDefaultPath(StrLocalIniSection, 'LocalImageCachePath', FilePath, StrDefaultCachePath, IniFile);
     FLocalLogsPath := ReadStringWithDefaultPath(StrLocalIniSection, 'LocalLogsPath', FilePath, StrDefaultLogPath, IniFile);
@@ -414,7 +422,7 @@ begin
     FVisualStyle := IniFile.ReadString(StrApplicationIniSection, 'VisualStyle', 'Windows');
     FReOpenWindowsAfterRestart := IniFile.ReadBool(StrWindowsIniSection, 'ReOpenWindowsAfterRestart', False);
 
-    FSearchListDoubleClickAction := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', caVIEW);
+    FSearchListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchListDoubleClickAction', Integer(caVIEW)));
     FSearchLimit := IniFile.ReadInteger(StrSearchWindowIniSection, 'SearchLimit', 4);
     FWSearchGridSize := IniFile.ReadInteger(StrSearchWindowIniSection, 'WSearchGridSize', 64);
     FWSearchShowNumber := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowNumber', True);
@@ -430,9 +438,9 @@ begin
     FWSearchSortByYear := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', False);
     FWSearchMyCollection := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', False);
 
-    FCollectionListDoubleClickAction := IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', caVIEW);
-    FSetListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', caVIEW);
-    FPartsListDoubleClickAction := IniFile.ReadInteger(StrSetlistWindowIniSection, 'PartListDoubleClickAction', caVIEWEXTERNAL);
+    FCollectionListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', Integer(caVIEW)));
+    FSetListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', Integer(caVIEW)));
+    FPartsListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrSetlistWindowIniSection, 'PartListDoubleClickAction', Integer(caVIEWEXTERNAL)));
 
     // Window positions
     FFrmSearch.Load(IniFile, StrSearchWindowIniSection, 'FrmSearch');

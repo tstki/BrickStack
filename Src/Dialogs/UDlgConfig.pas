@@ -176,7 +176,7 @@ uses
 
 procedure TDlgConfig.FormCreate(Sender: TObject);
 
-  procedure FFillPulldown(CbxOpenType: TComboBox; PartOrSet: Integer);
+  procedure FFillPulldown(CbxOpenType: TComboBox; ExternalType: TViewExternalType);
   begin
     CbxOpenType.Items.BeginUpdate;
     try
@@ -185,7 +185,7 @@ procedure TDlgConfig.FormCreate(Sender: TObject);
       CbxOpenType.AddItem(StrOTRebrickable, TObject(cOTREBRICKABLE));
       CbxOpenType.AddItem(StrOTBrickLink, TObject(cOTBRICKLINK));
       CbxOpenType.AddItem(StrOTBrickOwl, TObject(cOTBRICKOWL));
-      if PartOrSet = cTYPESET then
+      if ExternalType = cTYPESET then
         CbxOpenType.AddItem(StrOTBrickSet, TObject(cOTBRICKSET))
       else
         CbxOpenType.AddItem(StrOTLDraw, TObject(cOTLDRAW));
@@ -195,7 +195,7 @@ procedure TDlgConfig.FormCreate(Sender: TObject);
     end;
   end;
 
-  procedure FFillActions(CbxActionType: TComboBox; WindowID: Integer);
+  procedure FFillActions(CbxActionType: TComboBox; WindowID: TDoubleClickActionType);
   begin
     CbxActionType.Items.BeginUpdate;
     try
@@ -340,17 +340,30 @@ end;
 
 procedure TDlgConfig.FSetConfig(Config: TConfig);
 
-  function FGetItemIndexByValue(Cbx: TComboBox; Value: Integer): Integer;
+  function FGetItemIndexByValue(Cbx: TComboBox; Value: TExternalOpenType): Integer;
   begin
     for var I := 0 to Cbx.Items.Count-1 do begin
-      var ObjectValue := Integer(Cbx.Items.Objects[I]);
+      var ObjectValue := TExternalOpenType(Cbx.Items.Objects[I]);
       if ObjectValue = Value then begin
-        Result := I;
+        Result := (I);
         Exit;
       end;
     end;
 
-    Result := 0;
+    Result := (0);
+  end;
+
+  function FGetDoubleClickItemIndexByValue(Cbx: TComboBox; Value: TDoubleClickAction): Integer;
+  begin
+    for var I := 0 to Cbx.Items.Count-1 do begin
+      var ObjectValue := TDoubleClickAction(Cbx.Items.Objects[I]);
+      if ObjectValue = Value then begin
+        Result := (I);
+        Exit;
+      end;
+    end;
+
+    Result := (0);
   end;
 
 begin
@@ -390,10 +403,10 @@ begin
   TrackResultLimit.Position := Config.SearchLimit;
 
   // Actions
-  CbxSearchListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxSearchListDoubleClickAction, Config.SearchListDoubleClickAction);
-  CbxCollectionListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxCollectionListDoubleClickAction, Config.CollectionListDoubleClickAction);
-  CbxSetListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxSetListDoubleClickAction, Config.SetListDoubleClickAction);
-  CbxPartsListDoubleClickAction.ItemIndex := FGetItemIndexByValue(CbxPartsListDoubleClickAction, Config.PartsListDoubleClickAction);
+  CbxSearchListDoubleClickAction.ItemIndex := FGetDoubleClickItemIndexByValue(CbxSearchListDoubleClickAction, Config.SearchListDoubleClickAction);
+  CbxCollectionListDoubleClickAction.ItemIndex := FGetDoubleClickItemIndexByValue(CbxCollectionListDoubleClickAction, Config.CollectionListDoubleClickAction);
+  CbxSetListDoubleClickAction.ItemIndex := FGetDoubleClickItemIndexByValue(CbxSetListDoubleClickAction, Config.SetListDoubleClickAction);
+  CbxPartsListDoubleClickAction.ItemIndex := FGetDoubleClickItemIndexByValue(CbxPartsListDoubleClickAction, Config.PartsListDoubleClickAction);
 
   PCConfig.ActivePage := TsAuthentication;
 
@@ -433,8 +446,8 @@ begin
   Config.ViewBrickOwlUrl := EditViewBrickOwlUrl.Text;
   Config.ViewBrickSetUrl := EditViewBrickSetUrl.Text;
   Config.ViewLDrawUrl := EditViewLDrawUrl.Text;
-  Config.DefaultViewSetOpenType := Integer(CbxViewSetDefault.Items.Objects[CbxViewSetDefault.ItemIndex]);
-  Config.DefaultViewPartOpenType := Integer(CbxViewPartDefault.Items.Objects[CbxViewPartDefault.ItemIndex]);
+  Config.DefaultViewSetOpenType := TExternalOpenType(CbxViewSetDefault.Items.Objects[CbxViewSetDefault.ItemIndex]);
+  Config.DefaultViewPartOpenType := TExternalOpenType(CbxViewPartDefault.Items.Objects[CbxViewPartDefault.ItemIndex]);
 
   // Local
   Config.LocalImageCachePath := EditLocalImageCachePath.Text;
@@ -452,10 +465,10 @@ begin
   Config.PartIncrementCtrlShiftClick := StrToIntDef(EditPartIncrementCtrlShiftClick.Text, 1);
 
   // Actions
-  Config.SearchListDoubleClickAction := Integer(CbxSearchListDoubleClickAction.Items.Objects[CbxSearchListDoubleClickAction.ItemIndex]);
-  Config.CollectionListDoubleClickAction := Integer(CbxCollectionListDoubleClickAction.Items.Objects[CbxCollectionListDoubleClickAction.ItemIndex]);
-  Config.SetListDoubleClickAction := Integer(CbxSetListDoubleClickAction.Items.Objects[CbxSetListDoubleClickAction.ItemIndex]);
-  Config.PartsListDoubleClickAction := Integer(CbxPartsListDoubleClickAction.Items.Objects[CbxPartsListDoubleClickAction.ItemIndex]);
+  Config.SearchListDoubleClickAction := TDoubleClickAction(CbxSearchListDoubleClickAction.Items.Objects[CbxSearchListDoubleClickAction.ItemIndex]);
+  Config.CollectionListDoubleClickAction := TDoubleClickAction(CbxCollectionListDoubleClickAction.Items.Objects[CbxCollectionListDoubleClickAction.ItemIndex]);
+  Config.SetListDoubleClickAction := TDoubleClickAction(CbxSetListDoubleClickAction.Items.Objects[CbxSetListDoubleClickAction.ItemIndex]);
+  Config.PartsListDoubleClickAction := TDoubleClickAction(CbxPartsListDoubleClickAction.Items.Objects[CbxPartsListDoubleClickAction.ItemIndex]);
 
   ModalResult := mrOK;
 end;

@@ -132,7 +132,7 @@ type
     class procedure ShowPartsWindow(const set_num: String);
     class procedure EditPartsWindow(const set_num: String; const BSSetID: Integer);
     class procedure ShowSetListWindow(const BSSetListID: Integer);
-    class procedure OpenExternal(ObjectType: Integer; const ObjectID: String);
+    class procedure OpenExternal(ObjectType: TViewExternalType; const ObjectID: String);
     class procedure ShowSearchWindow;
     class procedure ShowCollectionWindow;
     class procedure UpdateSetsByCollectionID(BSSetListID: Integer);
@@ -529,9 +529,9 @@ begin
 
   var OpenType := cOTNONE;
   if (MsgData.ObjectType = cTYPESET) and (FConfig.DefaultViewSetOpenType <> cOTNONE) then begin
-    OpenType := FConfig.DefaultViewSetOpenType;
+    OpenType := TExternalOpenType(FConfig.DefaultViewSetOpenType);
   end else if (MsgData.ObjectType = cTYPEPART) and (FConfig.DefaultViewPartOpenType <> cOTNONE) then begin
-    OpenType := FConfig.DefaultViewPartOpenType;
+    OpenType := TExternalOpenType(FConfig.DefaultViewPartOpenType);
   end else begin // No default, ask the user what to use
     var Dlg := TDlgViewExternal.Create(Self);
     try
@@ -781,7 +781,7 @@ begin
 end;
 
 // May be set_num or part_num
-class procedure TFrmMain.OpenExternal(ObjectType: Integer; const ObjectID: String);
+class procedure TFrmMain.OpenExternal(ObjectType: TViewExternalType; const ObjectID: String);
 var
   PostData: POpenExternalData;
 begin

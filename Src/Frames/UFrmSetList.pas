@@ -14,6 +14,25 @@ uses
 type
   TCellAction = (caNone, caLeftClick, caDoubleClick, caRightClick);
 
+  TSetListFilter = (
+                         fltALL = 0,
+                         fltQUANTITY = 1,
+                         fltBUILT = 2,
+                         fltNOTBUILT = 3,
+                         fltSPAREPARTS = 4,
+                         fltNOSPAREPARTS = 5
+                       );
+
+  TSetListColumn = (
+                         colNAME = 0,
+                         colBSID = 1,
+                         colSETNUM = 2,
+                         colQTY = 3,
+                         colBUILD = 4,
+                         colSPARES = 5,
+                         colNOTE = 6
+                       );
+
   TFrmSetList = class(TForm)
     Panel1: TPanel;
     LblFilter: TLabel;
@@ -82,7 +101,7 @@ type
     FConfig: TConfig;
     FBSSetListID: Integer;
     FLvSetsLastClickPos: TPoint;
-    FSortColumn: Integer;
+    FSortColumn: TSetListColumn;
     FSortDesc: Boolean;
     procedure FSetConfig(Config: TConfig);
     procedure FSetBSSetListObject(SetListObject: TSetListObject; OwnsObject: Boolean);
@@ -115,23 +134,6 @@ uses
   USqLiteConnection,
   UITypes,
   UFrmMain, UDlgAddToSetList, UStrings, UDragData;
-
-const //CbxFilter
-  fltALL = 0;
-  fltQUANTITY = 1;
-  fltBUILT = 2;
-  fltNOTBUILT = 3;
-  fltSPAREPARTS = 4;
-  fltNOSPAREPARTS = 5;
-  //custom tag
-
-  colNAME = 0;
-  colBSID = 1;
-  colSETNUM = 2;
-  colQTY = 3;
-  colBUILD = 4;
-  colSPARES = 5;
-  colNOTE = 6;
 
 procedure TFrmSetList.FormCreate(Sender: TObject);
 begin
@@ -400,7 +402,7 @@ begin
                           ' left join themes t on t.id = s.theme_id' +
                           ' where ms.BSSetListID = :BSSetListID';
 
-      if CbxFilter.ItemIndex = fltQUANTITY then begin
+      if CbxFilter.ItemIndex = Integer(fltQUANTITY) then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN ('+
                                                ' SELECT s2.set_num' +
                                                ' FROM BSSets ms2' +
@@ -408,13 +410,13 @@ begin
                                                ' WHERE ms2.BSSetListID IN (:BSSetListID)' +
                                                ' GROUP BY s2.set_num' +
                                                ' HAVING COUNT(*) > 1);'
-      end else if CbxFilter.ItemIndex = fltBUILT then begin
+      end else if CbxFilter.ItemIndex = Integer(fltBUILT) then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' and built = 1';
-      end else if CbxFilter.ItemIndex = fltNOTBUILT then begin
+      end else if CbxFilter.ItemIndex = Integer(fltNOTBUILT) then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' and built = 0';
-      end else if CbxFilter.ItemIndex = fltSPAREPARTS then begin
+      end else if CbxFilter.ItemIndex = Integer(fltSPAREPARTS) then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' and havespareparts = 1';
-      end else if CbxFilter.ItemIndex = fltNOSPAREPARTS then begin
+      end else if CbxFilter.ItemIndex = Integer(fltNOSPAREPARTS) then begin
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' and havespareparts = 0';
       end;
       // Else, no filter.
@@ -673,9 +675,9 @@ end;
 
 procedure TFrmSetList.LvSetsColumnClick(Sender: TObject; Column: TListColumn);
 begin
-  if FSortColumn = Column.Index then
+  if FSortColumn = TSetListColumn(Column.Index) then
     FSortDesc := not FSortDesc;
-  FSortColumn := Column.Index;
+  FSortColumn := TSetListColumn(Column.Index);
 
   //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
 

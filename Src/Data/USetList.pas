@@ -6,11 +6,12 @@ uses
   FireDAC.Comp.Client,
   System.Classes, Generics.Collections;
 
-const
-  cETNONE = 0;
-  cETREBRICKABLE = 1;
-
 type
+  TExternalType = ( // Source
+                    cETNONE = 0,
+                    cETREBRICKABLE = 2
+                  );
+
   // Can be filled with: {{baseUrl}}/api/v3/users/:user_token/setlists/?page=1&page_size=20
   // Or through SQL
   TSetListObject = class(TObject)

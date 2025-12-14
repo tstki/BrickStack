@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
   FireDAC.Comp.Client, FireDAC.Stan.Param,
-  USQLUpdate,
+  UBSSQL,
   UConfig, Vcl.ExtCtrls;
 
 const
@@ -106,7 +106,6 @@ uses
   System.Hash,
   UFrmMain, UStrings,
   UDownloadThread,
-  UBSSQL,
   ZLib,
   UITypes,
   Winapi.ShellAPI,

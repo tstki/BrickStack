@@ -267,7 +267,7 @@ begin
         Params.ParamByName('name').AsString := EditCollectionName.Text;
         Params.ParamByName('description').AsString := '';
         Params.ParamByName('useincollection').asInteger := 1;
-        Params.ParamByName('externaltype').asInteger := cETNONE;
+        Params.ParamByName('externaltype').asInteger := Integer(cETNONE);
         Params.ParamByName('sortindex').asInteger := 0;
         // id/externalid/externaltype can't be changed by the user.
         // add imageindex later
@@ -452,7 +452,7 @@ begin
             SetListObject.Description := ''; // Not supported by API, or needs a separate call.
             SetListObject.UseInCollection := ResultBuildable;
             SetListObject.ExternalID := StrToIntDef(ResultID, 0);
-            SetListObject.ExternalType := cETREBRICKABLE;
+            SetListObject.ExternalType := Integer(cETREBRICKABLE);
             SetListObject.Dirty := True;
             SetListObjectList.Add(SetListObject);
 
