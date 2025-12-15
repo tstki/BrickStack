@@ -663,16 +663,16 @@ begin
 
   if SortSql <> '' then begin
     if FConfig.WPartsSortAscending then
-      SortSql := 'ORDER BY ' + SortSql + ' ASC'
+      SortSql := ' ORDER BY ' + SortSql + ' ASC'
     else
-      SortSql := 'ORDER BY ' + SortSql + ' DESC';
+      SortSql := ' ORDER BY ' + SortSql + ' DESC';
   end;
 
   if FConfig.WSearchMyCollection then begin
     if SortSql <> '' then
       SortSql := SortSql + ', s.set_num, bss.bssetlistid'
     else
-      SortSql := 'ORDER BY s.set_num, bss.bssetlistid';
+      SortSql := ' ORDER BY s.set_num, bss.bssetlistid';
   end;
 
   FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
