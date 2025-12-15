@@ -29,7 +29,7 @@ object FrmSearch: TFrmSearch
       Height = 15
       Caption = 'Year'
     end
-    object Label3: TLabel
+    object LblParts: TLabel
       Left = 8
       Top = 34
       Width = 26
@@ -43,7 +43,7 @@ object FrmSearch: TFrmSearch
       Height = 15
       Caption = 'to'
     end
-    object Label5: TLabel
+    object LblPartsCap: TLabel
       Left = 175
       Top = 34
       Width = 11
@@ -66,8 +66,8 @@ object FrmSearch: TFrmSearch
       Alignment = taRightJustify
       Caption = 'LimitRes'
     end
-    object Label1: TLabel
-      Left = 398
+    object LblThemeOrCategory: TLabel
+      Left = 385
       Top = 7
       Width = 36
       Height = 15
@@ -220,6 +220,7 @@ object FrmSearch: TFrmSearch
       Height = 23
       Style = csDropDownList
       TabOrder = 7
+      OnChange = CbxSearchWhatChange
     end
   end
   object SbResults: TStatusBar

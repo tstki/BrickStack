@@ -17,10 +17,10 @@ type
     PnlSearchOptions: TPanel;
     Year: TLabel;
     TrackYearFrom: TTrackBar;
-    Label3: TLabel;
+    LblParts: TLabel;
     TrackPartsFrom: TTrackBar;
     Label4: TLabel;
-    Label5: TLabel;
+    LblPartsCap: TLabel;
     TrackYearTo: TTrackBar;
     LblTrackYear: TLabel;
     TrackPartsTo: TTrackBar;
@@ -37,7 +37,7 @@ type
     BtnFilter: TButton;
     ImageList1: TImageList;
     CbxThemes: TComboBox;
-    Label1: TLabel;
+    LblThemeOrCategory: TLabel;
     ActionList1: TActionList;
     ActToggleIncludeSpareParts: TAction;
     ActToggleAscending: TAction;
@@ -140,6 +140,7 @@ type
     procedure ActShowCollectionIDExecute(Sender: TObject);
     procedure ActToggleAscendingExecute(Sender: TObject);
     procedure ActShowPartCountExecute(Sender: TObject);
+    procedure CbxSearchWhatChange(Sender: TObject);
   private
     { Private declarations }
     FSearchResult: TSearchResult; // Stored locally from query result.
@@ -149,6 +150,7 @@ type
     FConfig: TConfig;
     //FCurMaxCols: Integer;
     FLastMaxCols: Integer;
+    procedure FUpdateUI;
     procedure FSetConfig(Config: TConfig);
     procedure FDoSearch;
     function FGetFromYear(): Integer;
@@ -164,7 +166,7 @@ type
     procedure FUncheckAllSortExcept(Sender: TObject);
     procedure FSetDefaultColumnDimensionsAndAdjustGrid;
     procedure FBuildSetQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
-    procedure FBuiltPartQuery();
+    procedure FBuiltPartQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
     procedure FBuiltMinifigureQuery();
   public
     { Public declarations }
@@ -277,6 +279,8 @@ begin
 
   FLastMaxCols := -1;
   FAdjustGrid;
+
+  FUpdateUI;
 end;
 
 procedure TFrmSearch.FormShow(Sender: TObject);
@@ -405,6 +409,27 @@ begin
 
   DgSets.DefaultRowHeight := FGetGridHeight;
   DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.FUpdateUI;
+begin
+  TrackPartsFrom.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  TrackPartsTo.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblParts.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblPartsCap.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblTrackParts.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+
+  if CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET) then
+    LblThemeOrCategory.Caption := StrTheme
+  else // Parts of Minifigs
+    LblThemeOrCategory.Caption := StrCategory;
+end;
+
+procedure TFrmSearch.CbxSearchWhatChange(Sender: TObject);
+begin
+  //fill CbxThemes using part_categories
+
+  FUpdateUI;
 end;
 
 procedure TFrmSearch.DgSetsClick(Sender: TObject);
@@ -706,7 +731,7 @@ begin
     Params.ParamByName('themeid').AsInteger := ThemeID;
 end;
 
-procedure TFrmSearch.FBuiltPartQuery();
+procedure TFrmSearch.FBuiltPartQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
 begin
 //
 end;
@@ -768,9 +793,9 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
         //CbxSearchWhat
         if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPESET then
           FBuildSetQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
-        else begin // cTYPEPART
-          //FBuiltPartQuery()
-        //end else begin // cTYPEMINIFIGURE
+        else if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPEPART then
+          FBuiltPartQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
+        else begin // cTYPEMINIFIGURE
           //FBuiltMinifigureQuery()
         end;
 

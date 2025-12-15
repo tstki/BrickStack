@@ -57,6 +57,8 @@ const
   StrYes = 'Yes';
   StrNo = 'No';
   StrSetList = 'Setlist';
+  StrCategory = 'Category';
+  StrTheme = 'Theme';
 
   // Setlist filter
   StrSetListFillterShowAll = 'All';
