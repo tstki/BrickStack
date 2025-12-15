@@ -749,7 +749,7 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
       var FDQuery := TFDQuery.Create(nil);
       try
         var SearchSubject := '';
-        if TSearchBy(CbxSearchStyle.ItemIndex) = cNUMBER then
+        if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
           SearchSubject := 's.set_num'
         else // cNAME
           SearchSubject := 's.name';
