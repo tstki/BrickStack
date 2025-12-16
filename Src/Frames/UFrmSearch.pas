@@ -168,6 +168,7 @@ type
     procedure FBuildSetQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
     procedure FBuiltPartQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
     procedure FBuiltMinifigureQuery();
+    procedure FFillCbxThemesOrCategories(const SearchWhat: TSearchWhat);
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -205,7 +206,7 @@ begin
   CbxSearchWhat.Clear;
   CbxSearchWhat.Items.Add(StrSearchSets);  //cSEARCHTYPESET
   CbxSearchWhat.Items.Add(StrSearchParts); //cSEARCHTYPEPART
-  //StrSearchMinifigures
+  //StrSearchMinifigures                   //cSEARCHTYPEMINIFIG
   //StrAny
   CbxSearchWhat.ItemIndex := 0;
 
@@ -283,6 +284,63 @@ begin
   FUpdateUI;
 end;
 
+procedure TFrmSearch.FFillCbxThemesOrCategories(const SearchWhat: TSearchWhat);
+begin
+  var SqlConnection := FrmMain.AcquireConnection;
+  var FDQuery := TFDQuery.Create(nil);
+
+  CbxThemes.Items.BeginUpdate;
+
+  try
+    CbxThemes.Clear;
+    CbxThemes.Items.AddObject('(' + StrAny + ')', TObject(0));
+    FDQuery.Connection := SqlConnection;
+
+    if SearchWhat = cSEARCHTYPESET then begin
+      // Substring because some value has more than 40 characters, firedac moans about it when retrieving data.
+      FDQuery.SQL.Text := 'SELECT t.id as id, substr(t.name,1,40) as name, pt.name AS ptname, t.parent_id as ptid FROM themes t' +
+                          ' LEFT JOIN themes pt ON pt.id = t.parent_id' +
+                          ' ORDER BY t.name';
+      FDQuery.Open;
+
+      while not FDQuery.Eof do begin
+        var ThemeName := FDQuery.FieldByName('name').AsString;
+        var ParentThemeName := FDQuery.FieldByName('ptname').AsString;
+        var ThemeID := FDQuery.FieldByName('id').AsInteger;
+
+        var DisplayName := '';
+        if ParentThemeName <> '' then
+          DisplayName := Format('%s (%s)', [ThemeName, ParentThemeName])
+        else
+          DisplayName := ThemeName;
+
+        CbxThemes.Items.AddObject(DisplayName, TObject(ThemeID));
+
+        FDQuery.Next; // Move to the next row
+      end;
+    end else begin
+      // Substring because some value has more than 40 characters, firedac moans about it when retrieving data.
+      FDQuery.SQL.Text := 'SELECT pc.id as id, substr(pc.name,1,40) as name FROM part_categories pc' +
+                          ' ORDER BY pc.name';
+      FDQuery.Open;
+
+      while not FDQuery.Eof do begin
+        var PartCategoryName := FDQuery.FieldByName('name').AsString;
+        var PartCategoryID := FDQuery.FieldByName('id').AsInteger;
+
+        CbxThemes.Items.AddObject(PartCategoryName, TObject(PartCategoryID));
+
+        FDQuery.Next; // Move to the next row
+      end;
+    end;
+  finally
+    CbxThemes.ItemIndex := 0;
+    CbxThemes.Items.EndUpdate;
+    FDQuery.Free;
+    FrmMain.ReleaseConnection(SqlConnection);
+  end;
+end;
+
 procedure TFrmSearch.FormShow(Sender: TObject);
 begin
   inherited;
@@ -300,41 +358,7 @@ begin
   DgSets.OnMouseMove := DgSetsMouseMove;
 
   // Fill the theme pulldown - just main themes for now. No sub themes.
-  var SqlConnection := FrmMain.AcquireConnection;
-  var FDQuery := TFDQuery.Create(nil);
-  CbxThemes.Clear;
-  CbxThemes.Items.BeginUpdate;
-  CbxThemes.Items.AddObject('(' + StrAny + ')', TObject(0));
-  try
-    FDQuery.Connection := SqlConnection;
-
-    // Substring because some value has more than 40 characters, firedac moans about it when retrieving data.
-    FDQuery.SQL.Text := 'SELECT t.id as id, substr(t.name,1,40) as name, pt.name AS ptname, t.parent_id as ptid FROM themes t' +
-                        ' LEFT JOIN themes pt ON pt.id = t.parent_id' +
-                        ' ORDER BY t.name';
-    FDQuery.Open;
-
-    while not FDQuery.Eof do begin
-      var ThemeName := FDQuery.FieldByName('name').AsString;
-      var ParentThemeName := FDQuery.FieldByName('ptname').AsString;
-      var ThemeID := FDQuery.FieldByName('id').AsInteger;
-
-      var DisplayName := '';
-      if ParentThemeName <> '' then
-        DisplayName := Format('%s (%s)', [ThemeName, ParentThemeName])
-      else
-        DisplayName := ThemeName;
-
-      CbxThemes.Items.AddObject(DisplayName, TObject(ThemeID));
-
-      FDQuery.Next; // Move to the next row
-    end;
-  finally
-    CbxThemes.ItemIndex := 0;
-    CbxThemes.Items.EndUpdate;
-    FDQuery.Free;
-    FrmMain.ReleaseConnection(SqlConnection);
-  end;
+  FFillCbxThemesOrCategories(cSEARCHTYPESET);
 
   CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
 
@@ -428,6 +452,7 @@ end;
 procedure TFrmSearch.CbxSearchWhatChange(Sender: TObject);
 begin
   //fill CbxThemes using part_categories
+  FFillCbxThemesOrCategories(TSearchWhat(CbxSearchWhat.ItemIndex));
 
   FUpdateUI;
 end;
@@ -795,7 +820,7 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
           FBuildSetQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
         else if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPEPART then
           FBuiltPartQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
-        else begin // cTYPEMINIFIGURE
+        else begin // cSEARCHTYPEMINIFIG
           //FBuiltMinifigureQuery()
         end;
 
