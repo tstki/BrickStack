@@ -38,16 +38,18 @@ type
 
     // List of results, filled based on searchtype
     FSetObjectList: TSetObjectList;
-    //FParts: TPartObjectList;
+    FPartObjectList: TPartObjectList;
     //FMinifigs: TMinifigureObjectList;
   public
     constructor Create;
     destructor Destroy; override;
     { Public declarations }
+    function Count: Integer;
     procedure Clear;
-    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
+    procedure LoadFromQuery(FDQuery: TFDQuery; const SearchWhat: TSearchWhat; IncludeBSSetID, SearchedInOwnedSets: Boolean);
     property SearchType: TSearchWhat read FSearchType write FSearchType;
     property SetObjectList: TSetObjectList read FSetObjectList;
+    property PartObjectList: TPartObjectList read FPartObjectList;
   end;
 
 implementation
@@ -62,11 +64,13 @@ begin
   inherited;
 
   FSetObjectList := TSetObjectList.Create;
+  FPartObjectList := TPartObjectList.Create;
 end;
 
 destructor TSearchResult.Destroy;
 begin
   FSetObjectList.Free;
+  FPartObjectList.Free;
 
   inherited;
 end;
@@ -74,12 +78,29 @@ end;
 procedure TSearchResult.Clear;
 begin
   FSetObjectList.Clear;
+  FPartObjectList.Clear;
 end;
 
-procedure TSearchResult.LoadFromQuery(FDQuery: TFDQuery; IncludeBSSetID, SearchedInOwnedSets: Boolean);
+function TSearchResult.Count;
 begin
   if FSearchType = cSEARCHTYPESET then
-    FSetObjectList.LoadFromQuery(FDQuery, IncludeBSSetID, SearchedInOwnedSets);
+    Result := FSetObjectList.Count
+  else if FSearchType = cSEARCHTYPEPART then
+    Result := FPartObjectList.Count
+  else
+    Result := 0;
+end;
+
+procedure TSearchResult.LoadFromQuery(FDQuery: TFDQuery; const SearchWhat: TSearchWhat; IncludeBSSetID, SearchedInOwnedSets: Boolean);
+begin
+  FSearchType := SearchWhat;
+  FSetObjectList.Clear;
+  FPartObjectList.Clear;
+
+  if FSearchType = cSEARCHTYPESET then
+    FSetObjectList.LoadFromQuery(FDQuery, IncludeBSSetID, SearchedInOwnedSets)
+  else if FSearchType = cSEARCHTYPEPART then
+    FPartObjectList.LoadFromQuery(FDQuery, False, IncludeBSSetID, SearchedInOwnedSets);
 end;
 
 end.

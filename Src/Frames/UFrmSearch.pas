@@ -15,11 +15,11 @@ uses
 type
   TFrmSearch = class(TForm)
     PnlSearchOptions: TPanel;
-    Year: TLabel;
+    LblYear: TLabel;
     TrackYearFrom: TTrackBar;
     LblParts: TLabel;
     TrackPartsFrom: TTrackBar;
-    Label4: TLabel;
+    LblYearCap: TLabel;
     LblPartsCap: TLabel;
     TrackYearTo: TTrackBar;
     LblTrackYear: TLabel;
@@ -169,6 +169,7 @@ type
     procedure FBuiltPartQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
     procedure FBuiltMinifigureQuery();
     procedure FFillCbxThemesOrCategories(const SearchWhat: TSearchWhat);
+    procedure FFillCbxSearchBy(const SearchWhat: TSearchWhat);
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -187,6 +188,7 @@ uses
   UDlgAddToSetList,
   UDragData,
   DateUtils,
+  UPart,
   UFrmMain, UStrings;
 
 procedure TFrmSearch.FormCreate(Sender: TObject);
@@ -210,11 +212,7 @@ begin
   //StrAny
   CbxSearchWhat.ItemIndex := 0;
 
-  CbxSearchBy.Clear;
-  CbxSearchBy.Items.Add(StrSearchNumber); // cNUMBER
-  CbxSearchBy.Items.Add(StrSearchName);   // cNAME
-  //cAny
-  CbxSearchBy.ItemIndex := 0;
+  FFillCbxSearchBy(TSearchWhat(CbxSearchWhat.ItemIndex));
 
   // Template used for other results:
   //PnlTemplateResult.Parent := nil;
@@ -341,6 +339,30 @@ begin
   end;
 end;
 
+procedure TFrmSearch.FFillCbxSearchBy(const SearchWhat: TSearchWhat);
+begin
+  var currentIndex := CbxSearchBy.ItemIndex;
+
+  CbxSearchBy.Items.BeginUpdate;
+  try
+    CbxSearchBy.Clear;
+    if SearchWhat = cSEARCHTYPESET then
+      CbxSearchBy.Items.Add(StrSearchSetNumber) // cNUMBER
+    else if SearchWhat = cSEARCHTYPEPART then
+      CbxSearchBy.Items.Add(StrSearchPartNumber) // cNUMBER
+    else
+      CbxSearchBy.Items.Add(StrSearchNumber); // cNUMBER
+    CbxSearchBy.Items.Add(StrSearchName);   // cNAME
+    //cAny
+    if currentIndex >= 0 then
+      CbxSearchBy.ItemIndex := currentIndex
+    else
+      CbxSearchBy.ItemIndex := 0;
+  finally
+    CbxSearchBy.Items.EndUpdate;
+  end;
+end;
+
 procedure TFrmSearch.FormShow(Sender: TObject);
 begin
   inherited;
@@ -373,14 +395,14 @@ end;
 procedure TFrmSearch.FAdjustGrid();
 begin
   // recalculate visible column and rowcount for DgSetParts
-  if FSearchResult.SetObjectList.Count = 0 then begin
+  if FSearchResult.Count = 0 then begin
     DgSets.ColCount := 0;
     DgSets.RowCount := 0;
   end else
     DgSets.ColCount := Max(1, Floor(DgSets.ClientWidth div (DgSets.DefaultColWidth+1)));
 
   if DgSets.ColCount <> FLastMaxCols then begin
-    DgSets.RowCount := Ceil(FSearchResult.SetObjectList.Count / DgSets.ColCount);
+    DgSets.RowCount := Ceil(FSearchResult.Count / DgSets.ColCount);
     FLastMaxCols := DgSets.ColCount;
     DgSets.Invalidate;
   end;
@@ -443,6 +465,17 @@ begin
   LblPartsCap.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
   LblTrackParts.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
 
+  //Disable for now - later, a query could check if there's at least 1 set that uses a part in a year.
+  TrackYearFrom.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  TrackYearTo.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblYearCap.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  LblTrackYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+
+  ActSortByTheme.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  ActSortByPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  ActSortByYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+
   if CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET) then
     LblThemeOrCategory.Caption := StrTheme
   else // Parts of Minifigs
@@ -453,6 +486,7 @@ procedure TFrmSearch.CbxSearchWhatChange(Sender: TObject);
 begin
   //fill CbxThemes using part_categories
   FFillCbxThemesOrCategories(TSearchWhat(CbxSearchWhat.ItemIndex));
+  FFillCbxSearchBy(TSearchWhat(CbxSearchWhat.ItemIndex));
 
   FUpdateUI;
 end;
@@ -473,9 +507,13 @@ var
   YPosition: Integer;
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    var ImageUrl := SetObject.SetImgUrl;
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    var Obj := nil;
+    if FSearchResult.SearchType = cSEARCHTYPESET then
+      Obj := FSearchResult.SetObjectList[Idx]
+    else if FSearchResult.SearchType = cSEARCHTYPEPART then
+      Obj := FSearchResult.PartObjectList[Idx];
+    //else cSEARCHTYPEMINIFIG
 
     var InfoRowCount := 0;
     if DgSets.DefaultColWidth >= 64 then begin
@@ -494,6 +532,11 @@ begin
 
     //TPicture
     if FImageCache <> nil then begin
+      var ImageUrl := '';//SetObject.SetImgUrl;
+      if FSearchResult.SearchType = cSEARCHTYPESET then
+        ImageUrl := TSetObject(Obj).SetImgUrl
+      else if FSearchResult.SearchType = cSEARCHTYPEPART then
+        ImageUrl := TPartObject(Obj).ImgUrl;
       var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
       if Assigned(Picture) and Assigned(Picture.Graphic) then begin
         // Center the image in the cell (optional)
@@ -528,41 +571,49 @@ begin
 
     if DgSets.DefaultColWidth >= 64 then begin
       // Inforow 1
-      if FConfig.WSearchShowNumber then
-        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - (InfoRowCount*20) + 2, SetObject.SetNum);
-
-      // Inforow 2
-      if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then begin
-        if InfoRowCount = 3 then
-          YPosition := Rect.Bottom - 38    // This is the middle row
-        else if InfoRowCount = 2 then begin
-          if FConfig.WSearchShowNumber then
-            YPosition := Rect.Bottom - 18  // This is the bottom row
-          else
-            YPosition := Rect.Bottom - 38; // This is the top row
-        end else // This is the only row.
-          YPosition := Rect.Bottom - 18;
-
-        if FConfig.WSearchShowYear then
-          DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.SetYear));
-        var SetNumPartsText := IntToStr(SetObject.SetNumParts);
-        var TextWidth1 := DgSets.Canvas.TextWidth(SetNumPartsText);
-        if FConfig.WSearchShowPartCount then begin
-          DgSets.Canvas.TextOut(Rect.Right-TextWidth1-2, YPosition, SetNumPartsText);
-        end;
+      if FConfig.WSearchShowNumber then begin
+        var Number := '';
+        if FSearchResult.SearchType = cSEARCHTYPESET then
+          Number := TSetObject(Obj).SetNum
+        else if FSearchResult.SearchType = cSEARCHTYPEPART then
+          Number := TPartObject(Obj).PartNum;
+        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - (InfoRowCount*20) + 2, Number);
       end;
 
-      // Inforow 3 - Search in my collection - always at the bottom
-      if FConfig.WSearchMyCollection and
-         (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
-        YPosition := Rect.Bottom - 18;
+      if FSearchResult.SearchType = cSEARCHTYPESET then begin
+        // Inforow 2
+        if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then begin
+          if InfoRowCount = 3 then
+            YPosition := Rect.Bottom - 38    // This is the middle row
+          else if InfoRowCount = 2 then begin
+            if FConfig.WSearchShowNumber then
+              YPosition := Rect.Bottom - 18  // This is the bottom row
+            else
+              YPosition := Rect.Bottom - 38; // This is the top row
+          end else // This is the only row.
+            YPosition := Rect.Bottom - 18;
 
-        if FConfig.WSearchShowSetQuantity then
-          DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(SetObject.Quantity) + 'x');
-        var BSSetID := IntToStr(SetObject.BSSetListID);
-        var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
-        if FConfig.WSearchShowCollectionID then
-          DgSets.Canvas.TextOut(Rect.Right-TextWidth2-2, YPosition, BSSetID);
+          if FConfig.WSearchShowYear then
+            DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(TSetObject(Obj).SetYear));
+          var SetNumPartsText := IntToStr(TSetObject(Obj).SetNumParts);
+          var TextWidth1 := DgSets.Canvas.TextWidth(SetNumPartsText);
+          if FConfig.WSearchShowPartCount then begin
+            DgSets.Canvas.TextOut(Rect.Right-TextWidth1-2, YPosition, SetNumPartsText);
+          end;
+        end;
+
+        // Inforow 3 - Search in my collection - always at the bottom
+        if FConfig.WSearchMyCollection and
+           (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
+          YPosition := Rect.Bottom - 18;
+
+          if FConfig.WSearchShowSetQuantity then
+            DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(TSetObject(Obj).Quantity) + 'x');
+          var BSSetID := IntToStr(TSetObject(Obj).BSSetListID);
+          var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
+          if FConfig.WSearchShowCollectionID then
+            DgSets.Canvas.TextOut(Rect.Right-TextWidth2-2, YPosition, BSSetID);
+        end;
       end;
     end;
   end;
@@ -584,20 +635,22 @@ begin
       var Col, Row: Integer;
       DgSets.MouseToCell(X, Y, Col, Row);
       var Idx := FGetIndexByRowAndCol(Col, Row);
-      if (Idx >= 0) and (Idx < FSearchResult.SetObjectList.Count) then begin
+      if (Idx >= 0) and (Idx < FSearchResult.Count) then begin
         // Populate drag data
         ClearDragData;
-        var SetObj := FSearchResult.SetObjectList[Idx];
-        if Assigned(SetObj) then begin
-          if SetObj.BSSetID <> 0 then
-            DraggedBSSetIDs.Add(SetObj.BSSetID)
-          else
-            DraggedSetNums.Add(SetObj.SetNum);
-        end;
+        if FSearchResult.SearchType = cSEARCHTYPESET then begin
+          var SetObj := FSearchResult.SetObjectList[Idx];
+          if Assigned(SetObj) then begin
+            if SetObj.BSSetID <> 0 then
+              DraggedBSSetIDs.Add(SetObj.BSSetID)
+            else
+              DraggedSetNums.Add(SetObj.SetNum);
+          end;
 
-        // Start the drag operation. The Source will be the grid control.
-        DgSets.BeginDrag(False);
-        FDraggingStarted := True;
+          // Start the drag operation. The Source will be the grid control.
+          DgSets.BeginDrag(False);
+          FDraggingStarted := True;
+        end;
       end;
     end;
   end;
@@ -622,7 +675,7 @@ begin
       DgSets.Selection := TGridRect(Rect(Col, Row, Col, Row));
 
     var Idx := FGetIndexByRowAndCol(Col, Row);
-    if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
+    if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
       // show context menu:
       var Pt := Point(X, Y);
       Pt := DgSets.ClientToScreen(Pt);
@@ -637,19 +690,23 @@ end;
 procedure TFrmSearch.DgSetsSelectCell(Sender: TObject; ACol, ARow: LongInt; var CanSelect: Boolean);
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    //"40211-1 (partcount), This is a set name (Year) - Theme name"
-    var NumParts := '';
-    If SetObject.SetNumParts <> 0 then
-      NumParts := Format(' (%d)', [SetObject.SetNumParts]);
-    var Year := '';
-    If SetObject.SetYear <> 0 then
-      Year := Format(' (%d)', [SetObject.SetYear]);
-    var MyCollectionInfo := '';
-    if FConfig.WSearchMyCollection then
-      MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
-    SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName, IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then begin
+      var SetObject := FSearchResult.SetObjectList[Idx];
+      //"40211-1 (partcount), This is a set name (Year) - Theme name"
+      var NumParts := '';
+      If SetObject.SetNumParts <> 0 then
+        NumParts := Format(' (%d)', [SetObject.SetNumParts]);
+      var Year := '';
+      If SetObject.SetYear <> 0 then
+        Year := Format(' (%d)', [SetObject.SetYear]);
+      var MyCollectionInfo := '';
+      if FConfig.WSearchMyCollection then
+        MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
+      SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName, IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
+    end else begin
+      //todo part
+    end;
   end else
     SbResults.Panels[1].Text := '';
 end;
@@ -758,7 +815,108 @@ end;
 
 procedure TFrmSearch.FBuiltPartQuery(FDQuery: TFDQuery; OwnCollection: Boolean; const SearchSubject, SearchLikeOrExact: String);
 begin
-//
+  var CategoryID := 0;
+
+  if OwnCollection then begin
+    FDQuery.SQL.Text := 'SELECT p.part_num, p.name as partname, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
+                        ' FROM BSSets bss'+
+                        ' LEFT JOIN Parts p on BSS.set_num = s.set_num' +
+                        ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
+                        //' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
+                        ' INNER JOIN BSSetLists bl on bl.id = bss.BSSetListID' +
+                        ' WHERE'+ //' (year between :fromyear and :toyear) AND' +
+//                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                        ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+    if CbxThemes.ItemIndex <> 0 then begin
+      CategoryID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+      if CategoryID > 0 then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND p.part_cat_id = :categoryid';
+    end;
+
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
+                                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
+                                           ' GROUP BY bss.BSSetListID, s.set_num ';
+  end else begin
+    FDQuery.SQL.Text := 'SELECT DISTINCT p.part_num, p.name as partname, ip.img_url' + //, s.year, s.img_url, s.num_parts' +
+                        ' FROM Parts p' +
+                        ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
+                        ' WHERE' + //' (year between :fromyear and :toyear) AND' +
+//                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
+                        ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+
+    if CbxThemes.ItemIndex <> 0 then begin
+      CategoryID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
+      if CategoryID > 0 then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND p.part_cat_id = :categoryid';
+    end;
+  end;
+
+  //order by
+  var SortSql := '';
+  if FConfig.WSearchSortByNumber then
+    SortSql := 'p.part_num'
+  else if FConfig.WSearchSortByName then
+    SortSql := 'p.name'
+//  else if FConfig.WSearchSortByYear then
+//    SortSql := 's.year'
+  else if FConfig.WSearchSortByTheme then
+    SortSql := 'p.part_cat_id';
+//  else if FConfig.WSearchSortByPartCount then
+//    SortSql := 's.num_parts';
+
+  if SortSql <> '' then begin
+    if FConfig.WPartsSortAscending then
+      SortSql := ' ORDER BY ' + SortSql + ' ASC'
+    else
+      SortSql := ' ORDER BY ' + SortSql + ' DESC';
+  end;
+
+  if FConfig.WSearchMyCollection then begin
+    if SortSql <> '' then
+      SortSql := SortSql + ', p.part_num, bss.bssetlistid'
+    else
+      SortSql := ' ORDER BY p.part_num, bss.bssetlistid';
+  end;
+//2780 is the generic black connector
+  FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
+
+  // Limit results
+  FDQuery.SQL.Text := FDQuery.SQL.Text + ' LIMIT ' + IntToStr(10 + Config.SearchLimit * 10);
+
+  // Fill the params
+  var Params := FDQuery.Params;
+  var SearchValue1 := EditSearchText.Text;
+  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchAll then
+    SearchValue1 := '%' + EditSearchText.Text + '%'
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchPrefix then
+    SearchValue1 := EditSearchText.Text + '%'
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchSuffix then
+    SearchValue1 := '%' + EditSearchText.Text
+  else
+    SearchValue1 := EditSearchText.Text;
+
+  var SearchValue2 := SearchValue1 + '-1';
+  Params.ParamByName('Param1').AsString := SearchValue1;
+
+  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    Params.ParamByName('Param2').AsString := SearchValue2;
+
+//  Params.ParamByName('fromyear').AsInteger := FGetFromYear;
+//  Params.ParamByName('toyear').AsInteger := FGetToYear;
+//  Params.ParamByName('fromparts').AsInteger := FGetFromParts;
+//  Params.ParamByName('toparts').AsInteger := FGetToParts;
+  if CategoryID > 0 then
+    Params.ParamByName('categoryid').AsInteger := CategoryID;
 end;
 
 procedure TFrmSearch.FBuiltMinifigureQuery();
@@ -799,12 +957,23 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
       var FDQuery := TFDQuery.Create(nil);
       try
         var SearchSubject := '';
-        if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
-          SearchSubject := 's.set_num'
-        else // cNAME
-          SearchSubject := 's.name';
-        //cNUMORNAME
-        // special handling
+        if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPESET then begin
+          if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
+            SearchSubject := 's.set_num'
+          else // cNAME
+            SearchSubject := 's.name';
+          //cNUMORNAME
+          // special handling
+        end else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then begin
+          if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
+            SearchSubject := 'p.part_num'
+          else // cNAME
+            SearchSubject := 'p.name';
+          //cNUMORNAME
+          // special handling
+        end else begin // cSEARCHTYPEMINIFIG
+          //
+        end;
 
         var SearchLikeOrExact := '';
         if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchExact then
@@ -816,21 +985,21 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
         FDQuery.Connection := SqlConnection;
 
         //CbxSearchWhat
-        if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPESET then
+        if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPESET then
           FBuildSetQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
-        else if TSearchWhat(CbxSearchStyle.ItemIndex) = cSEARCHTYPEPART then
+        else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then
           FBuiltPartQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
         else begin // cSEARCHTYPEMINIFIG
           //FBuiltMinifigureQuery()
         end;
 
         // Run the query, and add the results into the ObjectList
-        FSearchResult.LoadFromQuery(FDQuery, False, FConfig.WSearchMyCollection);
+        FSearchResult.LoadFromQuery(FDQuery, TSearchWhat(CbxSearchWhat.ItemIndex), False, FConfig.WSearchMyCollection);
 
         FLastMaxCols := -1; // Force an invalidate
         FAdjustGrid;
 
-        SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSearchResult.SetObjectList.Count);
+        SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSearchResult.Count);
       finally
         FDQuery.Free;
         FrmMain.ReleaseConnection(SqlConnection);
@@ -862,17 +1031,21 @@ procedure TFrmSearch.ActAddSetToCollectionExecute(Sender: TObject);
 begin
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    var DlgAddToSetList := TDlgAddToSetList.Create(Self);
-    try
-      DlgAddToSetList.BSSetID := 0; // New
-      DlgAddToSetList.SetNum := SetObject.SetNum;
-      if DlgAddToSetList.ShowModal = mrOK then begin
-        // DlgAddToSetList handles the query.
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then begin
+      var SetObject := FSearchResult.SetObjectList[Idx];
+      var DlgAddToSetList := TDlgAddToSetList.Create(Self);
+      try
+        DlgAddToSetList.BSSetID := 0; // New
+        DlgAddToSetList.SetNum := SetObject.SetNum;
+        if DlgAddToSetList.ShowModal = mrOK then begin
+          // DlgAddToSetList handles the query.
+        end;
+      finally
+        DlgAddToSetList.Free;
       end;
-    finally
-      DlgAddToSetList.Free;
+    end else begin
+      //todo part
     end;
   end;
 end;
@@ -881,9 +1054,13 @@ procedure TFrmSearch.ActViewSetExternalExecute(Sender: TObject);
 begin
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then begin
+      var SetObject := FSearchResult.SetObjectList[Idx];
+      TFrmMain.OpenExternal(cTYPESET, SetObject.SetNum);
+    end else begin
+      //todo part
+    end;
   end;
 end;
 
@@ -1088,9 +1265,13 @@ begin
   // Open parts window
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    TFrmMain.ShowPartsWindow(SetObject.SetNum);
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then begin
+      var SetObject := FSearchResult.SetObjectList[Idx];
+      TFrmMain.ShowPartsWindow(SetObject.SetNum);
+    end else begin
+      //todo part
+    end;
   end;
 end;
 
@@ -1099,9 +1280,13 @@ begin
   // Open set
   var sel := DgSets.Selection;
   var Idx := FGetIndexByRowAndCol(Sel.left, sel.top);
-  if (Idx >= 0) and (Idx<FSearchResult.SetObjectList.Count) then begin
-    var SetObject := FSearchResult.SetObjectList[Idx];
-    TFrmMain.ShowSetWindow(SetObject.SetNum);
+  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then begin
+      var SetObject := FSearchResult.SetObjectList[Idx];
+      TFrmMain.ShowSetWindow(SetObject.SetNum);
+    end else begin
+      //todo part
+    end;
   end;
 end;
 

@@ -22,12 +22,12 @@ object FrmSearch: TFrmSearch
     Height = 63
     BevelOuter = bvNone
     TabOrder = 0
-    object Year: TLabel
+    object LblYear: TLabel
       Left = 8
       Top = 7
-      Width = 22
+      Width = 38
       Height = 15
-      Caption = 'Year'
+      Caption = 'LblYear'
     end
     object LblParts: TLabel
       Left = 8
@@ -36,7 +36,7 @@ object FrmSearch: TFrmSearch
       Height = 15
       Caption = 'Parts'
     end
-    object Label4: TLabel
+    object LblYearCap: TLabel
       Left = 175
       Top = 7
       Width = 11

@@ -38,7 +38,7 @@ type
   public
     { Public declarations }
     //procedure LoadByPartNum(PartNum: String);
-    procedure LoadFromQuery(FDQuery: TFDQuery);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields: Boolean);
 
     property PartNum: String read FPartNum write FPartNum;  //
     property PartName: String read FName write FName;
@@ -57,7 +57,7 @@ type
   // Move this to a separate unit later:
   TPartObjectList = class(TObjectList<TPartObject>)
   public
-    procedure LoadFromQuery(FDQuery: TFDQuery);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, IncludeBSSetID, SearchedInOwnedSets: Boolean);
     procedure LoadFromExternal;
     //procedure LoadFromFile;
     //procedure SaveToFile(ReWrite: Boolean);
@@ -93,16 +93,19 @@ begin
   end;
 end;}
 
-procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery);
+procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields: Boolean);
 begin
   Self.FPartNum := FDQuery.FieldByName('part_num').AsString;
   Self.FName := FDQuery.FieldByName('partname').AsString;
-  Self.FMaxQuantity := FDQuery.FieldByName('quantity').AsInteger;
-  Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
-
   Self.FImgUrl := FDQuery.FieldByName('img_url').AsString;
-  Self.FColorID := FDQuery.FieldByName('colorid').AsInteger;
-  Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
+
+  // when looking up parts of a set:
+  if IncludeSetFields then begin
+    Self.FColorID := FDQuery.FieldByName('color_id').AsInteger;
+    Self.FMaxQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
+    Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
+  end;
 
 //  Self.FColorRGB := FDQuery.FieldByName('rgb').AsString;
 //  Self.FColorName := FDQuery.FieldByName('colorname').AsString;
@@ -122,13 +125,15 @@ end;
 
 // TPartObjectList
 
-procedure TPartObjectList.LoadFromQuery(FDQuery: TFDQuery);
+procedure TPartObjectList.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, IncludeBSSetID, SearchedInOwnedSets: Boolean);
 begin
   FDQuery.Open;
 
+  //IncludeBSSetID, SearchedInOwnedSets used in FrmSearch
+
   while not FDQuery.Eof do begin
     var PartObject := TPartObject.Create;
-    PartObject.LoadFromQuery(FDQuery);
+    PartObject.LoadFromQuery(FDQuery, IncludeSetFields);
 
     Self.Add(PartObject);
 
@@ -136,7 +141,7 @@ begin
   end;
 end;
 
-procedure TPartObjectList.LoadFromExternal();//FNetHttp
+procedure TPartObjectList.LoadFromExternal();
 begin
 //
 end;

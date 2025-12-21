@@ -129,10 +129,14 @@ Import collection:
 -- select * from inventories where set_num = '4200-1';
 -- select * from inventory_minifigs where inventory_id = 9677;
 -- select * from minifigs where fig_num = 'fig-001386';
+- Menu option: Find alternative colors (for part search)
+- Menu option: Find sets with this part (for part search) - expand with special search later.
+- Include alternative colors option
 
 ### Search parts in:
 - Search for parts in sets, to find sets
 - Combine multiple parts to search for
+- Show what sets searched parts can be found in
 
 ## Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.

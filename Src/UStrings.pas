@@ -99,6 +99,8 @@ const
   StrSearchSuffix = '% suffix';
   StrSearchExact = 'Exact';
 
+  StrSearchSetNumber = 'Set number';
+  StrSearchPartNumber = 'Part number';
   StrSearchNumber = 'Number';
   StrSearchName = 'Name';
 
