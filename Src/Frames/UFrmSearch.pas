@@ -96,6 +96,7 @@ type
     Useinspecialsearch1: TMenuItem;
     ActShowPartCount: TAction;
     MnuShowPartCount: TMenuItem;
+    CbxIncludeAltColors: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -844,15 +845,32 @@ begin
     FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
                                            ' GROUP BY bss.BSSetListID, s.set_num ';
   end else begin
-    FDQuery.SQL.Text := 'SELECT DISTINCT p.part_num, p.name as partname, ip.img_url' + //, s.year, s.img_url, s.num_parts' +
-                        ' FROM Parts p' +
-                        ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
-                        ' WHERE' + //' (year between :fromyear and :toyear) AND' +
-//                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
-                        ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+    if CbxIncludeAltColors.Checked then begin
+      FDQuery.SQL.Text := 'SELECT DISTINCT p.part_num, p.name as partname, ip.img_url' + //, s.year, s.img_url, s.num_parts' +
+                          ' FROM Parts p' +
+                          ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
+                          ' WHERE' + //' (year between :fromyear and :toyear) AND' +
+                          ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
+      if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+        FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
+      FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+    end else begin
+      FDQuery.SQL.Text := 'WITH ranked AS (' +
+                          ' SELECT prt.part_num, prt.name, ip.img_url, ip.color_id,' +
+                                 ' ROW_NUMBER() OVER (' +
+                                   ' PARTITION BY prt.part_num' +
+                                   ' ORDER by color_id asc' +
+                                 ' ) AS rn' +
+                          ' FROM Parts prt' +
+                          ' LEFT JOIN inventory_parts ip ON ip.part_num = prt.part_num' +
+                          ' WHERE' + //' (year between :fromyear and :toyear) AND' +
+                          ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1))';
     if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-    FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ') SELECT part_num, name AS partname, img_url, color_id' +
+                          ' FROM ranked p' +
+                          ' WHERE rn = 1';
+    end;
 
     if CbxThemes.ItemIndex <> 0 then begin
       CategoryID := Integer(CbxThemes.Items.Objects[CbxThemes.ItemIndex]);
@@ -965,12 +983,21 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
           //cNUMORNAME
           // special handling
         end else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then begin
-          if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
-            SearchSubject := 'p.part_num'
-          else // cNAME
-            SearchSubject := 'p.name';
-          //cNUMORNAME
-          // special handling
+          if CbxIncludeAltColors.Checked then begin
+            if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
+              SearchSubject := 'p.part_num'
+            else // cNAME
+              SearchSubject := 'p.name';
+            //cNUMORNAME
+            // special handling
+          end else begin
+            if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
+              SearchSubject := 'prt.part_num'
+            else // cNAME
+              SearchSubject := 'prt.name';
+            //cNUMORNAME
+            // special handling
+          end;
         end else begin // cSEARCHTYPEMINIFIG
           //
         end;

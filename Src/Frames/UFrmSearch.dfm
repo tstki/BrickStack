@@ -222,6 +222,16 @@ object FrmSearch: TFrmSearch
       TabOrder = 7
       OnChange = CbxSearchWhatChange
     end
+    object CbxIncludeAltColors: TCheckBox
+      Left = 355
+      Top = 40
+      Width = 111
+      Height = 17
+      Hint = 'Also show alternative colors in the search results'
+      Caption = 'Include alt colors'
+      TabOrder = 8
+      OnClick = CbxSearchInMyCollectionClick
+    end
   end
   object SbResults: TStatusBar
     Left = 0
