@@ -33,7 +33,7 @@
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller
 
-### Throttling and request slowing:
+### Throttling and request slowing on api use:
 - Handle error 429: Add a mandatory delay between requests
 - Request was throttled - you are sending too many requests too fast.
 - Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
@@ -104,12 +104,13 @@
 - Export parts.
 - Add to collection
 - Show minifigures as part of the set parts
-- Export set parts - CSV
+- Export (missing) set parts - CSV / XML
 
 ### Collections:
 Export collection:
 - Choose format
 - Choose overwrite / keep
+- Export to bricklink XML (https://studiohelp.bricklink.com/hc/en-us/sections/6153794183319-Import-and-Export)
 Import collection:
 - Choose format
 - Choose overwrite / keep

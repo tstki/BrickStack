@@ -456,6 +456,8 @@ begin
 
   DgSets.DefaultRowHeight := FGetGridHeight;
   DgSets.Invalidate;
+
+  FUpdateUI;
 end;
 
 procedure TFrmSearch.FUpdateUI;
@@ -476,6 +478,9 @@ begin
   ActSortByTheme.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
   ActSortByPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
   ActSortByYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+
+  CbxIncludeAltColors.Enabled := not CbxSearchInMyCollection.Checked;
+  CbxIncludeAltColors.Visible := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART);
 
   if CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET) then
     LblThemeOrCategory.Caption := StrTheme
@@ -819,14 +824,11 @@ begin
   var CategoryID := 0;
 
   if OwnCollection then begin
-    FDQuery.SQL.Text := 'SELECT p.part_num, p.name as partname, s.year, s.img_url, s.num_parts, bss.BSSetListID, bl.name AS BSSetListName, count(*) AS quantity' + //, theme_id
-                        ' FROM BSSets bss'+
-                        ' LEFT JOIN Parts p on BSS.set_num = s.set_num' +
-                        ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
-                        //' LEFT JOIN Sets s on BSS.set_num = s.set_num' +
-                        ' INNER JOIN BSSetLists bl on bl.id = bss.BSSetListID' +
+    FDQuery.SQL.Text := 'SELECT p.name as partname, bpi.color_id, p.part_num, bpi.BSSetID, bpi.quantity, ip.img_url' +
+                        ' FROM BSDBPartsInventory bpi'+
+                        ' LEFT JOIN inventory_parts ip on ip.part_num = bpi.part_num' +
+                        ' LEFT JOIN parts p on p.part_num = bpi.part_num AND bpi.color_id = ip.color_id' +
                         ' WHERE'+ //' (year between :fromyear and :toyear) AND' +
-//                        ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
     if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
@@ -837,13 +839,7 @@ begin
       if CategoryID > 0 then
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND p.part_cat_id = :categoryid';
     end;
-
-    FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
-                                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
-      FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-    FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
-                                           ' GROUP BY bss.BSSetListID, s.set_num ';
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ' GROUP BY bpi.BSSetID, p.part_num';
   end else begin
     if CbxIncludeAltColors.Checked then begin
       FDQuery.SQL.Text := 'SELECT DISTINCT p.part_num, p.name as partname, ip.img_url' + //, s.year, s.img_url, s.num_parts' +
@@ -856,7 +852,7 @@ begin
       FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
     end else begin
       FDQuery.SQL.Text := 'WITH ranked AS (' +
-                          ' SELECT prt.part_num, prt.name, ip.img_url, ip.color_id,' +
+                          ' SELECT prt.part_num, prt.name, prt.part_cat_id, ip.img_url, ip.color_id,' +
                                  ' ROW_NUMBER() OVER (' +
                                    ' PARTITION BY prt.part_num' +
                                    ' ORDER by color_id asc' +
@@ -867,7 +863,7 @@ begin
                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1))';
     if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
-    FDQuery.SQL.Text := FDQuery.SQL.Text + ') SELECT part_num, name AS partname, img_url, color_id' +
+    FDQuery.SQL.Text := FDQuery.SQL.Text + ') SELECT p.part_num, p.name AS partname, p.img_url, p.color_id, p.part_cat_id' +
                           ' FROM ranked p' +
                           ' WHERE rn = 1';
     end;
@@ -900,10 +896,17 @@ begin
   end;
 
   if FConfig.WSearchMyCollection then begin
-    if SortSql <> '' then
-      SortSql := SortSql + ', p.part_num, bss.bssetlistid'
-    else
-      SortSql := ' ORDER BY p.part_num, bss.bssetlistid';
+    if OwnCollection then begin
+      if SortSql <> '' then
+        SortSql := SortSql + ', p.part_num DESC, bpi.BSSetID'
+      else
+        SortSql := ' ORDER BY p.part_num DESC, bpi.BSSetID';
+    end else begin
+      if SortSql <> '' then
+        SortSql := SortSql + ', p.part_num, bss.bssetlistid'
+      else
+        SortSql := ' ORDER BY p.part_num, bss.bssetlistid';
+    end;
   end;
 //2780 is the generic black connector
   FDQuery.SQL.Text := FDQuery.SQL.Text + SortSql;
@@ -983,7 +986,7 @@ select * from inventory_sets where inventory_id = 1726; – is a list of sets in a
           //cNUMORNAME
           // special handling
         end else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then begin
-          if CbxIncludeAltColors.Checked then begin
+          if CbxIncludeAltColors.Checked or FConfig.WSearchMyCollection then begin
             if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
               SearchSubject := 'p.part_num'
             else // cNAME
