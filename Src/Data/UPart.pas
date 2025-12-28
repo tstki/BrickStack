@@ -23,8 +23,10 @@ type
     //FColorIsTrans: Boolean;
 
     // BS Part inventory details
-    FBSPartID: Integer;    // Only set if there are BSDBPartsInventory Items found / enriched.
-    FCurQuantity: Integer; // Aka: Selected parts
+    FBSPartID: Integer;     // Only set if there are BSDBPartsInventory Items found / enriched.
+    FBSSetListID: Integer;  //
+    FBSSetListName: String; //
+    FCurQuantity: Integer;  // Aka: Selected parts
 
     //FDirty: Boolean;    // Not saved // Item was modified and needs to update
     //FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
@@ -38,7 +40,7 @@ type
   public
     { Public declarations }
     //procedure LoadByPartNum(PartNum: String);
-    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields: Boolean);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, SearchedInOwnedSets: Boolean);
 
     property PartNum: String read FPartNum write FPartNum;  //
     property PartName: String read FName write FName;
@@ -52,6 +54,8 @@ type
     //property ColorIsTrans: Boolean read FColorIsTrans write FColorIsTrans;
     property BSPartID: Integer read FBSPartID write FBSPartID;
     property CurQuantity: Integer read FCurQuantity write FCurQuantity;
+    property BSSetListID: Integer read FBSSetListID write FBSSetListID;
+    property BSSetListName: String read FBSSetListName write FBSSetListName;
   end;
 
   // Move this to a separate unit later:
@@ -93,7 +97,7 @@ begin
   end;
 end;}
 
-procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields: Boolean);
+procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, SearchedInOwnedSets: Boolean);
 begin
   Self.FPartNum := FDQuery.FieldByName('part_num').AsString;
   Self.FName := FDQuery.FieldByName('partname').AsString;
@@ -106,6 +110,14 @@ begin
     Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
     Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
   end;
+
+  if SearchedInOwnedSets then begin
+    Self.BSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
+    Self.BSSetListName := FDQuery.FieldByName('BSSetListName').AsString;
+    Self.CurQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    //FBSPartID //todo: loose parts arent counted yet
+  end;
+
 
 //  Self.FColorRGB := FDQuery.FieldByName('rgb').AsString;
 //  Self.FColorName := FDQuery.FieldByName('colorname').AsString;
@@ -133,7 +145,7 @@ begin
 
   while not FDQuery.Eof do begin
     var PartObject := TPartObject.Create;
-    PartObject.LoadFromQuery(FDQuery, IncludeSetFields);
+    PartObject.LoadFromQuery(FDQuery, IncludeSetFields, SearchedInOwnedSets);
 
     Self.Add(PartObject);
 

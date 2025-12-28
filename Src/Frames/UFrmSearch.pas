@@ -1,4 +1,4 @@
-unit UFrmSearch;
+ï»¿unit UFrmSearch;
 
 interface
 
@@ -171,6 +171,11 @@ type
     procedure FBuiltMinifigureQuery();
     procedure FFillCbxThemesOrCategories(const SearchWhat: TSearchWhat);
     procedure FFillCbxSearchBy(const SearchWhat: TSearchWhat);
+    // Draw helpers for DgSetsDrawCell refactor
+    function FInfoRowCountForWidth: Integer;
+    procedure FDrawImageInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+    procedure FDrawSetInfoInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+    procedure FDrawPartInfoInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
   public
     { Public declarations }
     property ImageCache: TImageCache read FImageCache write FImageCache;
@@ -508,121 +513,134 @@ begin
   Result := (ARow * DgSets.ColCount) + ACol;
 end;
 
-procedure TFrmSearch.DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+function TFrmSearch.FInfoRowCountForWidth: Integer;
+begin
+  Result := 0;
+  if DgSets.DefaultColWidth >= 64 then begin
+    if FConfig.WSearchShowNumber then
+      Inc(Result);
+    if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
+      Inc(Result);
+    if FConfig.WSearchMyCollection and
+      (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
+      Inc(Result);
+  end;
+end;
+
+procedure TFrmSearch.FDrawImageInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+begin
+  if FImageCache = nil then
+    Exit;
+
+  var ImageUrl := '';
+  if Obj <> nil then begin
+    if FSearchResult.SearchType = cSEARCHTYPESET then
+      ImageUrl := TSetObject(Obj).SetImgUrl
+    else if FSearchResult.SearchType = cSEARCHTYPEPART then
+      ImageUrl := TPartObject(Obj).ImgUrl;
+  end;
+
+  var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
+  if Assigned(Picture) and Assigned(Picture.Graphic) then begin
+    var ImageRect := Rect;
+    ImageRect.Bottom := ImageRect.Bottom - (20 * InfoRowCount);
+    DgSets.Canvas.StretchDraw(ImageRect, Picture.Graphic);
+  end;
+end;
+
+procedure TFrmSearch.FDrawSetInfoInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
 var
   YPosition: Integer;
 begin
-  var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FSearchResult.Count) then begin
-    var Obj := nil;
-    if FSearchResult.SearchType = cSEARCHTYPESET then
-      Obj := FSearchResult.SetObjectList[Idx]
-    else if FSearchResult.SearchType = cSEARCHTYPEPART then
-      Obj := FSearchResult.PartObjectList[Idx];
-    //else cSEARCHTYPEMINIFIG
+  if Obj = nil then
+    Exit
+  else if DgSets.DefaultColWidth < 64 then
+    Exit;
 
-    var InfoRowCount := 0;
-    if DgSets.DefaultColWidth >= 64 then begin
-      if FConfig.WSearchShowNumber then
-        Inc(InfoRowCount);
-      if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
-        Inc(InfoRowCount);
-      if FConfig.WSearchMyCollection and
-        (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
-        Inc(InfoRowCount);
-    end;
-
-  // set number
-  // year                      // part count
-  // count of set in bsset     // bssetid
-
-    //TPicture
-    if FImageCache <> nil then begin
-      var ImageUrl := '';//SetObject.SetImgUrl;
-      if FSearchResult.SearchType = cSEARCHTYPESET then
-        ImageUrl := TSetObject(Obj).SetImgUrl
-      else if FSearchResult.SearchType = cSEARCHTYPEPART then
-        ImageUrl := TPartObject(Obj).ImgUrl;
-      var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
-      if Assigned(Picture) and Assigned(Picture.Graphic) then begin
-        // Center the image in the cell (optional)
-  //      var ImgLeft := Rect.Left + (Rect.Width - Picture.Width) div 2;
-  //      var ImgTop := Rect.Top + (Rect.Height - Picture.Height) div 2;
-        var ImageRect := Rect;
-//        if DgSets.DefaultColWidth >= 64 then begin
-//          if PnlSearchOptions.Visible then
-//            ImageRect.Bottom := ImageRect.Bottom - 40 // 64 -20 -20
-//          else
-            ImageRect.Bottom := ImageRect.Bottom - (20*InfoRowCount);
-//        end;
-        DgSets.Canvas.StretchDraw(ImageRect, Picture.Graphic);
-  //      DgSetParts.Canvas.StretchDraw(Rect, Picture.Graphic);
-      end;
-    end;
-
-    DgSets.Canvas.Brush.Style := bsClear;
-    //ExampleText := Format('Cell %d,%d', [ACol, ARow]);
-{    if SetObject.IsSpare then
-      ExampleText := Format('%dx*', [SetObject.Quantity])
-    else
-      ExampleText := Format('%dx', [SetObject.Quantity]); // todo: 999/999
-}
-    // "More info" icon
-    //ImageList1.Draw(DgSets.Canvas, Rect.Right - 18, Rect.Bottom - 18, 1, True);
-
-    //visual:
-    // count of set in bsset     // bssetid
-    // set number
-    // year                      // part count
-
-    if DgSets.DefaultColWidth >= 64 then begin
-      // Inforow 1
-      if FConfig.WSearchShowNumber then begin
-        var Number := '';
-        if FSearchResult.SearchType = cSEARCHTYPESET then
-          Number := TSetObject(Obj).SetNum
-        else if FSearchResult.SearchType = cSEARCHTYPEPART then
-          Number := TPartObject(Obj).PartNum;
-        DgSets.Canvas.TextOut(Rect.Left+2, Rect.Bottom - (InfoRowCount*20) + 2, Number);
-      end;
-
-      if FSearchResult.SearchType = cSEARCHTYPESET then begin
-        // Inforow 2
-        if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then begin
-          if InfoRowCount = 3 then
-            YPosition := Rect.Bottom - 38    // This is the middle row
-          else if InfoRowCount = 2 then begin
-            if FConfig.WSearchShowNumber then
-              YPosition := Rect.Bottom - 18  // This is the bottom row
-            else
-              YPosition := Rect.Bottom - 38; // This is the top row
-          end else // This is the only row.
-            YPosition := Rect.Bottom - 18;
-
-          if FConfig.WSearchShowYear then
-            DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(TSetObject(Obj).SetYear));
-          var SetNumPartsText := IntToStr(TSetObject(Obj).SetNumParts);
-          var TextWidth1 := DgSets.Canvas.TextWidth(SetNumPartsText);
-          if FConfig.WSearchShowPartCount then begin
-            DgSets.Canvas.TextOut(Rect.Right-TextWidth1-2, YPosition, SetNumPartsText);
-          end;
-        end;
-
-        // Inforow 3 - Search in my collection - always at the bottom
-        if FConfig.WSearchMyCollection and
-           (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
-          YPosition := Rect.Bottom - 18;
-
-          if FConfig.WSearchShowSetQuantity then
-            DgSets.Canvas.TextOut(Rect.Left+2, YPosition, IntToStr(TSetObject(Obj).Quantity) + 'x');
-          var BSSetID := IntToStr(TSetObject(Obj).BSSetListID);
-          var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
-          if FConfig.WSearchShowCollectionID then
-            DgSets.Canvas.TextOut(Rect.Right-TextWidth2-2, YPosition, BSSetID);
-        end;
-      end;
-    end;
+  // Inforow 1
+  var SetObj := TSetObject(Obj);
+  if FConfig.WSearchShowNumber then begin
+    var Number := SetObj.SetNum;
+    DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, Number);
   end;
+
+  // Inforow 2
+  if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then begin
+    if InfoRowCount = 3 then
+      YPosition := Rect.Bottom - 38      // This is the middle row
+    else if InfoRowCount = 2 then begin
+      if FConfig.WSearchShowNumber then
+        YPosition := Rect.Bottom - 18    // This is the bottom row
+      else
+        YPosition := Rect.Bottom - 38;   // This is the top row
+    end else
+      YPosition := Rect.Bottom - 18;
+
+    if FConfig.WSearchShowYear then
+      DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, IntToStr(SetObj.SetYear));
+
+    var SetNumPartsText := IntToStr(SetObj.SetNumParts);
+    var TextWidth1 := DgSets.Canvas.TextWidth(SetNumPartsText);
+    if FConfig.WSearchShowPartCount then
+      DgSets.Canvas.TextOut(Rect.Right - TextWidth1 - 2, YPosition, SetNumPartsText);
+  end;
+
+  // Inforow 3 - Search in my collection - always at the bottom
+  if FConfig.WSearchMyCollection and
+     (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
+    YPosition := Rect.Bottom - 18;
+
+    if FConfig.WSearchShowSetQuantity then
+      DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, IntToStr(SetObj.Quantity) + 'x');
+
+    var BSSetID := IntToStr(SetObj.BSSetListID);
+    var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
+    if FConfig.WSearchShowCollectionID then
+      DgSets.Canvas.TextOut(Rect.Right - TextWidth2 - 2, YPosition, BSSetID);
+  end;
+end;
+
+procedure TFrmSearch.FDrawPartInfoInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+begin
+  if Obj = nil then
+    Exit
+  else if DgSets.DefaultColWidth < 64 then
+    Exit;
+
+  var PartObj := TPartObject(Obj);
+  if FConfig.WSearchShowNumber then
+    DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, PartObj.PartNum);
+
+  if FConfig.WSearchMyCollection and FConfig.WSearchShowSetQuantity then begin
+    var YPosition := Rect.Bottom - 18;
+    var NumText := IntToStr(PartObj.CurQuantity);
+    DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, NumText + 'x');
+  end;
+end;
+
+procedure TFrmSearch.DgSetsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
+begin
+  var Idx := FGetIndexByRowAndCol(ACol, ARow);
+  if (Idx < 0) or (Idx >= FSearchResult.Count) then
+    Exit;
+
+  var Obj := nil;
+  if FSearchResult.SearchType = cSEARCHTYPESET then
+    Obj := FSearchResult.SetObjectList[Idx]
+  else if FSearchResult.SearchType = cSEARCHTYPEPART then
+    Obj := FSearchResult.PartObjectList[Idx];
+
+  var InfoRowCount := FInfoRowCountForWidth;
+
+  FDrawImageInCell(Rect, Obj, InfoRowCount);
+
+  DgSets.Canvas.Brush.Style := bsClear;
+
+  if FSearchResult.SearchType = cSEARCHTYPESET then
+    FDrawSetInfoInCell(Rect, Obj, InfoRowCount)
+  else if FSearchResult.SearchType = cSEARCHTYPEPART then
+    FDrawPartInfoInCell(Rect, Obj, InfoRowCount);
+  //else cSEARCHTYPEMINIFIG
 end;
 
 procedure TFrmSearch.DgSetsMouseLeave(Sender: TObject);
@@ -709,9 +727,18 @@ begin
       var MyCollectionInfo := '';
       if FConfig.WSearchMyCollection then
         MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
-      SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year, IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName, IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
-    end else begin
-      //todo part
+      SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year,
+                                                                IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName,
+                                                                IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
+    end else if FSearchResult.SearchType = cSEARCHTYPEPART then begin
+      var PartObject := FSearchResult.PartObjectList[Idx];
+
+      var MyCollectionInfo := '';
+      if FConfig.WSearchMyCollection and (PartObject.CurQuantity > 0) and (PartObject.BSSetListName <> '') then
+        MyCollectionInfo := Format('%dx in %s', [PartObject.CurQuantity, PartObject.BSSetListName]);
+      SbResults.Panels[1].Text := Format('%s, %s%s%s', [PartObject.PartNum, PartObject.PartName, //Year,
+                                                              //IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName,
+                                                              IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
     end;
   end else
     SbResults.Panels[1].Text := '';
@@ -824,10 +851,12 @@ begin
   var CategoryID := 0;
 
   if OwnCollection then begin
-    FDQuery.SQL.Text := 'SELECT p.name as partname, bpi.color_id, p.part_num, bpi.BSSetID, bpi.quantity, ip.img_url' +
+    FDQuery.SQL.Text := 'SELECT p.name as partname, bpi.color_id, p.part_num, bpi.BSSetID, bpi.quantity, ip.img_url, bsl.id as BSSetListID, bsl.Name as BSSetListName' +
                         ' FROM BSDBPartsInventory bpi'+
                         ' LEFT JOIN inventory_parts ip on ip.part_num = bpi.part_num' +
                         ' LEFT JOIN parts p on p.part_num = bpi.part_num AND bpi.color_id = ip.color_id' +
+                        ' LEFT JOIN bssets bss on bss.ID = bpi.BSSetID' +
+                        ' LEFT JOIN bssetlists bsl on bsl.ID = bss.BSSetListID' +
                         ' WHERE'+ //' (year between :fromyear and :toyear) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
     if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
@@ -950,18 +979,18 @@ begin
   if EditSearchText.Text = '' then
     Exit;
 {
-select * from sets where set_num = ‘4200-1’; – one set, 102 parts
-select * from inventories where set_num = ‘4200-1’; – 9677
+select * from sets where set_num = ï¿½4200-1ï¿½; ï¿½ one set, 102 parts
+select * from inventories where set_num = ï¿½4200-1ï¿½; ï¿½ 9677
 
-select * from inventory_parts where inventory_id = 9677; – the set inventory
+select * from inventory_parts where inventory_id = 9677; ï¿½ the set inventory
 
-select * from inventory_minifigs where inventory_id = 9677; – fig-001386
-select * from inventories where set_num = ‘fig-001386’; – 52201
-select * from minifigs where fig_num = ‘fig-001386’; – 1 figure with 5 parts.
-select * from inventory_parts where inventory_id = 52201; – the minifig parts
+select * from inventory_minifigs where inventory_id = 9677; ï¿½ fig-001386
+select * from inventories where set_num = ï¿½fig-001386ï¿½; ï¿½ 52201
+select * from minifigs where fig_num = ï¿½fig-001386ï¿½; ï¿½ 1 figure with 5 parts.
+select * from inventory_parts where inventory_id = 52201; ï¿½ the minifig parts
 
-select * from inventory_sets where set_num = ‘4200-1’; – 1726, is the “set box” this set and 4 others are a part of
-select * from inventory_sets where inventory_id = 1726; – is a list of sets in a set box
+select * from inventory_sets where set_num = ï¿½4200-1ï¿½; ï¿½ 1726, is the ï¿½set boxï¿½ this set and 4 others are a part of
+select * from inventory_sets where inventory_id = 1726; ï¿½ is a list of sets in a set box
 }
 
   // Hide scrollbox while drawing
