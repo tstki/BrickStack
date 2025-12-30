@@ -220,6 +220,7 @@
         <DCCReference Include="Src\Scripts\UBSSQL.pas"/>
         <DCCReference Include="Src\UDragData.pas"/>
         <DCCReference Include="Src\Data\USearchResult.pas"/>
+        <DCCReference Include="Src\Data\UConst.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

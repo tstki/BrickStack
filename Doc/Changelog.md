@@ -5,6 +5,7 @@
 - Added "in my collection" option when searching.
 - Search results can now be sorted, and have the ability to show/hide text.
 - Search parts
+- Remember search parameters (except search field)
 
 ## Version 20251130.1915 (0.0.0.9)
 - CSV import overhaul.

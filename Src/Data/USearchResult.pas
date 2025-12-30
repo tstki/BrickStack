@@ -4,29 +4,10 @@ interface
 
 uses
   FireDAC.Comp.Client,
-  UPart, USet, USetList, //UMinifig,
+  UPart, USet, USetList, UConst,
   System.Classes, Generics.Collections;
 
 type
-  //Search what / View External types:
-  TSearchWhat = ( cSEARCHTYPESET = 0,
-                  cSEARCHTYPEPART = 1,
-                  cSEARCHTYPEMINIFIG = 2    // Not used yet
-                );
-
-  TSearchBy = ( //cNUMBERORNAME = 0,
-                cNUMBER = 0,
-                cNAME = 2
-              );
-
-  TSearchStyle = ( // Search style for others
-                   cSearchAll = 0,        // "%SearchText%" // May find a lot more unrelated stuff
-                   // Search style for sets
-                   cSearchPrefix = 1,     // "SearchText%" // Also gets all versions// Search style for sets:
-                   cSearchSuffix = 2,     // "%SearchText" and "%Searchtext-1" // Find parts of sets
-                   cSearchExact = 3       // "SearchText"
-                 );
-
   // Or through SQL
   TSearchResult = class(TObject)
   private

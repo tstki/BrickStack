@@ -171,7 +171,7 @@ uses
   IOUtils,  // Used for cache dir size
   ShellAPI, // Needed for ShellExecute
   Themes, Styles,
-  UStrings,
+  UStrings, UConst,
   UDlgLogin;
 
 procedure TDlgConfig.FormCreate(Sender: TObject);

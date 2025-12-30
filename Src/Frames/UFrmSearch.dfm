@@ -162,6 +162,7 @@ object FrmSearch: TFrmSearch
       Width = 74
       Height = 23
       TabOrder = 1
+      OnChange = CbxSearchStyleChange
       OnKeyPress = HandleKeyPress
     end
     object CbxSearchBy: TComboBox

@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages,
-  UConfig;
+  UConfig, UConst;
 
 type
   TShowSetData = record

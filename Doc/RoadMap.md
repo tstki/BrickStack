@@ -23,6 +23,7 @@
 - Comma separated search input, so you can search for sets "and / or"
 - Add DB column and rename BSSetLists to BSCollection, add column for type
 - Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
+- Build themes by year table on database creation, so you can filter the active themes by year.
 
 ### Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)

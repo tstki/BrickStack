@@ -133,7 +133,7 @@ implementation
 {$R *.dfm}
 uses
   ShellAPI, Printers, CommCtrl, UITypes,
-  UFrmMain,
+  UFrmMain, UConst,
   USQLiteConnection,
   Math, Diagnostics, Data.DB, StrUtils,
   UDlgViewExternal, UDlgAddToSetList,

@@ -3,51 +3,9 @@ unit UConfig;
 interface
 
 uses
-  System.Classes, Forms, IniFiles;
+  System.Classes, Forms, IniFiles, UConst;
 
 type
-  // Open Types for links to external sites:
-  TExternalOpenType = ( // Source
-                        cOTNONE = 0,        // None selected yet
-                        cOTREBRICKABLE = 1, // Parts and sets
-                        cOTBRICKLINK = 2,   //
-                        cOTBRICKOWL = 3,    //
-                        cOTBRICKSET = 4,    // Sets
-                        cOTLDRAW = 5,       // Parts
-                        cOTCUSTOM = 6       // Parts and sets (probably)
-                      );
-
-  // Doubleclick action windows
-  TDoubleClickActionType = (
-                             cACTIONSEARCH = 0,
-                             cACTIONCOLLECTION = 1,
-                             cACTIONSETLIST = 2,
-                             cACTIONPARTS = 3      // Only view parts, not edit parts.
-                           );
-
-  TDoubleClickAction = (
-                         caVIEW = 0,
-                         caVIEWEXTERNAL = 1,
-                         caEDITDETAILS = 2,
-                         caVIEWPARTS = 3,
-                         caEDITPARTS = 4
-                       );
-
-  //View External types:
-  TViewExternalType = (
-                        cTYPESET = 0,
-                        cTYPEPART = 1,
-                        cTYPEMINIFIG = 2 // Not used yet
-                      );
-
-  //Config sections - used for saving specific sections instead of "everything"
-  TConfigSection = (  csALL = 0,
-                      csCONFIGDIALOG = 1,
-                      csWINDOWPOSITIONS = 2,
-                      csPARTSWINDOWFILTERS = 3,
-                      csSEARCHWINDOWFILTERS = 4
-                    );
-  
   TClientFormStorage = class(TObject)
   private
     FOpenOnLoad: String;
@@ -124,6 +82,9 @@ type
     FWSearchSortByPartCount: Boolean;
     FWSearchSortByYear: Boolean;
     FWSearchMyCollection: Boolean;
+    FWSearchStyle: Integer;
+    FWSearchWhat: Integer;
+    FWSearchBy: Integer;
 
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
@@ -194,6 +155,9 @@ type
     property WSearchSortByName: Boolean read FWSearchSortByName write FWSearchSortByName;
     property WSearchSortByYear: Boolean read FWSearchSortByYear write FWSearchSortByYear;
     property WSearchMyCollection: Boolean read FWSearchMyCollection write FWSearchMyCollection;
+    property WSearchStyle: Integer read FWSearchStyle write FWSearchStyle;
+    property WSearchWhat: Integer read FWSearchWhat write FWSearchWhat;
+    property WSearchBy: Integer read FWSearchBy write FWSearchBy;
 
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
@@ -361,6 +325,9 @@ begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByName', FWSearchSortByName);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', FWSearchSortByYear);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', FWSearchMyCollection);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchStyle', FWSearchStyle);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchWhat', FWSearchWhat);
+      IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchBy', FWSearchBy);
     end;
 
     // Parts window filters and sorting
@@ -437,6 +404,9 @@ begin
     FWSearchSortByName := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByName', False);
     FWSearchSortByYear := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', False);
     FWSearchMyCollection := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', False);
+    FWSearchStyle := IniFile.ReadInteger(StrSearchWindowIniSection, 'WSearchStyle', Integer(cSEARCHPREFIX));
+    FWSearchWhat := IniFile.ReadInteger(StrSearchWindowIniSection, 'WSearchWhat', Integer(cSEARCHTYPESET));
+    FWSearchBy := IniFile.ReadInteger(StrSearchWindowIniSection, 'WSearchBy', Integer(cNUMBER));
 
     FCollectionListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrCollectionWindowIniSection, 'CollectionListDoubleClickAction', Integer(caVIEW)));
     FSetListDoubleClickAction := TDoubleClickAction(IniFile.ReadInteger(StrSetlistWindowIniSection, 'SetListDoubleClickAction', Integer(caVIEW)));

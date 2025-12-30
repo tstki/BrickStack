@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages,
   System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls,
-  Contnrs, USet, UConfig,
+  Contnrs, USet, UConfig, UConst,
   FireDAC.Comp.Client, FireDAC.Stan.Param,
   System.ImageList, Vcl.ImgList, Vcl.ExtCtrls, Vcl.Imaging.pngimage,
   USearchResult,
@@ -142,6 +142,7 @@ type
     procedure ActToggleAscendingExecute(Sender: TObject);
     procedure ActShowPartCountExecute(Sender: TObject);
     procedure CbxSearchWhatChange(Sender: TObject);
+    procedure CbxSearchStyleChange(Sender: TObject);
   private
     { Private declarations }
     FSearchResult: TSearchResult; // Stored locally from query result.
@@ -203,38 +204,6 @@ begin
 
   FSearchResult := TSearchResult.Create;
 
-  CbxSearchStyle.Clear;
-  CbxSearchStyle.Items.Add(StrSearchAll);
-  CbxSearchStyle.Items.Add(StrSearchPrefix);
-  CbxSearchStyle.Items.Add(StrSearchSuffix);
-  CbxSearchStyle.Items.Add(StrSearchExact);
-  CbxSearchStyle.ItemIndex := 0;
-
-  // This whole dialog is themed for search in sets, but we'll expand on that
-  CbxSearchWhat.Clear;
-  CbxSearchWhat.Items.Add(StrSearchSets);  //cSEARCHTYPESET
-  CbxSearchWhat.Items.Add(StrSearchParts); //cSEARCHTYPEPART
-  //StrSearchMinifigures                   //cSEARCHTYPEMINIFIG
-  //StrAny
-  CbxSearchWhat.ItemIndex := 0;
-
-  FFillCbxSearchBy(TSearchWhat(CbxSearchWhat.ItemIndex));
-
-  // Template used for other results:
-  //PnlTemplateResult.Parent := nil;
-//  PnlTemplateResult.Visible := False;
-
-//  EditPartsFrom.Text := '0';
-//  EditPartsTo.Text := '9000';
-//  EditYearFrom.Text := '1945';
-//  EditYearTo.Text := '2050';
-
-  // Ensure the year track has enough space for coming year.
-  var yearsSince1945 := YearOf(Now) - 1945+1;
-  var numYearTicks := yearsSince1945/10;
-  TrackYearFrom.Max := Round(numYearTicks+0.5);
-  TrackYearTo.Max := TrackYearFrom.Max;
-
 //  SbSearchResults.UseWheelForScrolling := True;
 end;
 
@@ -257,6 +226,30 @@ procedure TFrmSearch.FSetConfig(Config: TConfig);
 begin
   FConfig := Config;
 
+  CbxSearchStyle.Clear;
+  CbxSearchStyle.Items.Add(StrSearchAll);
+  CbxSearchStyle.Items.Add(StrSearchPrefix);
+  CbxSearchStyle.Items.Add(StrSearchSuffix);
+  CbxSearchStyle.Items.Add(StrSearchExact);
+  CbxSearchStyle.ItemIndex := Integer(Config.WSearchStyle); // Prefix is faster because it can the index.
+
+  // This whole dialog is themed for search in sets, but we'll expand on that
+  CbxSearchWhat.Clear;
+  CbxSearchWhat.Items.Add(StrSearchSets);  //cSEARCHTYPESET
+  CbxSearchWhat.Items.Add(StrSearchParts); //cSEARCHTYPEPART
+  //StrSearchMinifigures                   //cSEARCHTYPEMINIFIG
+  //StrAny
+  CbxSearchWhat.ItemIndex := Integer(Config.WSearchWhat);
+
+  FFillCbxSearchBy(TSearchWhat(CbxSearchWhat.ItemIndex));
+
+  // Ensure the year track has enough space for coming year.
+  var yearsSince1945 := YearOf(Now) - 1945+1;
+  var numYearTicks := yearsSince1945/10;
+  TrackYearFrom.Max := Round(numYearTicks+0.5);
+  TrackYearTo.Max := TrackYearFrom.Max;
+
+  //
   MnuShowNumber.Checked := FConfig.WSearchShowNumber;
   MnuShowYear.Checked := FConfig.WSearchShowYear;
   MnuShowQuantity.Checked := FConfig.WSearchShowSetQuantity;
@@ -363,7 +356,7 @@ begin
     if currentIndex >= 0 then
       CbxSearchBy.ItemIndex := currentIndex
     else
-      CbxSearchBy.ItemIndex := 0;
+      CbxSearchBy.ItemIndex := Config.WSearchBy;
   finally
     CbxSearchBy.Items.EndUpdate;
   end;
@@ -463,6 +456,11 @@ begin
   DgSets.Invalidate;
 
   FUpdateUI;
+end;
+
+procedure TFrmSearch.CbxSearchStyleChange(Sender: TObject);
+begin
+//  FUpdateUI;
 end;
 
 procedure TFrmSearch.FUpdateUI;
@@ -756,7 +754,7 @@ begin
                         ' WHERE (year between :fromyear and :toyear) AND' +
                         ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
     FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
 
@@ -768,7 +766,7 @@ begin
 
     FDQuery.SQL.Text := FDQuery.SQL.Text + ' AND s.set_num IN (SELECT bs.set_num from BSSets bs WHERE' +
                                            ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
     FDQuery.SQL.Text := FDQuery.SQL.Text + '))' +
                                            ' GROUP BY bss.BSSetListID, s.set_num ';
@@ -777,7 +775,7 @@ begin
                         ' FROM Sets s WHERE (year between :fromyear and :toyear) AND' +
                         ' (s.num_parts BETWEEN :fromparts AND :toparts) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
     FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
 
@@ -823,11 +821,11 @@ begin
   // Fill the params
   var Params := FDQuery.Params;
   var SearchValue1 := EditSearchText.Text;
-  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchAll then
+  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHALL then
     SearchValue1 := '%' + EditSearchText.Text + '%'
-  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchPrefix then
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHPREFIX then
     SearchValue1 := EditSearchText.Text + '%'
-  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchSuffix then
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHSUFFIX then
     SearchValue1 := '%' + EditSearchText.Text
   else
     SearchValue1 := EditSearchText.Text;
@@ -835,7 +833,7 @@ begin
   var SearchValue2 := SearchValue1 + '-1';
   Params.ParamByName('Param1').AsString := SearchValue1;
 
-  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
     Params.ParamByName('Param2').AsString := SearchValue2;
 
   Params.ParamByName('fromyear').AsInteger := FGetFromYear;
@@ -856,10 +854,11 @@ begin
                         ' LEFT JOIN inventory_parts ip on ip.part_num = bpi.part_num' +
                         ' LEFT JOIN parts p on p.part_num = bpi.part_num AND bpi.color_id = ip.color_id' +
                         ' LEFT JOIN bssets bss on bss.ID = bpi.BSSetID' +
+                        //left join set on setnum, to get the name to display.
                         ' LEFT JOIN bssetlists bsl on bsl.ID = bss.BSSetListID' +
                         ' WHERE'+ //' (year between :fromyear and :toyear) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
     FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
 
@@ -876,7 +875,7 @@ begin
                           ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
                           ' WHERE' + //' (year between :fromyear and :toyear) AND' +
                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
-      if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+      if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
         FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
       FDQuery.SQL.Text := FDQuery.SQL.Text + ')';
     end else begin
@@ -890,7 +889,7 @@ begin
                           ' LEFT JOIN inventory_parts ip ON ip.part_num = prt.part_num' +
                           ' WHERE' + //' (year between :fromyear and :toyear) AND' +
                           ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1))';
-    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+    if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
       FDQuery.SQL.Text := FDQuery.SQL.Text + ' OR (' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param2)';
     FDQuery.SQL.Text := FDQuery.SQL.Text + ') SELECT p.part_num, p.name AS partname, p.img_url, p.color_id, p.part_cat_id' +
                           ' FROM ranked p' +
@@ -946,11 +945,11 @@ begin
   // Fill the params
   var Params := FDQuery.Params;
   var SearchValue1 := EditSearchText.Text;
-  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchAll then
+  if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHALL then
     SearchValue1 := '%' + EditSearchText.Text + '%'
-  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchPrefix then
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHPREFIX then
     SearchValue1 := EditSearchText.Text + '%'
-  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchSuffix then
+  else if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHSUFFIX then
     SearchValue1 := '%' + EditSearchText.Text
   else
     SearchValue1 := EditSearchText.Text;
@@ -958,7 +957,7 @@ begin
   var SearchValue2 := SearchValue1 + '-1';
   Params.ParamByName('Param1').AsString := SearchValue1;
 
-  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSearchSuffix, cSearchExact] then
+  if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
     Params.ParamByName('Param2').AsString := SearchValue2;
 
 //  Params.ParamByName('fromyear').AsInteger := FGetFromYear;
@@ -978,6 +977,12 @@ procedure TFrmSearch.FDoSearch;
 begin
   if EditSearchText.Text = '' then
     Exit;
+
+  // dont save "EditSearchText.Text"
+  Config.WSearchStyle := CbxSearchStyle.ItemIndex;
+  Config.WSearchWhat := CbxSearchWhat.ItemIndex;
+  Config.WSearchBy := CbxSearchBy.ItemIndex;
+
 {
 select * from sets where set_num = �4200-1�; � one set, 102 parts
 select * from inventories where set_num = �4200-1�; � 9677
@@ -1035,7 +1040,7 @@ select * from inventory_sets where inventory_id = 1726; � is a list of sets in
         end;
 
         var SearchLikeOrExact := '';
-        if TSearchStyle(CbxSearchStyle.ItemIndex) = cSearchExact then
+        if TSearchStyle(CbxSearchStyle.ItemIndex) = cSEARCHEXACT then
           SearchLikeOrExact := '='
         else
           SearchLikeOrExact := 'LIKE';
