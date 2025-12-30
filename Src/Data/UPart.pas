@@ -27,6 +27,7 @@ type
     FBSSetListID: Integer;  //
     FBSSetListName: String; //
     FCurQuantity: Integer;  // Aka: Selected parts
+    FSetNum: String;
 
     //FDirty: Boolean;    // Not saved // Item was modified and needs to update
     //FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
@@ -56,6 +57,7 @@ type
     property CurQuantity: Integer read FCurQuantity write FCurQuantity;
     property BSSetListID: Integer read FBSSetListID write FBSSetListID;
     property BSSetListName: String read FBSSetListName write FBSSetListName;
+    property SetNum: String read FSetNum write FSetNum;
   end;
 
   // Move this to a separate unit later:
@@ -112,9 +114,11 @@ begin
   end;
 
   if SearchedInOwnedSets then begin
-    Self.BSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
-    Self.BSSetListName := FDQuery.FieldByName('BSSetListName').AsString;
-    Self.CurQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    Self.FBSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
+    Self.FBSSetListName := FDQuery.FieldByName('BSSetListName').AsString;
+    Self.FSetNum := FDQuery.FieldByName('set_num').AsString;
+    Self.FCurQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    //Self.FBSSetID := FDQuery.FieldByName('BSSetID').AsInteger;
     //FBSPartID //todo: loose parts arent counted yet
   end;
 

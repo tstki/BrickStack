@@ -25,9 +25,9 @@ object FrmSearch: TFrmSearch
     object LblYear: TLabel
       Left = 8
       Top = 7
-      Width = 38
+      Width = 22
       Height = 15
-      Caption = 'LblYear'
+      Caption = 'Year'
     end
     object LblParts: TLabel
       Left = 8

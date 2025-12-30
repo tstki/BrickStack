@@ -379,7 +379,7 @@ begin
   DgSets.OnMouseMove := DgSetsMouseMove;
 
   // Fill the theme pulldown - just main themes for now. No sub themes.
-  FFillCbxThemesOrCategories(cSEARCHTYPESET);
+  FFillCbxThemesOrCategories(TSearchWhat(CbxThemes.ItemIndex));
 
   CbxThemes.DropDownWidth := CbxThemes.DropDownWidth * 2;
 
@@ -599,20 +599,47 @@ begin
 end;
 
 procedure TFrmSearch.FDrawPartInfoInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+var
+  YPosition: Integer;
 begin
   if Obj = nil then
     Exit
   else if DgSets.DefaultColWidth < 64 then
     Exit;
 
+  // Inforow 1 - Part number
   var PartObj := TPartObject(Obj);
   if FConfig.WSearchShowNumber then
     DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, PartObj.PartNum);
 
-  if FConfig.WSearchMyCollection and FConfig.WSearchShowSetQuantity then begin
-    var YPosition := Rect.Bottom - 18;
-    var NumText := IntToStr(PartObj.CurQuantity);
-    DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, NumText + 'x');
+  // Inforow 2 - Set number (only when searching in own collection)
+  if FConfig.WSearchShowNumber then begin
+    if InfoRowCount = 3 then
+      YPosition := Rect.Bottom - 38      // This is the middle row
+    else if InfoRowCount = 2 then begin
+      if FConfig.WSearchShowNumber then
+        YPosition := Rect.Bottom - 18    // This is the bottom row
+      else
+        YPosition := Rect.Bottom - 38;   // This is the top row
+    end else
+      YPosition := Rect.Bottom - 18;
+
+    DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, PartObj.SetNum);
+  end;
+
+  // Inforow 3 - Search in my collection - always at the bottom
+  if FConfig.WSearchMyCollection then begin
+    YPosition := Rect.Bottom - 18;
+    if FConfig.WSearchShowPartCount then begin
+      var NumText := IntToStr(PartObj.CurQuantity);
+      DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, NumText + 'x');
+    end;
+
+    if FConfig.WSearchShowCollectionID then begin
+      var BSSetID := IntToStr(PartObj.BSSetListID);
+      var TextWidth2 := DgSets.Canvas.TextWidth(BSSetID);
+      DgSets.Canvas.TextOut(Rect.Right - TextWidth2 - 2, YPosition, BSSetID);
+    end;
   end;
 end;
 
@@ -730,13 +757,15 @@ begin
                                                                 IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
     end else if FSearchResult.SearchType = cSEARCHTYPEPART then begin
       var PartObject := FSearchResult.PartObjectList[Idx];
-
       var MyCollectionInfo := '';
-      if FConfig.WSearchMyCollection and (PartObject.CurQuantity > 0) and (PartObject.BSSetListName <> '') then
-        MyCollectionInfo := Format('%dx in %s', [PartObject.CurQuantity, PartObject.BSSetListName]);
-      SbResults.Panels[1].Text := Format('%s, %s%s%s', [PartObject.PartNum, PartObject.PartName, //Year,
-                                                              //IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName,
-                                                              IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
+      if FConfig.WSearchMyCollection and (PartObject.CurQuantity > 0) then begin
+        if PartObject.BSSetListName <> '' then
+          MyCollectionInfo := Format('%dx in %s', [PartObject.CurQuantity, PartObject.BSSetListName]);
+        if PartObject.SetNum <> '' then
+          MyCollectionInfo := MyCollectionInfo + Format('(%s)', [PartObject.SetNum]); // todo, add BSSetID to make it more unique
+      end;
+      SbResults.Panels[1].Text := Format('%s, %s%s%s', [PartObject.PartNum, PartObject.PartName,
+                                                        IfThen(MyCollectionInfo <> '', ', ', ''), MyCollectionInfo]);
     end;
   end else
     SbResults.Panels[1].Text := '';
@@ -849,13 +878,14 @@ begin
   var CategoryID := 0;
 
   if OwnCollection then begin
-    FDQuery.SQL.Text := 'SELECT p.name as partname, bpi.color_id, p.part_num, bpi.BSSetID, bpi.quantity, ip.img_url, bsl.id as BSSetListID, bsl.Name as BSSetListName' +
+    FDQuery.SQL.Text := 'SELECT p.name as partname, bpi.color_id, p.part_num, bpi.BSSetID, bpi.quantity,' +
+                        ' ip.img_url, bsl.id as BSSetListID, bsl.Name as BSSetListName, s.name as setname, s.set_num as set_num' +
                         ' FROM BSDBPartsInventory bpi'+
                         ' LEFT JOIN inventory_parts ip on ip.part_num = bpi.part_num' +
                         ' LEFT JOIN parts p on p.part_num = bpi.part_num AND bpi.color_id = ip.color_id' +
                         ' LEFT JOIN bssets bss on bss.ID = bpi.BSSetID' +
-                        //left join set on setnum, to get the name to display.
                         ' LEFT JOIN bssetlists bsl on bsl.ID = bss.BSSetListID' +
+                        ' LEFT JOIN sets s on s.set_num = bss.set_num' +
                         ' WHERE'+ //' (year between :fromyear and :toyear) AND' +
                         ' ((' + SearchSubject + ' ' + SearchLikeOrExact + ' :Param1)';
     if TSearchStyle(CbxSearchStyle.ItemIndex) in [cSEARCHSUFFIX, cSEARCHEXACT] then
@@ -926,9 +956,9 @@ begin
   if FConfig.WSearchMyCollection then begin
     if OwnCollection then begin
       if SortSql <> '' then
-        SortSql := SortSql + ', p.part_num DESC, bpi.BSSetID'
+        SortSql := SortSql + ', p.part_num DESC, bss.BSSetListID, bpi.BSSetID'
       else
-        SortSql := ' ORDER BY p.part_num DESC, bpi.BSSetID';
+        SortSql := ' ORDER BY p.part_num DESC, bss.BSSetListID, bpi.BSSetID';
     end else begin
       if SortSql <> '' then
         SortSql := SortSql + ', p.part_num, bss.bssetlistid'
@@ -984,18 +1014,18 @@ begin
   Config.WSearchBy := CbxSearchBy.ItemIndex;
 
 {
-select * from sets where set_num = �4200-1�; � one set, 102 parts
-select * from inventories where set_num = �4200-1�; � 9677
+  select * from sets where set_num = '4200-1'; = one set, 102 parts
+  select * from inventories where set_num = '4200-1'; = 9677
 
-select * from inventory_parts where inventory_id = 9677; � the set inventory
+  select * from inventory_parts where inventory_id = 9677; = the set inventory
 
-select * from inventory_minifigs where inventory_id = 9677; � fig-001386
-select * from inventories where set_num = �fig-001386�; � 52201
-select * from minifigs where fig_num = �fig-001386�; � 1 figure with 5 parts.
-select * from inventory_parts where inventory_id = 52201; � the minifig parts
+  select * from inventory_minifigs where inventory_id = 9677; = fig-001386
+  select * from inventories where set_num = 'fig-001386'; = 52201
+  select * from minifigs where fig_num = 'fig-001386'; = 1 figure with 5 parts.
+  select * from inventory_parts where inventory_id = 52201; = the minifig parts
 
-select * from inventory_sets where set_num = �4200-1�; � 1726, is the �set box� this set and 4 others are a part of
-select * from inventory_sets where inventory_id = 1726; � is a list of sets in a set box
+  select * from inventory_sets where set_num = '4200-1'; = 1726, is the 'set box' this set and 4 others are a part of
+  select * from inventory_sets where inventory_id = 1726; = is a list of sets in a set box
 }
 
   // Hide scrollbox while drawing
