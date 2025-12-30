@@ -97,6 +97,8 @@ type
     ActShowPartCount: TAction;
     MnuShowPartCount: TMenuItem;
     CbxIncludeAltColors: TCheckBox;
+    ActShowPartOrMinifigNum: TAction;
+    MnuShowPartOrFigureNumber: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -143,6 +145,7 @@ type
     procedure ActShowPartCountExecute(Sender: TObject);
     procedure CbxSearchWhatChange(Sender: TObject);
     procedure CbxSearchStyleChange(Sender: TObject);
+    procedure ActShowPartOrMinifigNumExecute(Sender: TObject);
   private
     { Private declarations }
     FSearchResult: TSearchResult; // Stored locally from query result.
@@ -482,6 +485,8 @@ begin
   ActSortByPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
   ActSortByYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
 
+  ActShowPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+
   CbxIncludeAltColors.Enabled := not CbxSearchInMyCollection.Checked;
   CbxIncludeAltColors.Visible := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART);
 
@@ -609,7 +614,7 @@ begin
 
   // Inforow 1 - Part number
   var PartObj := TPartObject(Obj);
-  if FConfig.WSearchShowNumber then
+  if FConfig.WSearchShowPartOrMinifigNumber then
     DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, PartObj.PartNum);
 
   // Inforow 2 - Set number (only when searching in own collection)
@@ -630,7 +635,7 @@ begin
   // Inforow 3 - Search in my collection - always at the bottom
   if FConfig.WSearchMyCollection then begin
     YPosition := Rect.Bottom - 18;
-    if FConfig.WSearchShowPartCount then begin
+    if FConfig.WSearchShowSetQuantity then begin
       var NumText := IntToStr(PartObj.CurQuantity);
       DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, NumText + 'x');
     end;
@@ -1224,6 +1229,17 @@ begin
   MnuShowPartCount.Checked := not MnuShowPartCount.Checked;
 
   Config.WSearchShowPartCount := MnuShowPartCount.Checked;
+
+  FSetDefaultColumnDimensionsAndAdjustGrid;
+
+  DgSets.Invalidate;
+end;
+
+procedure TFrmSearch.ActShowPartOrMinifigNumExecute(Sender: TObject);
+begin
+  MnuShowPartOrFigureNumber.Checked := not MnuShowPartOrFigureNumber.Checked;
+
+  Config.WSearchShowPartOrMinifigNumber := MnuShowPartOrFigureNumber.Checked;
 
   FSetDefaultColumnDimensionsAndAdjustGrid;
 

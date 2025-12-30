@@ -588,8 +588,12 @@ object FrmSearch: TFrmSearch
       Caption = 'Show part count'
       OnExecute = ActShowPartCountExecute
     end
+    object ActShowPartOrMinifigNum: TAction
+      Caption = 'Show (part/figure) number'
+      OnExecute = ActShowPartOrMinifigNumExecute
+    end
     object ActShowSetNum: TAction
-      Caption = 'Show (set) number'
+      Caption = 'Show set number'
       OnExecute = ActShowSetNumExecute
     end
     object ActShowYear: TAction
@@ -697,6 +701,9 @@ object FrmSearch: TFrmSearch
     end
     object MnuShowNumber: TMenuItem
       Action = ActShowSetNum
+    end
+    object MnuShowPartOrFigureNumber: TMenuItem
+      Action = ActShowPartOrMinifigNum
     end
     object MnuShowYear: TMenuItem
       Action = ActShowYear

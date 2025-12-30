@@ -75,6 +75,7 @@ type
     FWSearchShowSetQuantity: Boolean;
     FWSearchShowCollectionID: Boolean;
     FWSearchShowPartCount: Boolean;
+    FWSearchShowPartOrMinifigNumber: Boolean;
     FWSearchSortAscending: Boolean;
     FWSearchSortByName: Boolean;
     FWSearchSortByTheme: Boolean;
@@ -148,6 +149,7 @@ type
     property WSearchShowSetQuantity: Boolean read FWSearchShowSetQuantity write FWSearchShowSetQuantity;
     property WSearchShowCollectionID: Boolean read FWSearchShowCollectionID write FWSearchShowCollectionID;
     property WSearchShowPartCount: Boolean read FWSearchShowPartCount write FWSearchShowPartCount;
+    property WSearchShowPartOrMinifigNumber: Boolean read FWSearchShowPartOrMinifigNumber write FWSearchShowPartOrMinifigNumber;
     property WSearchSortAscending: Boolean read FWSearchSortAscending write FWSearchSortAscending;
     property WSearchSortByTheme: Boolean read FWSearchSortByTheme write FWSearchSortByTheme;
     property WSearchSortByNumber: Boolean read FWSearchSortByNumber write FWSearchSortByNumber;
@@ -313,18 +315,19 @@ begin
     // Search window filters and sorting
     if Section in [csALL, csSEARCHWINDOWFILTERS] then begin
       IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchGridSize', FWSearchGridSize);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortAscending', FWSearchSortAscending);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowNumber', FWSearchShowNumber);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowYear', FWSearchShowYear);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowSetQuantity', FWSearchShowSetQuantity);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowCollectionID', FWSearchShowCollectionID);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchShowPartCount', FWSearchShowPartCount);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByTheme', FWSearchSortByTheme);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByNumber', FWSearchSortByNumber);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByPartCount', FWSearchSortByPartCount);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByName', FWSearchSortByName);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchSortByYear', FWSearchSortByYear);
-      IniFile.WriteBool(StrSetPartsWindowIniSection, 'WSearchMyCollection', FWSearchMyCollection);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortAscending', FWSearchSortAscending);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowNumber', FWSearchShowNumber);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowYear', FWSearchShowYear);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowSetQuantity', FWSearchShowSetQuantity);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowCollectionID', FWSearchShowCollectionID);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowPartCount', FWSearchShowPartCount);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchShowPartOrMinifigNumber', FWSearchShowPartOrMinifigNumber);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortByTheme', FWSearchSortByTheme);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortByNumber', FWSearchSortByNumber);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortByPartCount', FWSearchSortByPartCount);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortByName', FWSearchSortByName);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchSortByYear', FWSearchSortByYear);
+      IniFile.WriteBool(StrSearchWindowIniSection, 'WSearchMyCollection', FWSearchMyCollection);
       IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchStyle', FWSearchStyle);
       IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchWhat', FWSearchWhat);
       IniFile.WriteInteger(StrSearchWindowIniSection, 'WSearchBy', FWSearchBy);
@@ -397,6 +400,7 @@ begin
     FWSearchShowSetQuantity := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowSetQuantity', True);
     FWSearchShowCollectionID := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowCollectionID', True);
     FWSearchShowPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowPartCount', True);
+    FWSearchShowPartOrMinifigNumber := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchShowPartOrMinifigNumber', True);
     FWSearchSortAscending := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortAscending', False);
     FWSearchSortByTheme := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByTheme', False);
     FWSearchSortByNumber := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WSearchSortByNumber', False);
