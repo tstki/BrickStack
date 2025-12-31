@@ -258,6 +258,7 @@ begin
   MnuShowQuantity.Checked := FConfig.WSearchShowSetQuantity;
   MnuShowCollectionID.Checked := FConfig.WSearchShowCollectionID;
   MnuShowPartCount.Checked := FConfig.WSearchShowPartCount;
+  MnuShowPartOrFigureNumber.Checked := FConfig.WSearchShowPartOrMinifigNumber;
   MnuSortAscending.Checked := FConfig.WSearchSortAscending;
   MnuSortByName.Checked := FConfig.WSearchSortByName;
   MnuSortByNumber.Checked := FConfig.WSearchSortByNumber;
@@ -422,18 +423,7 @@ end;
 
 function TFrmSearch.FGetGridHeight: Integer;
 begin
-  var InfoRowCount := 0;
-  if DgSets.DefaultColWidth >= 64 then begin
-    if FConfig.WSearchShowNumber then
-      Inc(InfoRowCount);
-    if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
-      Inc(InfoRowCount);
-    if FConfig.WSearchMyCollection and
-      (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
-      Inc(InfoRowCount);
-  end;
-
-  Result := FGetGridWidth + (InfoRowCount*20);
+  Result := FGetGridWidth + (FInfoRowCountForWidth*20);
 end;
 
 function TFrmSearch.FGetGridWidth: Integer;
@@ -486,6 +476,11 @@ begin
   ActSortByYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
 
   ActShowPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  ActShowYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
+  ActShowSetNum.Enabled := (CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET)) or CbxSearchInMyCollection.Checked;
+  ActShowSetQuantity.Enabled := CbxSearchInMyCollection.Checked;
+  ActShowCollectionID.Enabled := CbxSearchInMyCollection.Checked;
+  ActShowPartOrMinifigNum.Enabled := (CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART));
 
   CbxIncludeAltColors.Enabled := not CbxSearchInMyCollection.Checked;
   CbxIncludeAltColors.Visible := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART);
@@ -520,13 +515,25 @@ function TFrmSearch.FInfoRowCountForWidth: Integer;
 begin
   Result := 0;
   if DgSets.DefaultColWidth >= 64 then begin
-    if FConfig.WSearchShowNumber then
-      Inc(Result);
-    if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
-      Inc(Result);
-    if FConfig.WSearchMyCollection and
-      (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
-      Inc(Result);
+    var SearchWhat := TSearchWhat(CbxSearchWhat.ItemIndex);
+    if SearchWhat = cSEARCHTYPESET then begin
+      if FConfig.WSearchShowNumber then
+        Inc(Result);
+      if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
+        Inc(Result);
+      if FConfig.WSearchMyCollection and
+        (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
+        Inc(Result);
+    end else if SearchWhat = cSEARCHTYPEPART then begin
+      if FConfig.WSearchShowPartOrMinifigNumber then
+        Inc(Result);
+      if FConfig.WSearchMyCollection then begin
+        if FConfig.WSearchShowNumber then
+          Inc(Result);
+        if (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
+          Inc(Result);
+      end;
+    end;
   end;
 end;
 
@@ -618,22 +625,22 @@ begin
     DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, PartObj.PartNum);
 
   // Inforow 2 - Set number (only when searching in own collection)
-  if FConfig.WSearchShowNumber then begin
-    if InfoRowCount = 3 then
-      YPosition := Rect.Bottom - 38      // This is the middle row
-    else if InfoRowCount = 2 then begin
-      if FConfig.WSearchShowNumber then
-        YPosition := Rect.Bottom - 18    // This is the bottom row
-      else
-        YPosition := Rect.Bottom - 38;   // This is the top row
-    end else
-      YPosition := Rect.Bottom - 18;
-
-    DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, PartObj.SetNum);
-  end;
-
-  // Inforow 3 - Search in my collection - always at the bottom
   if FConfig.WSearchMyCollection then begin
+    if FConfig.WSearchShowNumber then begin
+      if InfoRowCount = 3 then
+        YPosition := Rect.Bottom - 38      // This is the middle row
+      else if InfoRowCount = 2 then begin
+        if FConfig.WSearchShowNumber then
+          YPosition := Rect.Bottom - 18    // This is the bottom row
+        else
+          YPosition := Rect.Bottom - 38;   // This is the top row
+      end else
+        YPosition := Rect.Bottom - 18;
+
+      DgSets.Canvas.TextOut(Rect.Left + 2, YPosition, PartObj.SetNum);
+    end;
+
+    // Inforow 3 - Search in my collection - always at the bottom
     YPosition := Rect.Bottom - 18;
     if FConfig.WSearchShowSetQuantity then begin
       var NumText := IntToStr(PartObj.CurQuantity);
