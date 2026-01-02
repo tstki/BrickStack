@@ -1023,7 +1023,7 @@ begin
   FConfig.WSearchStyle := CbxSearchStyle.ItemIndex;
   FConfig.WSearchWhat := CbxSearchWhat.ItemIndex;
   FConfig.WSearchBy := CbxSearchBy.ItemIndex;
-  FConfig.WSearchOwnCollection := ChkSearchOwnCollection.Checked
+  FConfig.WSearchOwnCollection := ChkSearchOwnCollection.Checked;
 {
   select * from sets where set_num = '4200-1'; = one set, 102 parts
   select * from inventories where set_num = '4200-1'; = 9677
