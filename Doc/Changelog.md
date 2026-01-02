@@ -1,6 +1,6 @@
 # BrickStack changelog
 
-## Version (0.0.0.10)
+## Version 20260102.1014 (0.0.0.10)
 - Search results limiter moved to settings.
 - Added "in my collection" option when searching.
 - Search results can now be sorted, and have the ability to show/hide text.
