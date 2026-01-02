@@ -23,6 +23,7 @@
 - Comma separated search input, so you can search for sets "and / or"
 - Add DB column and rename BSSetLists to BSCollection, add column for type
 - Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
+- Build themes by year table on database creation, so you can filter the active themes by year.
 
 ### Optimizations:
 - Multithreading http calls for smoother user experience (mind error 429)
@@ -33,7 +34,7 @@
 - progressdialog in case an operation takes long (like import/export)
 - Cleanup unused functions to keep the .exe smaller
 
-### Throttling and request slowing:
+### Throttling and request slowing on api use:
 - Handle error 429: Add a mandatory delay between requests
 - Request was throttled - you are sending too many requests too fast.
 - Normal user accounts are allowed to send on average one request/sec, with some small allowance for burst traffic.
@@ -104,12 +105,13 @@
 - Export parts.
 - Add to collection
 - Show minifigures as part of the set parts
-- Export set parts - CSV
+- Export (missing) set parts - CSV / XML
 
 ### Collections:
 Export collection:
 - Choose format
 - Choose overwrite / keep
+- Export to bricklink XML (https://studiohelp.bricklink.com/hc/en-us/sections/6153794183319-Import-and-Export)
 Import collection:
 - Choose format
 - Choose overwrite / keep
@@ -129,10 +131,16 @@ Import collection:
 -- select * from inventories where set_num = '4200-1';
 -- select * from inventory_minifigs where inventory_id = 9677;
 -- select * from minifigs where fig_num = 'fig-001386';
+- Menu option: Find alternative colors (for part search)
+- Menu option: Find sets with this part (for part search) - expand with special search later.
+- Include part search by year (by joining set, and sorting by year ascending)
+- Remember the last 10 searches, all input parameters.
+- "Ignore sets" checkbox to search "total" parts, without splitting by set.
 
 ### Search parts in:
 - Search for parts in sets, to find sets
 - Combine multiple parts to search for
+- Show what sets searched parts can be found in
 
 ## Known issues:
 - Selecting a grid cell at the bottom, scrolls all the way to the bottom of the search result.

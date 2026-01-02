@@ -51,7 +51,7 @@ uses
   ShellAPI, Printers,
   USQLiteConnection,
   FireDAC.Stan.Param,
-  Math, Diagnostics, Data.DB, StrUtils,
+  Math, Diagnostics, Data.DB, StrUtils, UConst,
   UFrmMain, UDlgViewExternal, UDlgAddToSetList,
   UStrings;
 

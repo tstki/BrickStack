@@ -7,27 +7,12 @@ uses
   Vcl.Graphics, Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.Menus, Vcl.ComCtrls,
   Vcl.ToolWin, Vcl.ActnMan, Vcl.ActnCtrls, System.Actions, Vcl.ActnList,
   UConfig, Vcl.PlatformDefaultStyleActnCtrls, System.ImageList, Vcl.ImgList,
-  Vcl.Imaging.pngimage, Vcl.ExtCtrls,
+  Vcl.Imaging.pngimage, Vcl.ExtCtrls, UConst,
   FireDAC.Comp.Client, FireDAC.Stan.Def, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.Stan.Param, FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
   USetList, USet, System.Generics.Collections;
 
 type
-  TExternalTypeFilters = (
-                         cETFALL = 0,
-                         cETFLOCAL = 1,       // So, not actually external
-                         cETFREBRICKABLE = 2, // Imported from Rebrickable
-                         cETFHASSETS = 3,
-                         cETFNOSETS = 4
-                       );
-
-  TColumns = (
-               colNAME = 0,
-               colSETS = 1,
-               colUSEINBUILD = 2,
-               colSORTINDEX = 3
-             );
-
   TFrmSetListCollection = class(TForm)
     ActionList1: TActionList;
     LvSetLists: TListView;
@@ -88,7 +73,7 @@ type
     { Private declarations }
     FConfig: TConfig;
     FSetListObjectList: TSetListObjectList;
-    FSortColumn: TColumns;
+    FSortColumn: TSetListCollectionColumns;
     FSortDesc: Boolean;
 //    FPrevSelectedIndex: Integer;
     FIsDragHighlighting: Boolean;
@@ -269,9 +254,9 @@ end;
 
 procedure TFrmSetListCollection.LvSetListsColumnClick(Sender: TObject; Column: TListColumn);
 begin
-  if FSortColumn = TColumns(Column.Index) then
+  if FSortColumn = TSetListCollectionColumns(Column.Index) then
     FSortDesc := not FSortDesc;
-  FSortColumn := TColumns(Column.Index);
+  FSortColumn := TSetListCollectionColumns(Column.Index);
 
   //todo: Update column names back to their default and show (^) / (v) behind the name if it is being sorted.
 

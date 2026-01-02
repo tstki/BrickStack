@@ -57,6 +57,8 @@ const
   StrYes = 'Yes';
   StrNo = 'No';
   StrSetList = 'Setlist';
+  StrCategory = 'Category';
+  StrTheme = 'Theme';
 
   // Setlist filter
   StrSetListFillterShowAll = 'All';
@@ -97,6 +99,8 @@ const
   StrSearchSuffix = '% suffix';
   StrSearchExact = 'Exact';
 
+  StrSearchSetNumber = 'Set number';
+  StrSearchPartNumber = 'Part number';
   StrSearchNumber = 'Number';
   StrSearchName = 'Name';
 

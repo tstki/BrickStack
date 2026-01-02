@@ -22,28 +22,28 @@ object FrmSearch: TFrmSearch
     Height = 63
     BevelOuter = bvNone
     TabOrder = 0
-    object Year: TLabel
+    object LblYear: TLabel
       Left = 8
       Top = 7
       Width = 22
       Height = 15
       Caption = 'Year'
     end
-    object Label3: TLabel
+    object LblParts: TLabel
       Left = 8
       Top = 34
       Width = 26
       Height = 15
       Caption = 'Parts'
     end
-    object Label4: TLabel
+    object LblYearCap: TLabel
       Left = 175
       Top = 7
       Width = 11
       Height = 15
       Caption = 'to'
     end
-    object Label5: TLabel
+    object LblPartsCap: TLabel
       Left = 175
       Top = 34
       Width = 11
@@ -66,8 +66,8 @@ object FrmSearch: TFrmSearch
       Alignment = taRightJustify
       Caption = 'LimitRes'
     end
-    object Label1: TLabel
-      Left = 398
+    object LblThemeOrCategory: TLabel
+      Left = 385
       Top = 7
       Width = 36
       Height = 15
@@ -162,6 +162,7 @@ object FrmSearch: TFrmSearch
       Width = 74
       Height = 23
       TabOrder = 1
+      OnChange = CbxSearchStyleChange
       OnKeyPress = HandleKeyPress
     end
     object CbxSearchBy: TComboBox
@@ -192,7 +193,7 @@ object FrmSearch: TFrmSearch
       TabOrder = 4
       OnClick = BtnFilterClick
     end
-    object CbxSearchInMyCollection: TCheckBox
+    object ChkSearchOwnCollection: TCheckBox
       Left = 223
       Top = 40
       Width = 111
@@ -200,7 +201,7 @@ object FrmSearch: TFrmSearch
       Hint = 'In my collections only'
       Caption = 'In my collection'
       TabOrder = 5
-      OnClick = CbxSearchInMyCollectionClick
+      OnClick = ChkSearchOwnCollectionClick
     end
     object Button1: TButton
       Left = 572
@@ -220,6 +221,17 @@ object FrmSearch: TFrmSearch
       Height = 23
       Style = csDropDownList
       TabOrder = 7
+      OnChange = CbxSearchWhatChange
+    end
+    object ChkIncludeAltColors: TCheckBox
+      Left = 355
+      Top = 40
+      Width = 111
+      Height = 17
+      Hint = 'Also show alternative colors in the search results'
+      Caption = 'Include alt colors'
+      TabOrder = 8
+      OnClick = ChkSearchOwnCollectionClick
     end
   end
   object SbResults: TStatusBar
@@ -576,8 +588,12 @@ object FrmSearch: TFrmSearch
       Caption = 'Show part count'
       OnExecute = ActShowPartCountExecute
     end
+    object ActShowPartOrMinifigNum: TAction
+      Caption = 'Show (part/figure) number'
+      OnExecute = ActShowPartOrMinifigNumExecute
+    end
     object ActShowSetNum: TAction
-      Caption = 'Show (set) number'
+      Caption = 'Show set number'
       OnExecute = ActShowSetNumExecute
     end
     object ActShowYear: TAction
@@ -685,6 +701,9 @@ object FrmSearch: TFrmSearch
     end
     object MnuShowNumber: TMenuItem
       Action = ActShowSetNum
+    end
+    object MnuShowPartOrFigureNumber: TMenuItem
+      Action = ActShowPartOrMinifigNum
     end
     object MnuShowYear: TMenuItem
       Action = ActShowYear

@@ -98,12 +98,9 @@ type
     FImageCache: TImageCache;
     FInventoryPanels: TObjectList;
     FPartObjectList: TPartObjectList;
-//    FCurMaxCols: Integer;
     FSetNum: String;
     FBSSetID: Integer;
-    //FCheckboxMode: Boolean;
     FLastMaxCols: Integer;
-//    FLastCellAction: TCellAction;
     procedure FSetConfig(Config: TConfig);
     procedure FSaveSortSettings;
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
@@ -133,7 +130,7 @@ implementation
 {$R *.dfm}
 uses
   ShellAPI, Printers, CommCtrl, UITypes,
-  UFrmMain,
+  UFrmMain, UConst,
   USQLiteConnection,
   Math, Diagnostics, Data.DB, StrUtils,
   UDlgViewExternal, UDlgAddToSetList,
@@ -1131,7 +1128,7 @@ begin
 
       var InventoryVersion := StrToIntDef(CbxInventoryVersion.Text, 1);
       FDQuery.SQL.Text := 'SELECT ip.part_num, p.name as partname, ip.quantity, ip.is_spare,' +
-                          ' ip.img_url, ip.color_id as colorid, ip.inventory_id' + //, c.name as colorname, c.is_trans, c.rgb
+                          ' ip.img_url, ip.color_id as color_id, ip.inventory_id' + //, c.name as colorname, c.is_trans, c.rgb
                           ' FROM inventories' +
                           ' LEFT JOIN inventory_parts ip ON ip.inventory_id = inventories.id';
       if FConfig.WPartsSortByHue then begin
@@ -1159,7 +1156,7 @@ begin
       if FConfig.WPartsSortByCategory then
         SortSql := ', ip.part_num'
       else if FConfig.WPartsSortByColor then
-        SortSql := ', colorid'
+        SortSql := ', color_id'
       else if FConfig.WPartsSortByHue then
         SortSql := ', c.rgb'
       else if FConfig.WPartsSortByPart then
@@ -1179,7 +1176,7 @@ begin
       Params.ParamByName('set_num').AsString := set_num;
       Params.ParamByName('version').AsInteger := InventoryVersion; // TODO: Needs to be stored with the set_num and BSSetID
 
-      FPartObjectList.LoadFromQuery(FDQuery);
+      FPartObjectList.LoadFromQuery(FDQuery, True, False, False);
 
       SbResults.Panels[0].Text := 'Results: ' + IntToStr(FPartObjectList.Count);
 

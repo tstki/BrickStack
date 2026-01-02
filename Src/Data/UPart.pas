@@ -23,8 +23,11 @@ type
     //FColorIsTrans: Boolean;
 
     // BS Part inventory details
-    FBSPartID: Integer;    // Only set if there are BSDBPartsInventory Items found / enriched.
-    FCurQuantity: Integer; // Aka: Selected parts
+    FBSPartID: Integer;     // Only set if there are BSDBPartsInventory Items found / enriched.
+    FBSSetListID: Integer;  //
+    FBSSetListName: String; //
+    FCurQuantity: Integer;  // Aka: Selected parts
+    FSetNum: String;
 
     //FDirty: Boolean;    // Not saved // Item was modified and needs to update
     //FDoDelete: Boolean; // Not saved // Item was deleted during import, remove it from the database on save.
@@ -38,7 +41,7 @@ type
   public
     { Public declarations }
     //procedure LoadByPartNum(PartNum: String);
-    procedure LoadFromQuery(FDQuery: TFDQuery);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, SearchedInOwnedSets: Boolean);
 
     property PartNum: String read FPartNum write FPartNum;  //
     property PartName: String read FName write FName;
@@ -52,12 +55,15 @@ type
     //property ColorIsTrans: Boolean read FColorIsTrans write FColorIsTrans;
     property BSPartID: Integer read FBSPartID write FBSPartID;
     property CurQuantity: Integer read FCurQuantity write FCurQuantity;
+    property BSSetListID: Integer read FBSSetListID write FBSSetListID;
+    property BSSetListName: String read FBSSetListName write FBSSetListName;
+    property SetNum: String read FSetNum write FSetNum;
   end;
 
   // Move this to a separate unit later:
   TPartObjectList = class(TObjectList<TPartObject>)
   public
-    procedure LoadFromQuery(FDQuery: TFDQuery);
+    procedure LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, IncludeBSSetID, SearchedInOwnedSets: Boolean);
     procedure LoadFromExternal;
     //procedure LoadFromFile;
     //procedure SaveToFile(ReWrite: Boolean);
@@ -93,16 +99,29 @@ begin
   end;
 end;}
 
-procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery);
+procedure TPartObject.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, SearchedInOwnedSets: Boolean);
 begin
   Self.FPartNum := FDQuery.FieldByName('part_num').AsString;
   Self.FName := FDQuery.FieldByName('partname').AsString;
-  Self.FMaxQuantity := FDQuery.FieldByName('quantity').AsInteger;
-  Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
-
   Self.FImgUrl := FDQuery.FieldByName('img_url').AsString;
-  Self.FColorID := FDQuery.FieldByName('colorid').AsInteger;
-  Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
+
+  // when looking up parts of a set:
+  if IncludeSetFields then begin
+    Self.FColorID := FDQuery.FieldByName('color_id').AsInteger;
+    Self.FMaxQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    Self.FIsSpare := (FDQuery.FieldByName('is_spare').AsInteger) = 1;
+    Self.FInventoryID := FDQuery.FieldByName('inventory_id').AsInteger;
+  end;
+
+  if SearchedInOwnedSets then begin
+    Self.FBSSetListID := FDQuery.FieldByName('BSSetListID').AsInteger;
+    Self.FBSSetListName := FDQuery.FieldByName('BSSetListName').AsString;
+    Self.FSetNum := FDQuery.FieldByName('set_num').AsString;
+    Self.FCurQuantity := FDQuery.FieldByName('quantity').AsInteger;
+    //Self.FBSSetID := FDQuery.FieldByName('BSSetID').AsInteger;
+    //FBSPartID //todo: loose parts arent counted yet
+  end;
+
 
 //  Self.FColorRGB := FDQuery.FieldByName('rgb').AsString;
 //  Self.FColorName := FDQuery.FieldByName('colorname').AsString;
@@ -122,13 +141,15 @@ end;
 
 // TPartObjectList
 
-procedure TPartObjectList.LoadFromQuery(FDQuery: TFDQuery);
+procedure TPartObjectList.LoadFromQuery(FDQuery: TFDQuery; IncludeSetFields, IncludeBSSetID, SearchedInOwnedSets: Boolean);
 begin
   FDQuery.Open;
 
+  //IncludeBSSetID, SearchedInOwnedSets used in FrmSearch
+
   while not FDQuery.Eof do begin
     var PartObject := TPartObject.Create;
-    PartObject.LoadFromQuery(FDQuery);
+    PartObject.LoadFromQuery(FDQuery, IncludeSetFields, SearchedInOwnedSets);
 
     Self.Add(PartObject);
 
@@ -136,7 +157,7 @@ begin
   end;
 end;
 
-procedure TPartObjectList.LoadFromExternal();//FNetHttp
+procedure TPartObjectList.LoadFromExternal();
 begin
 //
 end;

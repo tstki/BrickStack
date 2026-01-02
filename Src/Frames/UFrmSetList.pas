@@ -9,30 +9,10 @@ uses
   FireDAC.Stan.Param, FireDAC.Stan.Pool, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
   UConfig, USetList, Vcl.StdCtrls, Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.ComCtrls,
   Generics.Collections, USet, System.ImageList, Vcl.ImgList, Vcl.Menus,
+  UConst,
   Vcl.Buttons;
 
 type
-  TCellAction = (caNone, caLeftClick, caDoubleClick, caRightClick);
-
-  TSetListFilter = (
-                         fltALL = 0,
-                         fltQUANTITY = 1,
-                         fltBUILT = 2,
-                         fltNOTBUILT = 3,
-                         fltSPAREPARTS = 4,
-                         fltNOSPAREPARTS = 5
-                       );
-
-  TSetListColumn = (
-                         colNAME = 0,
-                         colBSID = 1,
-                         colSETNUM = 2,
-                         colQTY = 3,
-                         colBUILD = 4,
-                         colSPARES = 5,
-                         colNOTE = 6
-                       );
-
   TFrmSetList = class(TForm)
     Panel1: TPanel;
     LblFilter: TLabel;
@@ -422,19 +402,19 @@ begin
       // Else, no filter.
 
       case FSortColumn of
-        colNAME:
+        slcolNAME:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY s.name';
-        colBSID:
+        slcolBSID:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.id';
-        //colQTY: //todo
+        //slcolQTY: //todo
           //FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY qty';
-        colBUILD:
+        slcolBUILD:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.Built';
-        colSPARES:
+        slcolSPARES:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.HaveSpareParts';
-        colNOTE:
+        slcolNOTE:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY ms.Notes';
-        else //colSETNUM:
+        else //slcolSETNUM:
           FDQuery.SQL.Text := FDQuery.SQL.Text + ' ORDER BY s.set_num';
       end;
 

@@ -10,7 +10,7 @@ uses
   USqLiteConnection,
   FireDAC.Comp.Client,
   UDlgUpdateDatabase, UITypes,
-  UConfig, UImageCache, UPostMessage;
+  UConfig, UConst, UImageCache, UPostMessage;
 
 type
   TFrmMain = class(TForm)

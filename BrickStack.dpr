@@ -37,7 +37,8 @@ uses
   Vcl.Styles,
   UBSSQL in 'Src\Scripts\UBSSQL.pas',
   UDragData in 'Src\UDragData.pas',
-  USearchResult in 'Src\Data\USearchResult.pas';
+  USearchResult in 'Src\Data\USearchResult.pas',
+  UConst in 'Src\Data\UConst.pas';
 
 {$R *.RES}
 
