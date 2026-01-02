@@ -43,9 +43,10 @@ type
                     );
 
   //Search what / View External types:
-  TSearchWhat = ( cSEARCHTYPESET = 0,
+  TSearchWhat = ( cSEARCHTYPENOTHING = -2,
+                  cSEARCHTYPESET = 0,
                   cSEARCHTYPEPART = 1,
-                  cSEARCHTYPEMINIFIG = 2    // Not used yet
+                  cSEARCHTYPEMINIFIG = 1    // Not used yet
                 );
 
   TSearchBy = ( //cNUMBERORNAME = 0,

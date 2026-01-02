@@ -4,8 +4,9 @@
 - Search results limiter moved to settings.
 - Added "in my collection" option when searching.
 - Search results can now be sorted, and have the ability to show/hide text.
-- Search parts
+- Search for parts in DB / collection
 - Remember search parameters (except search field)
+- Search "in own collection" disconnected from UI, and now connected to search results.
 
 ## Version 20251130.1915 (0.0.0.9)
 - CSV import overhaul.

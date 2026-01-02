@@ -98,12 +98,9 @@ type
     FImageCache: TImageCache;
     FInventoryPanels: TObjectList;
     FPartObjectList: TPartObjectList;
-//    FCurMaxCols: Integer;
     FSetNum: String;
     FBSSetID: Integer;
-    //FCheckboxMode: Boolean;
     FLastMaxCols: Integer;
-//    FLastCellAction: TCellAction;
     procedure FSetConfig(Config: TConfig);
     procedure FSaveSortSettings;
     procedure FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);

@@ -12,10 +12,11 @@ type
   TSearchResult = class(TObject)
   private
     { Private declarations }
-    FSearchType: TSearchWhat;
-    //searchtype
-    //own list
-    //input fields
+    FSearchType: TSearchWhat;  // Sets / Parts / Minifigs
+    FSearchOwnCollection: Boolean; // Did we search our own collection or the database?
+
+    //todo: Store all input fields, so we can remember "previous searches"
+    // Dont store the actual results
 
     // List of results, filled based on searchtype
     FSetObjectList: TSetObjectList;
@@ -29,6 +30,7 @@ type
     procedure Clear;
     procedure LoadFromQuery(FDQuery: TFDQuery; const SearchWhat: TSearchWhat; IncludeBSSetID, SearchedInOwnedSets: Boolean);
     property SearchType: TSearchWhat read FSearchType write FSearchType;
+    property SearchOwnCollection: Boolean read FSearchOwnCollection write FSearchOwnCollection;
     property SetObjectList: TSetObjectList read FSetObjectList;
     property PartObjectList: TPartObjectList read FPartObjectList;
   end;
@@ -43,6 +45,8 @@ uses
 constructor TSearchResult.Create;
 begin
   inherited;
+
+  FSearchType := cSEARCHTYPENOTHING;
 
   FSetObjectList := TSetObjectList.Create;
   FPartObjectList := TPartObjectList.Create;

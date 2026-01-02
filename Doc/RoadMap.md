@@ -133,7 +133,9 @@ Import collection:
 -- select * from minifigs where fig_num = 'fig-001386';
 - Menu option: Find alternative colors (for part search)
 - Menu option: Find sets with this part (for part search) - expand with special search later.
-- Include search by year (by joining set, and sorting by year ascending)
+- Include part search by year (by joining set, and sorting by year ascending)
+- Remember the last 10 searches, all input parameters.
+- "Ignore sets" checkbox to search "total" parts, without splitting by set.
 
 ### Search parts in:
 - Search for parts in sets, to find sets

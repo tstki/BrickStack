@@ -193,7 +193,7 @@ object FrmSearch: TFrmSearch
       TabOrder = 4
       OnClick = BtnFilterClick
     end
-    object CbxSearchInMyCollection: TCheckBox
+    object ChkSearchOwnCollection: TCheckBox
       Left = 223
       Top = 40
       Width = 111
@@ -201,7 +201,7 @@ object FrmSearch: TFrmSearch
       Hint = 'In my collections only'
       Caption = 'In my collection'
       TabOrder = 5
-      OnClick = CbxSearchInMyCollectionClick
+      OnClick = ChkSearchOwnCollectionClick
     end
     object Button1: TButton
       Left = 572
@@ -223,7 +223,7 @@ object FrmSearch: TFrmSearch
       TabOrder = 7
       OnChange = CbxSearchWhatChange
     end
-    object CbxIncludeAltColors: TCheckBox
+    object ChkIncludeAltColors: TCheckBox
       Left = 355
       Top = 40
       Width = 111
@@ -231,7 +231,7 @@ object FrmSearch: TFrmSearch
       Hint = 'Also show alternative colors in the search results'
       Caption = 'Include alt colors'
       TabOrder = 8
-      OnClick = CbxSearchInMyCollectionClick
+      OnClick = ChkSearchOwnCollectionClick
     end
   end
   object SbResults: TStatusBar

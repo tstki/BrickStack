@@ -71,7 +71,7 @@ type
     ActViewParts: TAction;
     Viewparts1: TMenuItem;
     N3: TMenuItem;
-    CbxSearchInMyCollection: TCheckBox;
+    ChkSearchOwnCollection: TCheckBox;
     Button1: TButton;
     ActSearch: TAction;
     ActExpandFilter: TAction;
@@ -96,7 +96,7 @@ type
     Useinspecialsearch1: TMenuItem;
     ActShowPartCount: TAction;
     MnuShowPartCount: TMenuItem;
-    CbxIncludeAltColors: TCheckBox;
+    ChkIncludeAltColors: TCheckBox;
     ActShowPartOrMinifigNum: TAction;
     MnuShowPartOrFigureNumber: TMenuItem;
     procedure FormCreate(Sender: TObject);
@@ -123,7 +123,7 @@ type
     procedure ActViewPartsExecute(Sender: TObject);
     procedure ActViewSetExternalExecute(Sender: TObject);
     procedure ActAddSetToCollectionExecute(Sender: TObject);
-    procedure CbxSearchInMyCollectionClick(Sender: TObject);
+    procedure ChkSearchOwnCollectionClick(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
     procedure ActSearchExecute(Sender: TObject);
     procedure ActExpandFilterExecute(Sender: TObject);
@@ -153,7 +153,6 @@ type
     FDragStartPoint: TPoint;
     FDraggingStarted: Boolean;
     FConfig: TConfig;
-    //FCurMaxCols: Integer;
     FLastMaxCols: Integer;
     procedure FUpdateUI;
     procedure FSetConfig(Config: TConfig);
@@ -266,7 +265,7 @@ begin
   MnuSortByPartCount.Checked := FConfig.WSearchSortByPartCount;
   MnuSortByYear.Checked := FConfig.WSearchSortByYear;
 
-  CbxSearchInMyCollection.Checked := FConfig.WSearchMyCollection;
+  ChkSearchOwnCollection.Checked := FConfig.WSearchOwnCollection;
 
   MnuGrid64.Checked := FConfig.WSearchGridSize = 64;
   MnuGrid96.Checked := FConfig.WSearchGridSize = 96;
@@ -441,12 +440,12 @@ begin
   PopSetsFilter.Popup(P.X, P.Y);
 end;
 
-procedure TFrmSearch.CbxSearchInMyCollectionClick(Sender: TObject);
+procedure TFrmSearch.ChkSearchOwnCollectionClick(Sender: TObject);
 begin
-  FConfig.WSearchMyCollection := CbxSearchInMyCollection.Checked;
+//  FConfig.WSearchOwnCollection := ChkSearchOwnCollection.Checked;
 
-  DgSets.DefaultRowHeight := FGetGridHeight;
-  DgSets.Invalidate;
+//  DgSets.DefaultRowHeight := FGetGridHeight;
+//  DgSets.Invalidate;
 
   FUpdateUI;
 end;
@@ -477,13 +476,13 @@ begin
 
   ActShowPartCount.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
   ActShowYear.Enabled := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET);
-  ActShowSetNum.Enabled := (CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET)) or CbxSearchInMyCollection.Checked;
-  ActShowSetQuantity.Enabled := CbxSearchInMyCollection.Checked;
-  ActShowCollectionID.Enabled := CbxSearchInMyCollection.Checked;
+  ActShowSetNum.Enabled := (CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET)) or FSearchResult.SearchOwnCollection;
+  ActShowSetQuantity.Enabled := FSearchResult.SearchOwnCollection;
+  ActShowCollectionID.Enabled := FSearchResult.SearchOwnCollection;
   ActShowPartOrMinifigNum.Enabled := (CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART));
 
-  CbxIncludeAltColors.Enabled := not CbxSearchInMyCollection.Checked;
-  CbxIncludeAltColors.Visible := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART);
+  ChkIncludeAltColors.Enabled := not ChkSearchOwnCollection.Checked;
+  ChkIncludeAltColors.Visible := CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPEPART);
 
   if CbxSearchWhat.ItemIndex = Integer(cSEARCHTYPESET) then
     LblThemeOrCategory.Caption := StrTheme
@@ -521,13 +520,13 @@ begin
         Inc(Result);
       if FConfig.WSearchShowYear or FConfig.WSearchShowPartCount then
         Inc(Result);
-      if FConfig.WSearchMyCollection and
+      if FSearchResult.SearchOwnCollection and
         (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
         Inc(Result);
     end else if SearchWhat = cSEARCHTYPEPART then begin
       if FConfig.WSearchShowPartOrMinifigNumber then
         Inc(Result);
-      if FConfig.WSearchMyCollection then begin
+      if FSearchResult.SearchOwnCollection then begin
         if FConfig.WSearchShowNumber then
           Inc(Result);
         if (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then
@@ -596,7 +595,7 @@ begin
   end;
 
   // Inforow 3 - Search in my collection - always at the bottom
-  if FConfig.WSearchMyCollection and
+  if FSearchResult.SearchOwnCollection and
      (FConfig.WSearchShowSetQuantity or FConfig.WSearchShowCollectionID) then begin
     YPosition := Rect.Bottom - 18;
 
@@ -621,16 +620,16 @@ begin
 
   // Inforow 1 - Part number
   var PartObj := TPartObject(Obj);
-  if FConfig.WSearchShowPartOrMinifigNumber then
+  if FConfig.WSearchShowNumber then
     DgSets.Canvas.TextOut(Rect.Left + 2, Rect.Bottom - (InfoRowCount * 20) + 2, PartObj.PartNum);
 
   // Inforow 2 - Set number (only when searching in own collection)
-  if FConfig.WSearchMyCollection then begin
-    if FConfig.WSearchShowNumber then begin
+  if FSearchResult.SearchOwnCollection then begin
+    if FConfig.WSearchShowPartOrMinifigNumber then begin
       if InfoRowCount = 3 then
         YPosition := Rect.Bottom - 38      // This is the middle row
       else if InfoRowCount = 2 then begin
-        if FConfig.WSearchShowNumber then
+        if FConfig.WSearchShowPartOrMinifigNumber then
           YPosition := Rect.Bottom - 18    // This is the bottom row
         else
           YPosition := Rect.Bottom - 38;   // This is the top row
@@ -762,7 +761,7 @@ begin
       If SetObject.SetYear <> 0 then
         Year := Format(' (%d)', [SetObject.SetYear]);
       var MyCollectionInfo := '';
-      if FConfig.WSearchMyCollection then
+      if FSearchResult.SearchOwnCollection then
         MyCollectionInfo := Format('%dx in %s', [SetObject.Quantity, SetObject.BSSetListName]);
       SbResults.Panels[1].Text := Format('%s%s, %s%s%s%s%s%s', [SetObject.SetNum, NumParts, SetObject.SetName, Year,
                                                                 IfThen(SetObject.SetThemeName<>'', ' - ', ''), SetObject.SetThemeName,
@@ -770,7 +769,7 @@ begin
     end else if FSearchResult.SearchType = cSEARCHTYPEPART then begin
       var PartObject := FSearchResult.PartObjectList[Idx];
       var MyCollectionInfo := '';
-      if FConfig.WSearchMyCollection and (PartObject.CurQuantity > 0) then begin
+      if FSearchResult.SearchOwnCollection and (PartObject.CurQuantity > 0) then begin
         if PartObject.BSSetListName <> '' then
           MyCollectionInfo := Format('%dx in %s', [PartObject.CurQuantity, PartObject.BSSetListName]);
         if PartObject.SetNum <> '' then
@@ -847,7 +846,7 @@ begin
       SortSql := ' ORDER BY ' + SortSql + ' DESC';
   end;
 
-  if FConfig.WSearchMyCollection then begin
+  if ChkSearchOwnCollection.Checked then begin
     if SortSql <> '' then
       SortSql := SortSql + ', s.set_num, bss.bssetlistid'
     else
@@ -911,7 +910,7 @@ begin
     end;
     FDQuery.SQL.Text := FDQuery.SQL.Text + ' GROUP BY bpi.BSSetID, p.part_num';
   end else begin
-    if CbxIncludeAltColors.Checked then begin
+    if ChkIncludeAltColors.Checked then begin
       FDQuery.SQL.Text := 'SELECT DISTINCT p.part_num, p.name as partname, ip.img_url' + //, s.year, s.img_url, s.num_parts' +
                           ' FROM Parts p' +
                           ' LEFT JOIN inventory_parts ip on ip.part_num = p.part_num' +
@@ -965,7 +964,7 @@ begin
       SortSql := ' ORDER BY ' + SortSql + ' DESC';
   end;
 
-  if FConfig.WSearchMyCollection then begin
+  if ChkSearchOwnCollection.Checked then begin
     if OwnCollection then begin
       if SortSql <> '' then
         SortSql := SortSql + ', p.part_num DESC, bss.BSSetListID, bpi.BSSetID'
@@ -1021,10 +1020,10 @@ begin
     Exit;
 
   // dont save "EditSearchText.Text"
-  Config.WSearchStyle := CbxSearchStyle.ItemIndex;
-  Config.WSearchWhat := CbxSearchWhat.ItemIndex;
-  Config.WSearchBy := CbxSearchBy.ItemIndex;
-
+  FConfig.WSearchStyle := CbxSearchStyle.ItemIndex;
+  FConfig.WSearchWhat := CbxSearchWhat.ItemIndex;
+  FConfig.WSearchBy := CbxSearchBy.ItemIndex;
+  FConfig.WSearchOwnCollection := ChkSearchOwnCollection.Checked
 {
   select * from sets where set_num = '4200-1'; = one set, 102 parts
   select * from inventories where set_num = '4200-1'; = 9677
@@ -1046,6 +1045,8 @@ begin
     // Clean up the list before adding new results
     FSearchResult.Clear;
 
+    FSearchResult.SearchOwnCollection := ChkSearchOwnCollection.Checked;
+
     //Get tickcount for performance monitoring.
     //var Stopwatch := TStopWatch.Create;
     //Stopwatch.Start;
@@ -1062,7 +1063,7 @@ begin
           //cNUMORNAME
           // special handling
         end else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then begin
-          if CbxIncludeAltColors.Checked or FConfig.WSearchMyCollection then begin
+          if ChkIncludeAltColors.Checked or ChkSearchOwnCollection.Checked then begin
             if TSearchBy(CbxSearchBy.ItemIndex) = cNUMBER then
               SearchSubject := 'p.part_num'
             else // cNAME
@@ -1092,18 +1093,20 @@ begin
 
         //CbxSearchWhat
         if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPESET then
-          FBuildSetQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
+          FBuildSetQuery(FDQuery, ChkSearchOwnCollection.Checked, SearchSubject, SearchLikeOrExact)
         else if TSearchWhat(CbxSearchWhat.ItemIndex) = cSEARCHTYPEPART then
-          FBuiltPartQuery(FDQuery, FConfig.WSearchMyCollection, SearchSubject, SearchLikeOrExact)
+          FBuiltPartQuery(FDQuery, ChkSearchOwnCollection.Checked, SearchSubject, SearchLikeOrExact)
         else begin // cSEARCHTYPEMINIFIG
           //FBuiltMinifigureQuery()
         end;
 
         // Run the query, and add the results into the ObjectList
-        FSearchResult.LoadFromQuery(FDQuery, TSearchWhat(CbxSearchWhat.ItemIndex), False, FConfig.WSearchMyCollection);
+        FSearchResult.LoadFromQuery(FDQuery, TSearchWhat(CbxSearchWhat.ItemIndex), False, ChkSearchOwnCollection.Checked);
 
         FLastMaxCols := -1; // Force an invalidate
+        DgSets.DefaultRowHeight := FGetGridHeight;
         FAdjustGrid;
+        FUpdateUI;
 
         SbResults.Panels[0].Text := 'Results: ' + IntToStr(FSearchResult.Count);
       finally
