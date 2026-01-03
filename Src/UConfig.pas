@@ -54,6 +54,7 @@ type
     // Parts window settings:
     FWPartsShowPartCount: Boolean;
     FWPartsShowPartnum: Boolean;
+    FWPartsGridSize: Integer;
     FWPartsIncludeNonSpareParts: Boolean;
     FWPartsIncludeSpareParts: Boolean;
     FWPartsSortByCategory: Boolean;
@@ -128,6 +129,7 @@ type
 
     property WPartsShowPartCount: Boolean read FWPartsShowPartCount write FWPartsShowPartCount;
     property WPartsShowPartnum: Boolean read FWPartsShowPartnum write FWPartsShowPartnum;
+    property WPartsGridSize: Integer read FWPartsGridSize write FWPartsGridSize;
     property WPartsIncludeNonSpareParts: Boolean read FWPartsIncludeNonSpareParts write FWPartsIncludeNonSpareParts;
     property WPartsIncludeSpareParts: Boolean read FWPartsIncludeSpareParts write FWPartsIncludeSpareParts;
     property WPartsSortByCategory: Boolean read FWPartsSortByCategory write FWPartsSortByCategory;
@@ -337,6 +339,7 @@ begin
     if Section in [csALL, csPARTSWINDOWFILTERS] then begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsShowPartCount', FWPartsShowPartCount);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsShowPartnum', FWPartsShowPartnum);
+      IniFile.WriteInteger(StrSetPartsWindowIniSection, 'WPartsGridSize', FWPartsGridSize);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', FWPartsIncludeNonSpareParts);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsIncludeSpareParts', FWPartsIncludeSpareParts);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByCategory', FWPartsSortByCategory);
@@ -426,6 +429,7 @@ begin
     // View parts window filters
     FWPartsShowPartCount := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsShowPartCount', True);
     FWPartsShowPartnum := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsShowPartnum', True);
+    FWPartsGridSize := IniFile.ReadInteger(StrSetPartsWindowIniSection, 'WPartsGridSize', 64);
     FWPartsIncludeNonSpareParts := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsIncludeNonSpareParts', True);
     FWPartsIncludeSpareParts := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsIncludeSpareParts', True);
     FWPartsSortByCategory := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByCategory', False);

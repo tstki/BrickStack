@@ -19,7 +19,6 @@ type
     Panel1: TPanel;
     LblInventoryVersion: TLabel;
     CbxInventoryVersion: TComboBox;
-    BtnFilter: TButton;
     PopPartsFilter: TPopupMenu;
     Sort1: TMenuItem;
     MnuSortAscending: TMenuItem;
@@ -43,12 +42,9 @@ type
     ActViewPartExternal: TAction;
     ImageList16: TImageList;
     SbResults: TStatusBar;
-    LblPartsGridSize: TLabel;
     DgSetParts: TDrawGrid;
-    TbGridSize: TTrackBar;
     MnuShowPartCount: TMenuItem;
     MnuShowPartnum: TMenuItem;
-    LblPartsGridSizePx: TLabel;
     PopGridRightClick: TPopupMenu;
     Viewpartexternally1: TMenuItem;
     ImageList32: TImageList;
@@ -64,6 +60,16 @@ type
     MnuIncludeNonSpareParts: TMenuItem;
     ActShowCount: TAction;
     ActShowPartNum: TAction;
+    ActSetGridSize32: TAction;
+    ActSetGridSize64: TAction;
+    ActSetGridSize96: TAction;
+    ActSetGridSize128: TAction;
+    Gridsize1: TMenuItem;
+    MnuGrid32: TMenuItem;
+    MnuGrid64: TMenuItem;
+    MnuGrid96: TMenuItem;
+    MnuGrid128: TMenuItem;
+    Button6: TButton;
     procedure FormCreate(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
@@ -80,7 +86,7 @@ type
     procedure DgSetPartsDblClick(Sender: TObject);
     procedure DgSetPartsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure FormResize(Sender: TObject);
-    procedure TbGridSizeChange(Sender: TObject);
+    procedure FHandleUpdateGridSize(const NewSize: Integer);
     procedure DgSetPartsSelectCell(Sender: TObject; ACol, ARow: LongInt;  var CanSelect: Boolean);
     procedure ActViewPartExternalExecute(Sender: TObject);
     procedure ActPartsInvertCompleteExecute(Sender: TObject);
@@ -91,6 +97,10 @@ type
     procedure ActShowCountExecute(Sender: TObject);
     procedure ActShowPartNumExecute(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure ActSetGridSize32Execute(Sender: TObject);
+    procedure ActSetGridSize64Execute(Sender: TObject);
+    procedure ActSetGridSize96Execute(Sender: TObject);
+    procedure ActSetGridSize128Execute(Sender: TObject);
   private
     { Private declarations }
     FPartsMode: TPartsMode;
@@ -107,8 +117,10 @@ type
     procedure FInvalidateGridCell(Grid: TDrawGrid; ACol, ARow: Integer);
     procedure FAdjustGrid();
     function FGetIndexByRowAndCol(ACol, ARow: Integer): Integer;
+    procedure FDrawImageInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
     function FGetGridWidth: Integer;
     function FGetGridHeight: Integer;
+    function FInfoRowCountForWidth: Integer;
     procedure FModifyQuantity(PartObject: TPartObject; Amount: Integer; Increment: Boolean);
     procedure FDrawPartCell(ACanvas: TCanvas; ACol, ARow: Integer; Rect: TRect; AForPrint: Boolean = False);
     procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
@@ -470,11 +482,16 @@ begin
   MnuSortByQuantity.Checked := FConfig.WPartsSortByQuantity;
   MnuSortAscending.Checked := FConfig.WPartsSortAscending;
 
+  MnuGrid32.Checked := FConfig.WPartsGridSize = 32;
+  MnuGrid64.Checked := FConfig.WPartsGridSize = 64;
+  MnuGrid96.Checked := FConfig.WPartsGridSize = 96;
+  MnuGrid128.Checked := FConfig.WPartsGridSize = 128;
+
   DgSetParts.FixedCols := 0;
   DgSetParts.FixedRows := 0;
   FSetDefaultColumnDimensionsAndAdjustGrid;
 
-  LblPartsGridSizePx.Caption := IntToStr(FGetGridWidth) + 'px';
+  //FUpdateUI;
 end;
 
 procedure TFrmParts.FormCreate(Sender: TObject);
@@ -498,23 +515,28 @@ end;
 
 function TFrmParts.FGetGridWidth: Integer;
 begin
-  Result := 32 + (TbGridSize.Position*16);
+  if FConfig = nil then
+    Result := 64
+  else
+    Result := FConfig.WPartsGridSize;
 end;
 
 function TFrmParts.FGetGridHeight: Integer;
 begin
-  if Config <> nil then begin
-    if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
-      if Config.WPartsShowPartCount then
-        Result := FGetGridWidth + 40  // 64 + 20 + 20
-      else
-        Result := FGetGridWidth + 20; // 64 + 20
-    end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
-      Result := FGetGridWidth + 20
+  Result := FGetGridWidth + (FInfoRowCountForWidth*20);
+end;
+
+function TFrmParts.FInfoRowCountForWidth: Integer;
+begin
+  if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+    if Config.WPartsShowPartCount then
+      Result := 2
     else
-      Result := FGetGridWidth;
-  end else
-    Result := FGetGridWidth;
+      Result := 1;
+  end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
+    Result := 1
+  else
+    Result := 0;
 end;
 
 procedure TFrmParts.FAdjustGrid();
@@ -535,13 +557,21 @@ begin
   FLastMaxCols := DgSetParts.ColCount;
 end;
 
-procedure TFrmParts.TbGridSizeChange(Sender: TObject);
+procedure TFrmParts.FHandleUpdateGridSize(const NewSize: Integer);
 begin
+  if FConfig <> nil then begin
+    if NewSize <> 0 then
+      FConfig.WPartsGridSize := NewSize;
+
+    MnuGrid32.Checked := FConfig.WPartsGridSize = 32;
+    MnuGrid64.Checked := FConfig.WPartsGridSize = 64;
+    MnuGrid96.Checked := FConfig.WPartsGridSize = 96;
+    MnuGrid128.Checked := FConfig.WPartsGridSize = 128;
+  end;
+
   DgSetParts.DefaultColWidth := FGetGridWidth;
   DgSetParts.DefaultRowHeight := FGetGridHeight;
   FAdjustGrid;
-
-  LblPartsGridSizePx.Caption := IntToStr(FGetGridWidth) + 'px'
 end;
 
 procedure TFrmParts.FHandleQueryAndHandleSetInventoryVersion(Query: TFDQuery);
@@ -567,6 +597,26 @@ begin
   // Hide the inventory version display if there's only one version.
   LblInventoryVersion.Visible := MaxVersion > 1;
   CbxInventoryVersion.visible := MaxVersion > 1;
+end;
+
+procedure TFrmParts.ActSetGridSize32Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(32);
+end;
+
+procedure TFrmParts.ActSetGridSize64Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(64);
+end;
+
+procedure TFrmParts.ActSetGridSize96Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(96);
+end;
+
+procedure TFrmParts.ActSetGridSize128Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(128);
 end;
 
 procedure TFrmParts.ActShowCountExecute(Sender: TObject);
@@ -921,63 +971,63 @@ begin
   Result := (ARow * DgSetParts.ColCount) + ACol;
 end;
 
+procedure TFrmParts.FDrawImageInCell(const Rect: TRect; Obj: TObject; InfoRowCount: Integer);
+begin
+  if FImageCache = nil then
+    Exit;
+
+  var ImageUrl := '';
+  if Obj <> nil then
+    ImageUrl := TPartObject(Obj).ImgUrl;
+
+  var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
+  if Assigned(Picture) and Assigned(Picture.Graphic) then begin
+    var ImageRect := Rect;
+    ImageRect.Bottom := ImageRect.Bottom - (20 * InfoRowCount);
+    DgSetParts.Canvas.StretchDraw(ImageRect, Picture.Graphic);
+  end;
+end;
+
 procedure TFrmParts.DgSetPartsDrawCell(Sender: TObject; ACol, ARow: LongInt; Rect: TRect; State: TGridDrawState);
 begin
   var Idx := FGetIndexByRowAndCol(ACol, ARow);
-  if (Idx >= 0) and (Idx<FPartObjectList.Count) then begin
-    var PartObject := FPartObjectList[Idx];
-    var ImageUrl := PartObject.ImgUrl;
+  if (Idx < 0) or (Idx >= FPartObjectList.Count) then
+    Exit;
 
-    // Draw cell background (optional, for selection highlight)
-    if FPartsMode = caEdit then begin
-      if PartObject.CurQuantity = PartObject.MaxQuantity then
-        DgSetParts.Canvas.Brush.Color := clGreen;
-      DgSetParts.Canvas.FillRect(Rect);
-    end;
+  var PartObject := FPartObjectList[Idx];
 
-    // TPicture
-    if FImageCache <> nil then begin
-      var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
-      //  ImageList1.draw
-      if Assigned(Picture) and Assigned(Picture.Graphic) then begin
-        var ImageRect := Rect;
-        if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
-          if Config.WPartsShowPartCount then
-            ImageRect.Bottom := ImageRect.Bottom - 40  // 64 -20 -20
-          else
-            ImageRect.Bottom := ImageRect.Bottom - 20; // 64 -20
-        end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
-          ImageRect.Bottom := ImageRect.Bottom - 20;
-        DgSetParts.Canvas.StretchDraw(ImageRect, Picture.Graphic);
-      end;
-    end;
+  // Draw cell background (optional, for selection highlight)
+  if FPartsMode = caEdit then begin
+    if PartObject.CurQuantity = PartObject.MaxQuantity then
+      DgSetParts.Canvas.Brush.Color := clGreen;
+    DgSetParts.Canvas.FillRect(Rect);
+  end;
 
-    DgSetParts.Canvas.Brush.Style := bsClear;
+  var InfoRowCount := FInfoRowCountForWidth;
 
-    if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
-      if Config.WPartsShowPartCount then
-        DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum)
-      else
-        DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
-    end;
+  // TPicture
+  FDrawImageInCell(Rect, PartObject, InfoRowCount);
 
-    if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then begin
-      var PartCount := '';
-      if FPartsMode = caView then
-        PartCount := Format('%dx', [PartObject.MaxQuantity])
-      else
-        PartCount := Format('%d/%d', [PartObject.CurQuantity, PartObject.MaxQuantity]);
+  DgSetParts.Canvas.Brush.Style := bsClear;
 
-      if PartObject.IsSpare then
-        PartCount := PartCount + '*';
+  if Config.WPartsShowPartnum and (DgSetParts.DefaultColWidth >= 64) then begin
+    if Config.WPartsShowPartCount then
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 38, PartObject.PartNum)
+    else
+      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
+  end;
 
-      DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartCount);
-    end;
+  if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then begin
+    var PartCount := '';
+    if FPartsMode = caView then
+      PartCount := Format('%dx', [PartObject.MaxQuantity])
+    else
+      PartCount := Format('%d/%d', [PartObject.CurQuantity, PartObject.MaxQuantity]);
 
-    {if DgSetParts.DefaultColWidth > 32 then begin
-      // "More info" icon
-      ImageList1.Draw(DgSetParts.Canvas, Rect.Right - 18, Rect.Bottom - 38, 1, True);
-    end;}
+    if PartObject.IsSpare then
+      PartCount := PartCount + '*';
+
+    DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartCount);
   end;
 end;
 

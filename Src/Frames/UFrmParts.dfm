@@ -37,20 +37,6 @@ object FrmParts: TFrmParts
       Anchors = [akTop, akRight]
       Caption = 'Version'
     end
-    object LblPartsGridSize: TLabel
-      Left = 96
-      Top = 13
-      Width = 44
-      Height = 15
-      Caption = 'Grid size'
-    end
-    object LblPartsGridSizePx: TLabel
-      Left = 264
-      Top = 13
-      Width = 13
-      Height = 15
-      Caption = 'px'
-    end
     object CbxInventoryVersion: TComboBox
       Left = 578
       Top = 10
@@ -60,87 +46,71 @@ object FrmParts: TFrmParts
       Anchors = [akTop, akRight]
       TabOrder = 0
     end
-    object BtnFilter: TButton
-      Left = 8
-      Top = 9
-      Width = 72
-      Height = 25
-      Caption = 'Display'
-      ImageIndex = 8
-      Images = ImageList16
-      TabOrder = 1
-      OnClick = BtnFilterClick
-    end
-    object TbGridSize: TTrackBar
-      Left = 146
-      Top = 7
-      Width = 119
-      Height = 27
-      Max = 6
-      PageSize = 1
-      Position = 2
-      TabOrder = 2
-      OnChange = TbGridSizeChange
-    end
     object Button2: TButton
-      Left = 433
-      Top = 2
+      Left = 196
+      Top = 6
       Width = 32
       Height = 32
       Action = ActPrintParts
-      Anchors = [akTop, akRight]
+      Caption = ' '
+      ImageMargins.Left = -2
+      Images = ImageList32
+      TabOrder = 1
+    end
+    object Button1: TButton
+      Left = 158
+      Top = 6
+      Width = 32
+      Height = 32
+      Action = ActExport
+      Caption = ' '
+      ImageMargins.Left = -2
+      Images = ImageList32
+      TabOrder = 2
+    end
+    object Button3: TButton
+      Left = 120
+      Top = 6
+      Width = 32
+      Height = 32
+      Action = ActPartsCompleteAll
       Caption = ' '
       ImageMargins.Left = -2
       Images = ImageList32
       TabOrder = 3
     end
-    object Button1: TButton
-      Left = 395
-      Top = 2
+    object Button4: TButton
+      Left = 46
+      Top = 6
       Width = 32
       Height = 32
-      Action = ActExport
-      Anchors = [akTop, akRight]
+      Action = ActPartsRemoveAll
       Caption = ' '
       ImageMargins.Left = -2
       Images = ImageList32
       TabOrder = 4
     end
-    object Button3: TButton
-      Left = 357
-      Top = 2
+    object Button5: TButton
+      Left = 84
+      Top = 6
       Width = 32
       Height = 32
-      Action = ActPartsCompleteAll
-      Anchors = [akTop, akRight]
+      Action = ActPartsInvertComplete
       Caption = ' '
       ImageMargins.Left = -2
       Images = ImageList32
       TabOrder = 5
     end
-    object Button4: TButton
-      Left = 283
-      Top = 2
+    object Button6: TButton
+      Left = 8
+      Top = 6
       Width = 32
       Height = 32
-      Action = ActPartsRemoveAll
-      Anchors = [akTop, akRight]
-      Caption = ' '
+      ImageIndex = 8
       ImageMargins.Left = -2
       Images = ImageList32
       TabOrder = 6
-    end
-    object Button5: TButton
-      Left = 321
-      Top = 2
-      Width = 32
-      Height = 32
-      Action = ActPartsInvertComplete
-      Anchors = [akTop, akRight]
-      Caption = ' '
-      ImageMargins.Left = -2
-      Images = ImageList32
-      TabOrder = 7
+      OnClick = BtnFilterClick
     end
   end
   object SbResults: TStatusBar
@@ -204,6 +174,21 @@ object FrmParts: TFrmParts
       end
       object MnuSortByQuantity: TMenuItem
         Action = ActSortByQuantity
+      end
+    end
+    object Gridsize1: TMenuItem
+      Caption = 'Grid size'
+      object MnuGrid32: TMenuItem
+        Action = ActSetGridSize32
+      end
+      object MnuGrid64: TMenuItem
+        Action = ActSetGridSize64
+      end
+      object MnuGrid96: TMenuItem
+        Action = ActSetGridSize96
+      end
+      object MnuGrid128: TMenuItem
+        Action = ActSetGridSize128
       end
     end
     object MnuIncludeSpareParts: TMenuItem
@@ -295,6 +280,22 @@ object FrmParts: TFrmParts
     object ActShowPartNum: TAction
       Caption = 'Show part number'
       OnExecute = ActShowPartNumExecute
+    end
+    object ActSetGridSize32: TAction
+      Caption = '32x32 px'
+      OnExecute = ActSetGridSize32Execute
+    end
+    object ActSetGridSize64: TAction
+      Caption = '64x64 px'
+      OnExecute = ActSetGridSize64Execute
+    end
+    object ActSetGridSize96: TAction
+      Caption = '96x96 px'
+      OnExecute = ActSetGridSize96Execute
+    end
+    object ActSetGridSize128: TAction
+      Caption = '128x128 px'
+      OnExecute = ActSetGridSize128Execute
     end
   end
   object ImageList16: TImageList

@@ -1,5 +1,8 @@
 # BrickStack changelog
 
+## Version (0.0.0.11)
+- Moved grid slider in parts window to submenu
+
 ## Version 20260102.1014 (0.0.0.10)
 - Search results limiter moved to settings.
 - Added "in my collection" option when searching.
