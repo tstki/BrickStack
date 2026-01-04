@@ -61,6 +61,7 @@
 - Fix window sizes and anchors
 - Expand helpfile (F1) / tutorial / common shortcuts
 - Split view. left = grid, right = details of selection with larger image.
+-- Remove the whole setlist dialog by merging it into the collection dialog as split view.
 
 ### Settings:
 - Add option to show/hide columns for collection / setlist.

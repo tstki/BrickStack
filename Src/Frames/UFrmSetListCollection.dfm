@@ -536,6 +536,7 @@ object FrmSetListCollection: TFrmSetListCollection
   end
   object ImageList32: TImageList
     ColorDepth = cd32Bit
+    DrawingStyle = dsTransparent
     Height = 32
     Width = 32
     Left = 120
