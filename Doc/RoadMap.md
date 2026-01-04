@@ -1,12 +1,14 @@
 # More of a todo / idea list than a roadmap, but here goes:
 
 ## Application:
-- Note bulk downloads may be slow and need to be throttled to +- 1 per second.
+- Note bulk (image) downloads may be too fast and need to be throttled to +- 1 per second.
 - Closing a dialog should store it's last location, not just on application close
 -- Add option for this, since MDIs are kinda jumpy when reloading location.
 - Auto updater through github releases page
 -- Show dialog on startup if detected, ask user if they want to update - and give option to not remind again for this version.
 -- exe can replace itself through rename.
+- Check database version on startup and ask user to update
+- Generic imagelists (16/32) to reduce double images and ensure consistent item indexes across the application.
 
 ### Welcome:
 - Reference to tutorial/about and mandatory database creation steps and updating.
@@ -54,10 +56,11 @@
 - Multiple collections (vertical and horizontal)
 - "layout" set for all windows to switch window placements configured by the user.
 - Hamburger menu if window size is too thin.
+- Minimum window size
 - Expand about screen
 - Fix window sizes and anchors
-- Helpfile / tutorial / common shortcuts
-- Sorting grids
+- Expand helpfile (F1) / tutorial / common shortcuts
+- Split view. left = grid, right = details of selection with larger image.
 
 ### Settings:
 - Add option to show/hide columns for collection / setlist.
@@ -147,3 +150,4 @@ Import collection:
 -- https://stackoverflow.com/questions/7118194/how-can-i-disable-the-scroll-into-view-behavior-of-tscrollbox
 - Some images are named ".jpg" but are actually bitmaps, or png. (not our fault, really!)
 - "3001pr004" and other parts with different external references do not allow part lookup at this time.
+- Broken images are cached rather than left as is - add option to skip caching on those.

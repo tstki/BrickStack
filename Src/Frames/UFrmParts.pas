@@ -980,7 +980,7 @@ begin
   if Obj <> nil then
     ImageUrl := TPartObject(Obj).ImgUrl;
 
-  var Picture := FImageCache.GetImage(ImageUrl, cidMAX256);
+  var Picture := FImageCache.GetImage(ImageUrl, cidMAX128);
   if Assigned(Picture) and Assigned(Picture.Graphic) then begin
     var ImageRect := Rect;
     ImageRect.Bottom := ImageRect.Bottom - (20 * InfoRowCount);
