@@ -76,6 +76,7 @@
 - Options for default image quality for parts / sets / other. Too high by default, limit is 1000px 128 for parts and 256 for models would be better as default.
 - Choose UI elements in search results / parts (several template layouts, with example)
 - Option to treat newly added sets as having all parts
+- Option to adjust font size in sets/parts dialog
 
 ### Configure desired columns when printing - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview

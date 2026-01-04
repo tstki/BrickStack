@@ -181,6 +181,9 @@ object FrmParts: TFrmParts
       object MnuGrid32: TMenuItem
         Action = ActSetGridSize32
       end
+      object MnuGrid48: TMenuItem
+        Action = ActSetGridSize48
+      end
       object MnuGrid64: TMenuItem
         Action = ActSetGridSize64
       end
@@ -256,19 +259,19 @@ object FrmParts: TFrmParts
       OnExecute = ActViewPartExternalExecute
     end
     object ActPartsInvertComplete: TAction
-      Caption = 'ActPartsInvertComplete'
+      Caption = 'Invert parts'
       Hint = 'Invert "(in)complete" parts'
       ImageIndex = 22
       OnExecute = ActPartsInvertCompleteExecute
     end
     object ActPartsCompleteAll: TAction
-      Caption = 'ActPartsCompleteAll'
+      Caption = 'Add all parts'
       Hint = 'Mark all parts as complete'
       ImageIndex = 23
       OnExecute = ActPartsCompleteAllExecute
     end
     object ActPartsRemoveAll: TAction
-      Caption = 'ActPartsRemoveAll'
+      Caption = 'Remove all parts'
       Hint = 'Set all part counts to zero'
       ImageIndex = 21
       OnExecute = ActPartsRemoveAllExecute
@@ -284,6 +287,10 @@ object FrmParts: TFrmParts
     object ActSetGridSize32: TAction
       Caption = '32x32 px'
       OnExecute = ActSetGridSize32Execute
+    end
+    object ActSetGridSize48: TAction
+      Caption = '48x48px'
+      OnExecute = ActSetGridSize48Execute
     end
     object ActSetGridSize64: TAction
       Caption = '64x64 px'

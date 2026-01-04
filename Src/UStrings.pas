@@ -48,6 +48,8 @@ const
   StrPartListFrameTitle = 'Part list';
   StrSearchFrameTitle = 'Search';
   StrFrmSetTitle = 'Lego set: %s - %s';
+  StrFrmPartsViewTitle = 'Lego set: %s - %s - View parts ';
+  StrFrmPartsEditTitle = 'Lego set: %s - %s (ID: %d) - Edit parts';
   StrMax = 'Max: %d';
   StrAddSetTo = 'Add set ''%s'' to:';
   StrEditSetTo = 'Edit set ''%s'' (%d):';

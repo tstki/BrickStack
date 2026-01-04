@@ -66,10 +66,12 @@ type
     ActSetGridSize128: TAction;
     Gridsize1: TMenuItem;
     MnuGrid32: TMenuItem;
+    MnuGrid48: TMenuItem;
     MnuGrid64: TMenuItem;
     MnuGrid96: TMenuItem;
     MnuGrid128: TMenuItem;
     Button6: TButton;
+    ActSetGridSize48: TAction;
     procedure FormCreate(Sender: TObject);
     procedure ActPrintPartsExecute(Sender: TObject);
     procedure BtnFilterClick(Sender: TObject);
@@ -92,7 +94,6 @@ type
     procedure ActPartsInvertCompleteExecute(Sender: TObject);
     procedure ActPartsCompleteAllExecute(Sender: TObject);
     procedure ActPartsRemoveAllExecute(Sender: TObject);
-    procedure MnuShowPartnumClick(Sender: TObject);
     procedure ActToggleIncludeNonSpareExecute(Sender: TObject);
     procedure ActShowCountExecute(Sender: TObject);
     procedure ActShowPartNumExecute(Sender: TObject);
@@ -101,14 +102,15 @@ type
     procedure ActSetGridSize64Execute(Sender: TObject);
     procedure ActSetGridSize96Execute(Sender: TObject);
     procedure ActSetGridSize128Execute(Sender: TObject);
+    procedure ActSetGridSize48Execute(Sender: TObject);
   private
     { Private declarations }
     FPartsMode: TPartsMode;
     FConfig: TConfig;
     FImageCache: TImageCache;
-    FInventoryPanels: TObjectList;
     FPartObjectList: TPartObjectList;
     FSetNum: String;
+    FSetName: String;
     FBSSetID: Integer;
     FLastMaxCols: Integer;
     procedure FSetConfig(Config: TConfig);
@@ -126,6 +128,8 @@ type
     procedure FHandleClick(CellAction: TCellAction; Sender: TObject);
     procedure FUncheckAllSortExcept(Sender: TObject);
     procedure FSetDefaultColumnDimensionsAndAdjustGrid;
+    procedure FSetWindowTitle;
+    procedure FUpdateUI;
   public
     { Public declarations }
     property Config: TConfig read FConfig write FSetConfig;
@@ -133,7 +137,7 @@ type
     procedure LoadPartsBySet(const set_num: String; const ForceRefresh: Boolean);
     procedure LoadPartCountByID(const BSSetID: Integer);
     property SetNum: String read FSetNum; // Read only
-    //property BSSetID: Integer read FBSSetID;
+    property BSSetID: Integer read FBSSetID;
     property PartsMode: TPartsMode read FPartsMode write FPartsMode;
   end;
 
@@ -260,31 +264,31 @@ begin
 
     FDTransaction.StartTransaction;
     try
-      FDQuery.SQL.Text := 'UPDATE BSDBPartsInventory ' +
-                          'SET quantity = CASE ' +
-                          '  WHEN quantity = (SELECT ip.quantity FROM inventories ' +
-                          '                   JOIN inventory_parts ip ON ip.inventory_id = inventories.id ' +
-                          '                   WHERE inventories.set_num = :setnum AND inventories.version = :version ' +
-                          '                     AND ip.inventory_id = BSDBPartsInventory.InventoryID ' +
-                          '                     AND ip.part_num = BSDBPartsInventory.part_num ' +
-                          '                     AND ip.color_id = BSDBPartsInventory.color_id ' +
-                          '                     AND ip.is_spare = BSDBPartsInventory.is_spare ' +
-                          '                   LIMIT 1) THEN 0 ' +
-                          '  WHEN quantity = 0 THEN (SELECT ip.quantity FROM inventories ' +
-                          '                          JOIN inventory_parts ip ON ip.inventory_id = inventories.id ' +
-                          '                          WHERE inventories.set_num = :setnum AND inventories.version = :version ' +
-                          '                            AND ip.inventory_id = BSDBPartsInventory.InventoryID ' +
-                          '                            AND ip.part_num = BSDBPartsInventory.part_num ' +
-                          '                            AND ip.color_id = BSDBPartsInventory.color_id ' +
-                          '                            AND ip.is_spare = BSDBPartsInventory.is_spare ' +
-                          '                          LIMIT 1) ' +
-                          '  ELSE quantity END ' +
-                          'WHERE EXISTS (SELECT 1 FROM inventories ' +
-                          '              JOIN inventory_parts ip ON ip.inventory_id = inventories.id ' +
-                          '              WHERE inventories.set_num = :setnum AND inventories.version = :version ' +
-                          '                AND ip.inventory_id = BSDBPartsInventory.InventoryID ' +
-                          '                AND ip.part_num = BSDBPartsInventory.part_num ' +
-                          '                AND ip.color_id = BSDBPartsInventory.color_id ' +
+      FDQuery.SQL.Text := 'UPDATE BSDBPartsInventory' +
+                          ' SET quantity = CASE' +
+                          '  WHEN quantity = (SELECT ip.quantity FROM inventories' +
+                          '                   JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
+                          '                   WHERE inventories.set_num = :setnum AND inventories.version = :version' +
+                          '                     AND ip.inventory_id = BSDBPartsInventory.InventoryID' +
+                          '                     AND ip.part_num = BSDBPartsInventory.part_num' +
+                          '                     AND ip.color_id = BSDBPartsInventory.color_id' +
+                          '                     AND ip.is_spare = BSDBPartsInventory.is_spare' +
+                          '                   LIMIT 1) THEN 0' +
+                          '  WHEN quantity = 0 THEN (SELECT ip.quantity FROM inventories' +
+                          '                          JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
+                          '                          WHERE inventories.set_num = :setnum AND inventories.version = :version' +
+                          '                            AND ip.inventory_id = BSDBPartsInventory.InventoryID' +
+                          '                            AND ip.part_num = BSDBPartsInventory.part_num' +
+                          '                            AND ip.color_id = BSDBPartsInventory.color_id' +
+                          '                            AND ip.is_spare = BSDBPartsInventory.is_spare' +
+                          '                          LIMIT 1)' +
+                          '  ELSE quantity END' +
+                          ' WHERE EXISTS (SELECT 1 FROM inventories' +
+                          '              JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
+                          '              WHERE inventories.set_num = :setnum AND inventories.version = :version' +
+                          '                AND ip.inventory_id = BSDBPartsInventory.InventoryID' +
+                          '                AND ip.part_num = BSDBPartsInventory.part_num' +
+                          '                AND ip.color_id = BSDBPartsInventory.color_id' +
                           '                AND ip.is_spare = BSDBPartsInventory.is_spare);';
 
       FDQuery.Params.ParamByName('setnum').AsString := FSetNum;
@@ -292,17 +296,17 @@ begin
       FDQuery.ExecSQL;
 
       //-- insert any rows that don't exist yet
-      FDQuery.SQL.Text := 'INSERT INTO BSDBPartsInventory (InventoryID, Part_Num, color_id, is_spare, quantity, BSSetID) ' +
-                          'SELECT ip.inventory_id, ip.part_num, ip.color_id, ip.is_spare, ip.quantity, :BSSetID ' +
-                          'FROM inventories ' +
-                          'JOIN inventory_parts ip ON ip.inventory_id = inventories.id ' +
-                          'LEFT JOIN BSDBPartsInventory bp ' +
-                          '  ON  bp.inventoryID = ip.inventory_id ' +
-                          '  AND bp.part_num    = ip.part_num ' +
-                          '  AND bp.color_id    = ip.color_id ' +
-                          '  AND bp.is_spare    = ip.is_spare ' +
-                          'WHERE inventories.set_num = :setnum ' +
-                          '  AND inventories.version = :version ' +
+      FDQuery.SQL.Text := 'INSERT INTO BSDBPartsInventory (InventoryID, Part_Num, color_id, is_spare, quantity, BSSetID)' +
+                          ' SELECT ip.inventory_id, ip.part_num, ip.color_id, ip.is_spare, ip.quantity, :BSSetID' +
+                          ' FROM inventories' +
+                          ' JOIN inventory_parts ip ON ip.inventory_id = inventories.id' +
+                          ' LEFT JOIN BSDBPartsInventory bp' +
+                          '  ON  bp.inventoryID = ip.inventory_id' +
+                          '  AND bp.part_num    = ip.part_num' +
+                          '  AND bp.color_id    = ip.color_id' +
+                          '  AND bp.is_spare    = ip.is_spare' +
+                          ' WHERE inventories.set_num = :setnum' +
+                          '  AND inventories.version = :version' +
                           '  AND bp.id IS NULL;';
 
       FDQuery.Params.ParamByName('BSSetID').AsInteger := FBSSetID;
@@ -483,6 +487,7 @@ begin
   MnuSortAscending.Checked := FConfig.WPartsSortAscending;
 
   MnuGrid32.Checked := FConfig.WPartsGridSize = 32;
+  MnuGrid48.Checked := FConfig.WPartsGridSize = 48;
   MnuGrid64.Checked := FConfig.WPartsGridSize = 64;
   MnuGrid96.Checked := FConfig.WPartsGridSize = 96;
   MnuGrid128.Checked := FConfig.WPartsGridSize = 128;
@@ -491,14 +496,19 @@ begin
   DgSetParts.FixedRows := 0;
   FSetDefaultColumnDimensionsAndAdjustGrid;
 
-  //FUpdateUI;
+  FUpdateUI;
+end;
+
+procedure TFrmParts.FUpdateUI;
+begin
+  ActPartsInvertComplete.Enabled := FPartsMode = caEdit;
+  ActPartsCompleteAll.Enabled := FPartsMode = caEdit;
+  ActPartsRemoveAll.Enabled := FPartsMode = caEdit;
 end;
 
 procedure TFrmParts.FormCreate(Sender: TObject);
 begin
   inherited;
-  FInventoryPanels := TObjectList.Create;
-  FInventoryPanels.OwnsObjects := True;
 
   FPartObjectList := TPartObjectList.Create;
 end;
@@ -533,7 +543,7 @@ begin
       Result := 2
     else
       Result := 1;
-  end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then
+  end else if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 32) then
     Result := 1
   else
     Result := 0;
@@ -564,6 +574,7 @@ begin
       FConfig.WPartsGridSize := NewSize;
 
     MnuGrid32.Checked := FConfig.WPartsGridSize = 32;
+    MnuGrid48.Checked := FConfig.WPartsGridSize = 48;
     MnuGrid64.Checked := FConfig.WPartsGridSize = 64;
     MnuGrid96.Checked := FConfig.WPartsGridSize = 96;
     MnuGrid128.Checked := FConfig.WPartsGridSize = 128;
@@ -602,6 +613,11 @@ end;
 procedure TFrmParts.ActSetGridSize32Execute(Sender: TObject);
 begin
   FHandleUpdateGridSize(32);
+end;
+
+procedure TFrmParts.ActSetGridSize48Execute(Sender: TObject);
+begin
+  FHandleUpdateGridSize(48);
 end;
 
 procedure TFrmParts.ActSetGridSize64Execute(Sender: TObject);
@@ -1017,12 +1033,16 @@ begin
       DgSetParts.Canvas.TextOut(Rect.Left, Rect.Bottom - 18, PartObject.PartNum);
   end;
 
-  if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 48) then begin
+  if Config.WPartsShowPartCount and (DgSetParts.DefaultColWidth >= 32) then begin
     var PartCount := '';
     if FPartsMode = caView then
       PartCount := Format('%dx', [PartObject.MaxQuantity])
-    else
-      PartCount := Format('%d/%d', [PartObject.CurQuantity, PartObject.MaxQuantity]);
+    else begin
+      if DgSetParts.DefaultColWidth >= 48 then
+        PartCount := Format('%d/%d', [PartObject.CurQuantity, PartObject.MaxQuantity])
+      else
+        PartCount := Format('%d', [PartObject.CurQuantity]);
+    end;
 
     if PartObject.IsSpare then
       PartCount := PartCount + '*';
@@ -1099,6 +1119,14 @@ begin
   end;
 end;
 
+procedure TFrmParts.FSetWindowTitle;
+begin
+  if BSSetID <> 0 then
+    Self.Caption := Format(StrFrmPartsEditTitle, [FSetnum, FSetName, BSSetID])
+  else
+    Self.Caption := Format(StrFrmPartsViewTitle, [FSetnum, FSetName]);
+end;
+
 procedure TFrmParts.LoadPartsBySet(const set_num: String; const ForceRefresh: Boolean);
 
   procedure FQueryAndHandleSetFields(Query: TFDQuery);
@@ -1119,7 +1147,8 @@ procedure TFrmParts.LoadPartsBySet(const set_num: String; const ForceRefresh: Bo
 
         if not Query.EOF then begin
           //FHandleQueryAndHandleSetFields(Query);
-          Self.Caption := Format(StrFrmSetTitle, [set_num, Query.FieldByName('name').AsString]);
+          FSetName := Query.FieldByName('name').AsString;
+          FSetWindowTitle;
         end;
       finally
         Query.Close; // Close the query when done
@@ -1156,17 +1185,11 @@ begin
     Exit;
 
   FSetNum := set_num;
-  Self.Caption := 'Lego set: ' + set_num; // + set name
   FPartObjectList.Clear;
 
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    // Clean up the list before adding new results
-    for var I:=FInventoryPanels.Count-1 downto 0 do
-      FInventoryPanels.Delete(I);
-
-    //LvTagData.Clear;
     var SqlConnection := FrmMain.AcquireConnection;
     var FDQuery := TFDQuery.Create(nil);
     try
@@ -1243,11 +1266,8 @@ begin
       //ShowMessage('Finished in: ' + IntToStr(Stopwatch.ElapsedMilliseconds) + 'ms');
     end;
   end;
-end;
 
-procedure TFrmParts.MnuShowPartnumClick(Sender: TObject);
-begin
-
+  FUpdateUI;
 end;
 
 // Not used by view parts mode:
@@ -1286,16 +1306,12 @@ procedure TFrmParts.LoadPartCountByID(const BSSetID: Integer);
 // Enrich FPartObjectList by getting which parts we own for this set.
 begin
   FBSSetID := BSSetID;
-  Self.Caption := Self.Caption + Format(' (ID: %d)', [BSSetID]); //todo: add config to show debug information
+  FSetWindowTitle;
   //todo: Investigate if this could be 1 query, joined with getting the parts?
 
   //var Stopwatch := TStopWatch.Create;
   //Stopwatch.Start;
   try
-    // Clean up the list before adding new results
-    for var I:=FInventoryPanels.Count-1 downto 0 do
-      FInventoryPanels.Delete(I);
-
     //LvTagData.Clear;
     var SqlConnection := FrmMain.AcquireConnection;
     var FDQuery := TFDQuery.Create(nil);

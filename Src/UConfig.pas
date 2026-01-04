@@ -13,11 +13,13 @@ type
     FLeft: Integer;
     FWidth: Integer;
     FHeight: Integer;
+    FOpenOnLoadBSID: Integer;
     FDimensionsValid: Boolean; // Check before using tl/wh
     procedure Save(IniFile: TIniFile; const Section, Name: String);
     procedure Load(IniFile: TIniFile; const Section, Name: String);
   public
     property OpenOnLoad: String read FOpenOnLoad write FOpenOnLoad;
+    property OpenOnLoadBSID: Integer read FOpenOnLoadBSID write FOpenOnLoadBSID;
     property Top: Integer read FTop write FTop;
     property Left: Integer read FLeft write FLeft;
     property Width: Integer read FWidth write FWidth;
@@ -186,7 +188,8 @@ uses
 // FormStorage
 procedure TClientFormStorage.Save(IniFile: TIniFile; const Section, Name: String);
 begin
-  var Value := Format('%d,%d,%d,%d,%s', [FTop,FLeft,FWidth,FHeight,FOpenOnLoad]);
+  // FOpenOnLoad should not contain a comma. But we never actually checked.
+  var Value := Format('%d,%d,%d,%d,%s,%d', [FTop,FLeft,FWidth,FHeight,FOpenOnLoad,FOpenOnLoadBSID]);
   IniFile.WriteString(Section, Name, Value);
 end;
 
@@ -194,13 +197,16 @@ procedure TClientFormStorage.Load(IniFile: TIniFile; const Section, Name: String
 begin
   var Value := IniFile.ReadString(Section, Name, '');
   var SplitArray := Value.Split([',']);
+  var Len := Length(SplitArray);
 
-  if Length(SplitArray) = 5 then begin
+  if Len >= 5 then begin
     FTop := StrToIntDef(SplitArray[0], 0);
     FLeft := StrToIntDef(SplitArray[1], 0);
     FWidth := StrToIntDef(SplitArray[2], 0);
     FHeight := StrToIntDef(SplitArray[3], 0);
     FOpenOnLoad := SplitArray[4];
+    if Len >= 6 then
+      FOpenOnLoadBSID := StrToIntDef(SplitArray[5], 0);
 
     FDimensionsValid := ((FTop+FLeft+FWidth+FHeight) <> 0) and (FWidth > 20) and (FHeight > 20);
   end else

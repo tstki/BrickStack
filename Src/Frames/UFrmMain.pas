@@ -200,8 +200,15 @@ begin
       FConfig.FrmSet.OpenOnLoad := TFrmSet(Child).SetNum;
       FConfig.FrmSet.GetFormDimensions(Child);
     end else if Child.ClassType = TFrmParts then begin
-      FConfig.FrmParts.OpenOnLoad := TFrmParts(Child).SetNum;
-      FConfig.FrmParts.GetFormDimensions(Child);
+      if TFrmParts(Child).PartsMode = caView then begin
+        FConfig.FrmParts.OpenOnLoad := TFrmParts(Child).SetNum;
+        FConfig.FrmParts.OpenOnLoadBSID := Integer(caView);
+        FConfig.FrmParts.GetFormDimensions(Child);
+      end else begin
+        FConfig.FrmParts.OpenOnLoad := TFrmParts(Child).SetNum;
+        FConfig.FrmParts.OpenOnLoadBSID := Integer(caEdit);
+        FConfig.FrmParts.GetFormDimensions(Child);
+      end;
     end else if Child.ClassType = TFrmSearch then begin
       FConfig.FrmSearch.OpenOnLoad := '1';
       FConfig.FrmSearch.GetFormDimensions(Child);
@@ -398,10 +405,12 @@ begin
           ShowSetListWindow(StrToInt(FConfig.FrmSetList.OpenOnLoad)); // Already checked to be valid
         if FConfig.FrmSet.OpenOnLoad <> '' then
           ShowSetWindow(FConfig.FrmSet.OpenOnLoad);
-        if FConfig.FrmParts.OpenOnLoad <> '' then
-          ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
-        //if FConfig.FrmEditParts.OpenOnLoad <> '' then //todo
-          //ShowPartsWindow(FConfig.FrmEditParts.OpenOnLoad);
+        if FConfig.FrmParts.OpenOnLoad <> '' then begin
+          if FConfig.FrmParts.OpenOnLoadBSID <> 0 then
+            EditPartsWindow(FConfig.FrmParts.OpenOnLoad, FConfig.FrmParts.OpenOnLoadBSID)
+          else
+            ShowPartsWindow(FConfig.FrmParts.OpenOnLoad);
+        end;
         if StrToIntDef(FConfig.FrmSearch.OpenOnLoad, 0) <> 0 then
           ShowSearchWindow;
       end;

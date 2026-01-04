@@ -1,7 +1,12 @@
 # BrickStack changelog
 
 ## Version (0.0.0.11)
-- Moved grid slider in parts window to submenu
+- Moved grid slider in parts window to submenu.
+- Edit/View parts dialog now clearly shows "view/edit parts" in the dialog title.
+- New icons in edit parts mode.
+### Fixes
+- Edit parts list window now properly re-opens as an edit window instead of a view window.
+- Edit parts performance improved.
 
 ## Version 20260102.1014 (0.0.0.10)
 - Search results limiter moved to settings.
