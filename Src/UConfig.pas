@@ -29,8 +29,9 @@ type
   end;
 
   // Column: ID, Width
-  TColumnStorage = class(TStringList)//TDictionary<Integer, Integer>
+  TColumnStorage = class(TStringList)
   private
+  //TODO, add sort order
     procedure Save(IniFile: TIniFile; const Section, Name: String);
     procedure Load(IniFile: TIniFile; const Section, Name: String);
   public
@@ -207,8 +208,7 @@ uses
 // ColumnStorage //  TColumnStorage = class(TDictionary<Integer, Integer>)
 procedure TColumnStorage.Save(IniFile: TIniFile; const Section, Name: String);
 begin
-//  var Value := Format('%d,%d,%d,%d,%s,%d', [FTop,FLeft,FWidth,FHeight,FOpenOnLoad,FOpenOnLoadBSID]);
-  IniFile.WriteString(Section, Name, Self.ToString);
+  IniFile.WriteString(Section, Name, Self.CommaText);
 end;
 
 procedure TColumnStorage.Load(IniFile: TIniFile; const Section, Name: String);
@@ -220,8 +220,8 @@ begin
     var SplitArray := Value.Split([',']);
     var Len := Length(SplitArray);
 
-    // for each
-    // add
+    for var Col in SplitArray do
+      Self.Add(Col);
   end;
 end;
 
