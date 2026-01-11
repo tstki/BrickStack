@@ -4,6 +4,7 @@
 - Moved grid slider in parts window to submenu.
 - Edit/View parts dialog now clearly shows "view/edit parts" in the dialog title.
 - New icons in edit parts mode.
+- Columns in collection list can now be shown/hidden/rearranged, and they will be remembered between sessions.
 ### Fixes
 - Edit parts list window now properly re-opens as an edit window instead of a view window.
 - Edit parts performance improved.

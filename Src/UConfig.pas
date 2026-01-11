@@ -3,7 +3,7 @@ unit UConfig;
 interface
 
 uses
-  System.Classes, Forms, IniFiles, UConst;
+  System.Classes, Generics.Collections, Forms, IniFiles, UConst;
 
 type
   TClientFormStorage = class(TObject)
@@ -26,6 +26,16 @@ type
     property Height: Integer read FHeight write FHeight;
     procedure GetFormDimensions(const Form: TForm);
     function SetFormDimensions(Form: TForm): Boolean;
+  end;
+
+  // Column: ID, Width
+  TColumnStorage = class(TStringList)
+  private
+  //TODO, add sort order
+    procedure Save(IniFile: TIniFile; const Section, Name: String);
+    procedure Load(IniFile: TIniFile; const Section, Name: String);
+  public
+    //
   end;
 
   TConfig = class(TObject)
@@ -71,6 +81,7 @@ type
     FPartIncrementCtrlClick: Integer;
     FPartIncrementCtrlShiftClick: Integer;
 
+    // Search window settings:
     FSearchLimit: Integer;
     FWSearchGridSize: Integer;
     FWSearchShowNumber: Boolean;
@@ -90,6 +101,10 @@ type
     FWSearchWhat: Integer;
     FWSearchBy: Integer;
 
+    // Set list Collection
+    FWCollectionLastUsedFilter: Integer;
+    FWCollectionColumns: TColumnStorage;
+
     // Window states
     FReOpenWindowsAfterRestart: Boolean;
 
@@ -107,6 +122,7 @@ type
     procedure Load;
     procedure ResetFramesOpenOnLoad;
     procedure ResetFramesDimensions;
+    procedure ResetFrameTableColumns;
     property RebrickableAPIKey: String read FRebrickableAPIKey write FRebrickableAPIKey;
     property RebrickableBaseUrl: String read FRebrickableBaseUrl write FRebrickableBaseUrl;
     property AuthenticationToken: String read FAuthenticationToken write FAuthenticationToken;
@@ -165,6 +181,10 @@ type
     property WSearchWhat: Integer read FWSearchWhat write FWSearchWhat;
     property WSearchBy: Integer read FWSearchBy write FWSearchBy;
 
+    // Setlist collection
+    property WCollectionLastUsedFilter: Integer read FWCollectionLastUsedFilter write FWCollectionLastUsedFilter;
+    property WCollectionColumns: TColumnStorage read FWCollectionColumns write FWCollectionColumns;
+
     property ReOpenWindowsAfterRestart: Boolean read FReOpenWindowsAfterRestart write FReOpenWindowsAfterRestart;
 {    property FrmSetListCollectionWasOpen: Boolean read FFrmSetListCollectionWasOpen write FFrmSetListCollectionWasOpen;
     property FrmSetListWasOpen: Integer read FFrmSetListWasOpen write FFrmSetListWasOpen;
@@ -184,6 +204,26 @@ implementation
 uses
   StrUtils, SysUtils,
   UStrings;
+
+// ColumnStorage //  TColumnStorage = class(TDictionary<Integer, Integer>)
+procedure TColumnStorage.Save(IniFile: TIniFile; const Section, Name: String);
+begin
+  IniFile.WriteString(Section, Name, Self.CommaText);
+end;
+
+procedure TColumnStorage.Load(IniFile: TIniFile; const Section, Name: String);
+begin
+  var Value := IniFile.ReadString(Section, Name, '');
+  if Value = '' then begin
+    // No defaults, let the caller check for list length zero.
+  end else begin
+    var SplitArray := Value.Split([',']);
+    var Len := Length(SplitArray);
+
+    for var Col in SplitArray do
+      Self.Add(Col);
+  end;
+end;
 
 // FormStorage
 procedure TClientFormStorage.Save(IniFile: TIniFile; const Section, Name: String);
@@ -238,6 +278,7 @@ constructor TConfig.Create;
 begin
   inherited;
 
+  WCollectionColumns := TColumnStorage.Create;
   FrmSetListCollection := TClientFormStorage.Create;
   FrmSetList := TClientFormStorage.Create;
   FrmSet := TClientFormStorage.Create;
@@ -247,6 +288,7 @@ end;
 
 destructor TConfig.Destroy;
 begin
+  WCollectionColumns.Free;
   FrmSetListCollection.Free;
   FrmSetList.Free;
   FrmSet.Free;
@@ -262,12 +304,18 @@ begin
   FrmSetList.OpenOnLoad := '';
   FrmSet.OpenOnLoad := '';
   FrmParts.OpenOnLoad := '';
+  FrmParts.OpenOnLoadBSID := Integer(caView);
   FrmSearch.OpenOnLoad := '';
 end;
 
 procedure TConfig.ResetFramesDimensions;
 begin
-  //
+  //todo: make this a button in the config.
+end;
+
+procedure TConfig.ResetFrameTableColumns;
+begin
+  //todo: make this a button in the config.
 end;
 
 procedure TConfig.Save(Section: TConfigSection);
@@ -355,6 +403,13 @@ begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortByQuantity', FWPartsSortByQuantity);
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', FWPartsSortAscending);
     end;
+
+    // Setlist collection
+    if Section in [csALL, csSETLISTCOLLECTIONWINDOWFILTERS] then begin
+      IniFile.WriteInteger(StrCollectionWindowIniSection, 'WCollectionLastUsedFilter', FWCollectionLastUsedFilter);
+      FWCollectionColumns.Save(IniFile, StrCollectionWindowIniSection, 'WCollectionColumns');
+    end;
+
   finally
     IniFile.Free;
   end;
@@ -444,6 +499,11 @@ begin
     FWPartsSortByPart := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByPart', False);
     FWPartsSortByQuantity := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByQuantity', False);
     FWPartsSortAscending := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', False);
+
+    // Setlist collection
+    FWCollectionLastUsedFilter := IniFile.ReadInteger(StrCollectionWindowIniSection, 'WCollectionLastUsedFilter', 0);
+    FWCollectionColumns.Load(IniFile, StrCollectionWindowIniSection, 'WCollectionColumns');
+
   finally
     IniFile.Free;
   end;

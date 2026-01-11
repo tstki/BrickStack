@@ -64,7 +64,7 @@
 -- Remove the whole setlist dialog by merging it into the collection dialog as split view.
 
 ### Settings:
-- Add option to show/hide columns for collection / setlist.
+- Add ability to drag n drop column headers for collection / setlist.
 - Add ability to add custom fields.
 - Option to store backup files on changes / periodically.
 - Slider setting for delay between image downloads.
@@ -78,6 +78,7 @@
 - Choose UI elements in search results / parts (several template layouts, with example)
 - Option to treat newly added sets as having all parts
 - Option to adjust font size in sets/parts dialog
+- Customize which overhead buttons are available on each dialog (since they are also available in the right click menu)
 
 ### Configure desired columns when printing - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview
@@ -93,7 +94,6 @@
 - Option to open selected collections in the same window, or a new window for each. (extra work for saving dialog dimensions)
 - Right click mark as built
 - Add (non editable) "all your sets" table entry to view your collection and filter from there.
-- Remember column widths
 - Add inventory version to set selection, so export knows what version to use rather than v1
 - Support filtering separate figures or all figures in your sets.
 - Text filter (show/hide text matches by name)
