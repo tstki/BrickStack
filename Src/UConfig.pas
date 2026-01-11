@@ -218,8 +218,6 @@ begin
     // No defaults, let the caller check for list length zero.
   end else begin
     var SplitArray := Value.Split([',']);
-    var Len := Length(SplitArray);
-
     for var Col in SplitArray do
       Self.Add(Col);
   end;

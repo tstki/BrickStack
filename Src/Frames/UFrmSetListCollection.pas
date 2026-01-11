@@ -662,13 +662,13 @@ begin
 end;
 
 procedure TFrmSetListCollection.FMoveColumn(MoveLeft: Boolean);
+var
+  MaxIdx, NewIndex: Integer;
 begin
   // Capture current widths from visual columns into the config so widths are preserved.
   for var I := 0 to LvSetLists.Columns.Count - 1 do
     FConfig.WCollectionColumns.Values[IntToStr(LvSetLists.Columns[I].Tag)] := IntToStr(LvSetLists.Columns[I].Width);
 
-  var MaxIdx := 0;
-  var NewIndex := 0;
   if MoveLeft then begin
     MaxIdx := FConfig.WCollectionColumns.Count;
     NewIndex := FLastColumnIdxClicked - 1;
