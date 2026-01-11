@@ -56,6 +56,12 @@ type
     MnuShowSets: TMenuItem;
     MnuShowUseInBuildCalc: TMenuItem;
     MnuShowSort: TMenuItem;
+    MnuColName: TMenuItem;
+    N1: TMenuItem;
+    ActColMoveLeft: TAction;
+    ActColMoveRight: TAction;
+    Moveleft1: TMenuItem;
+    Moveright1: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
     procedure ActEditSetListExecute(Sender: TObject);
@@ -82,6 +88,8 @@ type
     procedure ActColumnShowSortExecute(Sender: TObject);
     procedure LvSetListsContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
     procedure FormDestroy(Sender: TObject);
+    procedure ActColMoveLeftExecute(Sender: TObject);
+    procedure ActColMoveRightExecute(Sender: TObject);
   private
     { Private declarations }
     FConfig: TConfig;
@@ -92,6 +100,7 @@ type
     FIsDragHighlighting: Boolean;
     FDragHoverIndex: Integer;
     FIgnoreNextContextPopup: Boolean;
+    FLastColumnIdxClicked: Integer;
     procedure FSetConfig(Config: TConfig);
     procedure FTryAddColumn(const ColID: TSetListCollectionColumns);
     function FGetSelectedObject: TSetListObject;
@@ -100,6 +109,8 @@ type
     function FGetDefaultColumnName(const ColID: TSetListCollectionColumns): String;
     function FGetColumnIndexByTag(const ColID: TSetListCollectionColumns): Integer;
     procedure FToggleColumnByID(const ColID: TSetListCollectionColumns);
+    function FGetColumnIndexByCoordinate(const Point: TPoint): Integer;
+    procedure FMoveColumn(MoveLeft: Boolean);
     procedure FRebuildStatusBar;
     procedure FUpdateUI;
   public
@@ -335,6 +346,10 @@ begin
   ActColumnShowSets.Enabled := (ColCount > 1) or (FGetColumnIndexByTag(colSETS) < 0);
   ActColumnShowUseInBuildCalc.Enabled := (ColCount > 1) or (FGetColumnIndexByTag(colUSEINBUILD) < 0);
   ActColumnShowSort.Enabled := (ColCount > 1) or (FGetColumnIndexByTag(colSORTINDEX) < 0);
+
+  // Restrict the ability to move columns left/right
+  ActColMoveLeft.Enabled := (ColCount > 1) and (FLastColumnIdxClicked > 0);
+  ActColMoveRight.Enabled := (ColCount > 1) and (FLastColumnIdxClicked < LvSetLists.Columns.Count-1);
 end;
 
 procedure TFrmSetListCollection.LvSetListsChange(Sender: TObject; Item: TListItem; Change: TItemChange);
@@ -557,12 +572,47 @@ begin
   end;
 end;
 
+function TFrmSetListCollection.FGetColumnIndexByCoordinate(const Point: TPoint): Integer;
+begin
+  Result := -1;
+
+  if LvSetLists.Columns.Count = 0 then
+    Exit;
+
+  // Adjust X by horizontal scroll position so client X maps to column content X
+  var ScrollPos := GetScrollPos(LvSetLists.Handle, SB_HORZ);
+  var ContentX := Point.X + ScrollPos;
+
+  var Acc := 0;
+  for var I := 0 to LvSetLists.Columns.Count - 1 do begin
+    var W := LvSetLists.Columns[I].Width;
+    if (ContentX >= Acc) and (ContentX < Acc + W) then begin
+      Result := I;
+      Exit;
+    end;
+    Inc(Acc, W);
+  end;
+
+  if ContentX >= Acc then
+    Result := LvSetLists.Columns.Count - 1;
+end;
+
 procedure TFrmSetListCollection.LvSetListsColumnRightClick(Sender: TObject; Column: TListColumn; Point: TPoint);
 begin
   FIgnoreNextContextPopup := True;
 
   var ScreenPt := LvSetLists.ClientToScreen(Point);
-  PopupMenu2.Popup(ScreenPt.X, ScreenPt.Y);
+  //todo. store clicked column header, so we can move left/right
+
+  MnuColName.Caption := '';
+  var ColIdx := FGetColumnIndexByCoordinate(Point);
+  if ColIdx >= 0 then begin
+    FLastColumnIdxClicked := ColIdx;
+    MnuColName.Caption := LvSetLists.Columns[ColIdx].Caption;
+
+    FUpdateUI;
+    PopupMenu2.Popup(ScreenPt.X, ScreenPt.Y);
+  end;
 end;
 
 procedure TFrmSetListCollection.LvSetListsContextPopup(Sender: TObject; MousePos: TPoint; var Handled: Boolean);
@@ -609,6 +659,58 @@ begin
   end;
 
   FUpdateUI;
+end;
+
+procedure TFrmSetListCollection.FMoveColumn(MoveLeft: Boolean);
+begin
+  // Capture current widths from visual columns into the config so widths are preserved.
+  for var I := 0 to LvSetLists.Columns.Count - 1 do
+    FConfig.WCollectionColumns.Values[IntToStr(LvSetLists.Columns[I].Tag)] := IntToStr(LvSetLists.Columns[I].Width);
+
+  var MaxIdx := 0;
+  var NewIndex := 0;
+  if MoveLeft then begin
+    MaxIdx := FConfig.WCollectionColumns.Count;
+    NewIndex := FLastColumnIdxClicked - 1;
+  end else begin
+    MaxIdx := FConfig.WCollectionColumns.Count - 1;
+    NewIndex := FLastColumnIdxClicked + 1;
+  end;
+
+  // Update stored order
+  if (FLastColumnIdxClicked >= 0) and (FLastColumnIdxClicked < MaxIdx) then
+    FConfig.WCollectionColumns.Move(FLastColumnIdxClicked, NewIndex)
+  else
+    Exit;
+
+  // Rebuild visual columns from the config order
+  LvSetLists.Columns.BeginUpdate;
+  try
+    LvSetLists.Columns.Clear;
+    for var I := 0 to FConfig.WCollectionColumns.Count - 1 do begin
+      var Name := FConfig.WCollectionColumns.Names[I];
+      FTryAddColumn(TSetListCollectionColumns(StrToIntDef(Name, 0)));
+    end;
+  finally
+    LvSetLists.Columns.EndUpdate;
+  end;
+
+  LvSetLists.Invalidate;
+  FUpdateUI;
+end;
+
+procedure TFrmSetListCollection.ActColMoveLeftExecute(Sender: TObject);
+begin
+  if (FConfig = nil) or (FLastColumnIdxClicked <= 0) then
+    Exit;
+  FMoveColumn(True);
+end;
+
+procedure TFrmSetListCollection.ActColMoveRightExecute(Sender: TObject);
+begin
+  if (FConfig = nil) or (FLastColumnIdxClicked < 0) then
+    Exit;
+  FMoveColumn(False);
 end;
 
 procedure TFrmSetListCollection.ActColumnShowNameExecute(Sender: TObject);
@@ -716,6 +818,10 @@ end;
 
 procedure TFrmSetListCollection.FormDestroy(Sender: TObject);
 begin
+  // Capture current widths from visual columns into the config so widths are preserved.
+  for var I := 0 to LvSetLists.Columns.Count - 1 do
+    FConfig.WCollectionColumns.Values[IntToStr(LvSetLists.Columns[I].Tag)] := IntToStr(LvSetLists.Columns[I].Width);
+
   FConfig.Save(csSETLISTCOLLECTIONWINDOWFILTERS);
 end;
 

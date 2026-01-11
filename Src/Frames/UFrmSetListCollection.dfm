@@ -235,6 +235,14 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Show sort'
       OnExecute = ActColumnShowSortExecute
     end
+    object ActColMoveLeft: TAction
+      Caption = 'Move left'
+      OnExecute = ActColMoveLeftExecute
+    end
+    object ActColMoveRight: TAction
+      Caption = 'Move right'
+      OnExecute = ActColMoveRightExecute
+    end
   end
   object ImageList16: TImageList
     ColorDepth = cd32Bit
@@ -2681,6 +2689,19 @@ object FrmSetListCollection: TFrmSetListCollection
   object PopupMenu2: TPopupMenu
     Left = 208
     Top = 176
+    object MnuColName: TMenuItem
+      Caption = 'ColName'
+      Enabled = False
+    end
+    object Moveleft1: TMenuItem
+      Action = ActColMoveLeft
+    end
+    object Moveright1: TMenuItem
+      Action = ActColMoveRight
+    end
+    object N1: TMenuItem
+      Caption = '-'
+    end
     object MnuShowName: TMenuItem
       Action = ActColumnShowName
     end
