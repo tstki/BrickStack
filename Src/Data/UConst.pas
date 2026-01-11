@@ -39,7 +39,8 @@ type
                       csCONFIGDIALOG = 1,
                       csWINDOWPOSITIONS = 2,
                       csPARTSWINDOWFILTERS = 3,
-                      csSEARCHWINDOWFILTERS = 4
+                      csSEARCHWINDOWFILTERS = 4,
+                      csSETLISTCOLLECTIONWINDOWFILTERS = 5
                     );
 
   //Search what / View External types:

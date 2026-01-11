@@ -78,6 +78,7 @@
 - Choose UI elements in search results / parts (several template layouts, with example)
 - Option to treat newly added sets as having all parts
 - Option to adjust font size in sets/parts dialog
+- Customize which overhead buttons are available on each dialog (since they are also available in the right click menu)
 
 ### Configure desired columns when printing - preferably on the dialog itself by showing the config dialog and it's related settings.
 - Also multiple columns - ask in dialog, and make a preview

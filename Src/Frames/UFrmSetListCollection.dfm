@@ -11,6 +11,7 @@ object FrmSetListCollection: TFrmSetListCollection
   Position = poDefault
   Visible = True
   OnClose = FormClose
+  OnDestroy = FormDestroy
   OnResize = FormResize
   OnShow = FormShow
   TextHeight = 15
@@ -38,12 +39,12 @@ object FrmSetListCollection: TFrmSetListCollection
     OwnerData = True
     ReadOnly = True
     RowSelect = True
-    PopupMenu = PopupMenu1
     TabOrder = 1
     ViewStyle = vsReport
     OnChange = LvSetListsChange
     OnColumnClick = LvSetListsColumnClick
     OnColumnRightClick = LvSetListsColumnRightClick
+    OnContextPopup = LvSetListsContextPopup
     OnData = LvSetListsData
     OnDblClick = LvSetListsDblClick
   end
@@ -217,6 +218,22 @@ object FrmSetListCollection: TFrmSetListCollection
       Caption = 'Move sets...'
       ImageIndex = 5
       OnExecute = ActMoveSetsExecute
+    end
+    object ActColumnShowName: TAction
+      Caption = 'Show name'
+      OnExecute = ActColumnShowNameExecute
+    end
+    object ActColumnShowSets: TAction
+      Caption = 'Show sets'
+      OnExecute = ActColumnShowSetsExecute
+    end
+    object ActColumnShowUseInBuildCalc: TAction
+      Caption = 'Show use in build calc'
+      OnExecute = ActColumnShowUseInBuildCalcExecute
+    end
+    object ActColumnShowSort: TAction
+      Caption = 'Show sort'
+      OnExecute = ActColumnShowSortExecute
     end
   end
   object ImageList16: TImageList
@@ -2664,5 +2681,17 @@ object FrmSetListCollection: TFrmSetListCollection
   object PopupMenu2: TPopupMenu
     Left = 208
     Top = 176
+    object MnuShowName: TMenuItem
+      Action = ActColumnShowName
+    end
+    object MnuShowSets: TMenuItem
+      Action = ActColumnShowSets
+    end
+    object MnuShowUseInBuildCalc: TMenuItem
+      Action = ActColumnShowUseInBuildCalc
+    end
+    object MnuShowSort: TMenuItem
+      Action = ActColumnShowSort
+    end
   end
 end
