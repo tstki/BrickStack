@@ -2708,11 +2708,11 @@ object FrmSetListCollection: TFrmSetListCollection
     object MnuShowSets: TMenuItem
       Action = ActColumnShowSets
     end
-    object MnuShowUseInBuildCalc: TMenuItem
-      Action = ActColumnShowUseInBuildCalc
-    end
     object MnuShowSort: TMenuItem
       Action = ActColumnShowSort
+    end
+    object MnuShowUseInBuildCalc: TMenuItem
+      Action = ActColumnShowUseInBuildCalc
     end
   end
 end

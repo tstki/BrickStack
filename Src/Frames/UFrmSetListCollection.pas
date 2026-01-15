@@ -781,7 +781,9 @@ procedure TFrmSetListCollection.LvSetListsData(Sender: TObject; Item: TListItem)
         Result := IfThen(Obj.UseInCollection, 'Yes', 'No');
       Integer(colSORTINDEX):
         Result := IntToStr(Obj.SortIndex);
-    end;
+      else
+        Result := '';
+      end;
   end;
 
 begin
@@ -821,7 +823,6 @@ begin
   // Capture current widths from visual columns into the config so widths are preserved.
   for var I := 0 to LvSetLists.Columns.Count - 1 do
     FConfig.WCollectionColumns.Values[IntToStr(LvSetLists.Columns[I].Tag)] := IntToStr(LvSetLists.Columns[I].Width);
-
   FConfig.Save(csSETLISTCOLLECTIONWINDOWFILTERS);
 end;
 

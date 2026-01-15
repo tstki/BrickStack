@@ -40,7 +40,8 @@ type
                       csWINDOWPOSITIONS = 2,
                       csPARTSWINDOWFILTERS = 3,
                       csSEARCHWINDOWFILTERS = 4,
-                      csSETLISTCOLLECTIONWINDOWFILTERS = 5
+                      csSETLISTCOLLECTIONWINDOWFILTERS = 5,
+                      csSETLISTWINDOWFILTERS = 6
                     );
 
   //Search what / View External types:
@@ -89,14 +90,14 @@ type
                      fltNOSPAREPARTS = 5
                    );
 
-  TSetListColumn = ( slcolNAME = 0,
-                     slcolBSID = 1,
-                     slcolSETNUM = 2,
-                     slcolQTY = 3,
-                     slcolBUILD = 4,
-                     slcolSPARES = 5,
-                     slcolNOTE = 6
-                   );
+  TSetListColumns = ( slcolNAME = 0,
+                      slcolBSID = 1,
+                      slcolSETNUM = 2,
+                      slcolQTY = 3,
+                      slcolBUILD = 4,
+                      slcolSPARES = 5,
+                      slcolNOTE = 6
+                    );
 
 implementation
 

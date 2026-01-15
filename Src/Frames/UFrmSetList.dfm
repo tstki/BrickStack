@@ -140,6 +140,7 @@ object FrmSetList: TFrmSetList
     OnChange = LvSetsChange
     OnColumnClick = LvSetsColumnClick
     OnColumnRightClick = LvSetsColumnRightClick
+    OnContextPopup = LvSetsContextPopup
     OnData = LvSetsData
     OnDblClick = LvSetsDblClick
     OnMouseDown = LvSetsMouseDown
@@ -257,6 +258,51 @@ object FrmSetList: TFrmSetList
       Hint = 'Edit owned parts for set'
       ImageIndex = 7
       OnExecute = ActEditOwnedPartsExecute
+    end
+    object ActColumnShowName: TAction
+      Category = 'SetList'
+      Caption = 'Show name'
+      OnExecute = ActColumnShowNameExecute
+    end
+    object ActColumnShowBSID: TAction
+      Category = 'SetList'
+      Caption = 'Show BSID'
+      OnExecute = ActColumnShowBSIDExecute
+    end
+    object ActColumnShowSetNum: TAction
+      Category = 'SetList'
+      Caption = 'Show set_num'
+      OnExecute = ActColumnShowSetNumExecute
+    end
+    object ActColumnShowQty: TAction
+      Category = 'SetList'
+      Caption = 'Show quantity'
+      OnExecute = ActColumnShowQtyExecute
+    end
+    object ActColumnShowBuilt: TAction
+      Category = 'SetList'
+      Caption = 'Show built'
+      OnExecute = ActColumnShowBuiltExecute
+    end
+    object ActColumnShowSpares: TAction
+      Category = 'SetList'
+      Caption = 'Show spares'
+      OnExecute = ActColumnShowSparesExecute
+    end
+    object ActColumnShowNote: TAction
+      Category = 'SetList'
+      Caption = 'Show note'
+      OnExecute = ActColumnShowNoteExecute
+    end
+    object ActColMoveLeft: TAction
+      Category = 'SetList'
+      Caption = 'Move left'
+      OnExecute = ActColMoveLeftExecute
+    end
+    object ActColMoveRight: TAction
+      Category = 'SetList'
+      Caption = 'Move right'
+      OnExecute = ActColMoveRightExecute
     end
   end
   object ImageList16: TImageList
@@ -2929,5 +2975,39 @@ object FrmSetList: TFrmSetList
   object PopupMenu2: TPopupMenu
     Left = 208
     Top = 176
+    object MnuColName: TMenuItem
+      Caption = 'Colname'
+      Enabled = False
+    end
+    object Moveleft1: TMenuItem
+      Action = ActColMoveLeft
+    end
+    object Moveright1: TMenuItem
+      Action = ActColMoveRight
+    end
+    object N1: TMenuItem
+      Caption = '-'
+    end
+    object MnuShowBuilt: TMenuItem
+      Action = ActColumnShowBuilt
+    end
+    object MnuShowBSID: TMenuItem
+      Action = ActColumnShowBSID
+    end
+    object MnuShowName: TMenuItem
+      Action = ActColumnShowName
+    end
+    object MnuShowNote: TMenuItem
+      Action = ActColumnShowNote
+    end
+    object MnuShowQuantity: TMenuItem
+      Action = ActColumnShowQty
+    end
+    object MnuShowSetNum: TMenuItem
+      Action = ActColumnShowSetNum
+    end
+    object MnuShowSpares: TMenuItem
+      Action = ActColumnShowSpares
+    end
   end
 end

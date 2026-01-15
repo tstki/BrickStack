@@ -101,6 +101,10 @@ type
     FWSearchWhat: Integer;
     FWSearchBy: Integer;
 
+    // Set lists
+    FWSetListLastUsedFilter: Integer;
+    FWSetListColumns: TColumnStorage;
+
     // Set list Collection
     FWCollectionLastUsedFilter: Integer;
     FWCollectionColumns: TColumnStorage;
@@ -181,7 +185,9 @@ type
     property WSearchWhat: Integer read FWSearchWhat write FWSearchWhat;
     property WSearchBy: Integer read FWSearchBy write FWSearchBy;
 
-    // Setlist collection
+    property WSetListLastUsedFilter: Integer read FWSetListLastUsedFilter write FWSetListLastUsedFilter;
+    property WSetListColumns: TColumnStorage read FWSetListColumns write FWSetListColumns;
+
     property WCollectionLastUsedFilter: Integer read FWCollectionLastUsedFilter write FWCollectionLastUsedFilter;
     property WCollectionColumns: TColumnStorage read FWCollectionColumns write FWCollectionColumns;
 
@@ -277,6 +283,7 @@ begin
   inherited;
 
   WCollectionColumns := TColumnStorage.Create;
+  WSetListColumns := TColumnStorage.Create;
   FrmSetListCollection := TClientFormStorage.Create;
   FrmSetList := TClientFormStorage.Create;
   FrmSet := TClientFormStorage.Create;
@@ -287,6 +294,7 @@ end;
 destructor TConfig.Destroy;
 begin
   WCollectionColumns.Free;
+  WSetListColumns.Free;
   FrmSetListCollection.Free;
   FrmSetList.Free;
   FrmSet.Free;
@@ -402,12 +410,17 @@ begin
       IniFile.WriteBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', FWPartsSortAscending);
     end;
 
-    // Setlist collection
+    // Setlist window
+    if Section in [csALL, csSETLISTWINDOWFILTERS] then begin
+      IniFile.WriteInteger(StrSetListWindowIniSection, 'WSetListLastUsedFilter', FWSetListLastUsedFilter);
+      FWSetListColumns.Save(IniFile, StrSetListWindowIniSection, 'WSetListColumns');
+    end;
+
+    // Setlist collection window
     if Section in [csALL, csSETLISTCOLLECTIONWINDOWFILTERS] then begin
       IniFile.WriteInteger(StrCollectionWindowIniSection, 'WCollectionLastUsedFilter', FWCollectionLastUsedFilter);
       FWCollectionColumns.Save(IniFile, StrCollectionWindowIniSection, 'WCollectionColumns');
     end;
-
   finally
     IniFile.Free;
   end;
@@ -498,10 +511,13 @@ begin
     FWPartsSortByQuantity := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortByQuantity', False);
     FWPartsSortAscending := IniFile.ReadBool(StrSetPartsWindowIniSection, 'WPartsSortAscending', False);
 
+    // Setlist
+    FWSetListLastUsedFilter := IniFile.ReadInteger(StrSetListWindowIniSection, 'WSetListLastUsedFilter', 0);
+    FWSetListColumns.Load(IniFile, StrSetListWindowIniSection, 'WSetListColumns');
+
     // Setlist collection
     FWCollectionLastUsedFilter := IniFile.ReadInteger(StrCollectionWindowIniSection, 'WCollectionLastUsedFilter', 0);
     FWCollectionColumns.Load(IniFile, StrCollectionWindowIniSection, 'WCollectionColumns');
-
   finally
     IniFile.Free;
   end;
