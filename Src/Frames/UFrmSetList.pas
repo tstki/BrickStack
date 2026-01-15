@@ -1117,12 +1117,15 @@ begin
         end;
       end else begin
         var SetObject := TSetObject(Obj);
-        Value := '  ' + FGetSetObjectValueByTag(SetObject, StrToIntDef(Name, 0));
+        Value := FGetSetObjectValueByTag(SetObject, StrToIntDef(Name, 0));
         Item.ImageIndex := 9;
       end;
 
       if IsFirst then begin
-        Item.Caption := Value;
+        if Obj.ClassType = TSetObjectList then
+          Item.Caption := Value
+        else
+          Item.Caption := '  ' + Value;
         IsFirst := False;
       end else
         Item.SubItems.Add(Value);

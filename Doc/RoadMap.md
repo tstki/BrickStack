@@ -20,9 +20,8 @@
 - Make sure any token is not logged.
 
 ### Database:
-- Dont use "select *" but get the exact columns
-- Auto Database updater improvements
-- Comma separated search input, so you can search for sets "and / or"
+- Auto database updater improvements
+- Comma separated search input, so you can search for sets "and / or". Up to 5?
 - Add DB column and rename BSSetLists to BSCollection, add column for type
 - Deleting a set/collection should ask the user to move all parts/sets to a new inventory, or delete (including all parts)
 - Build themes by year table on database creation, so you can filter the active themes by year.
