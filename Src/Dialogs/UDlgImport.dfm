@@ -1,7 +1,7 @@
 object DlgImport: TDlgImport
   Left = 0
   Top = 0
-  Caption = 'DlgImport'
+  Caption = 'Import'
   ClientHeight = 206
   ClientWidth = 370
   Color = clBtnFace

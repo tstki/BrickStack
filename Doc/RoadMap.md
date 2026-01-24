@@ -48,6 +48,11 @@
 ## API
 ### Get user's inventory
 - Ability to export inventory per group to rebrickable csv/xml
+- API endpoint webserver http/https to allow you to host access to your library.
+-- Password protected
+- Dedicated server mode
+-- Multiple user accounts
+-- Html interface
 
 ## Windows
 - Collection details (shows selected collection's details / custom fields / statistics)

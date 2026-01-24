@@ -46,6 +46,7 @@ uses
   FireDAC.Comp.Client, FireDAC.Stan.Param,
   Data.DB,
   USQLiteConnection,
+  xml.XMLDoc,
   UBrickLinkXMLIntf,
   UFrmMain, UStrings;
 
@@ -54,6 +55,7 @@ const
   ekREBRICKABLEAPI = 0;
   ekREBRICKABLECSV = 1;
   ekBRICKLINKXML = 2;
+  ekBRICKSETCSV = 3;
 
   // Export remote options
   eoAPPEND = 0;
@@ -71,6 +73,7 @@ begin
     CbxExportOptions.Items.Add(StrNameRebrickableAPI);
     CbxExportOptions.Items.Add(StrNameRebrickableCSV);
     CbxExportOptions.Items.Add(StrNameBrickLinkXML);
+    CbxExportOptions.Items.Add(StrNameBrickSetCSV);
     CbxExportOptions.ItemIndex := 0;
   finally
     CbxExportOptions.Items.EndUpdate;
@@ -108,17 +111,20 @@ begin
   //Itemtype: S=Set, S=Minifig, P=Part?
 
   if CbxExportOptions.ItemIndex = ekREBRICKABLEAPI then begin
-    // do query
+    // todo: do query
     // API call
   end else begin
     var SaveDialog := TSaveDialog.Create(Self);
     try
-      if CbxExportOptions.ItemIndex = ekREBRICKABLECSV then begin
+      if CbxExportOptions.ItemIndex in [ekREBRICKABLECSV, ekBRICKSETCSV] then begin
         SaveDialog.Filter := StrExportCSVFilter;
         SaveDialog.DefaultExt := StrExportCSVFileType;
-      end else begin //ekBRICKLINKXML
+      end else if CbxExportOptions.ItemIndex = ekBRICKLINKXML then begin
         SaveDialog.Filter := StrExportXMLFilter;
         SaveDialog.DefaultExt := StrExportXMLileType;
+      end else begin
+        // Not yet implemented
+        Exit;
       end;
       SaveDialog.Title := StrSaveAsTitle;
 
@@ -131,7 +137,7 @@ begin
         try
           // Set up the query
           FDQuery.Connection := SqlConnection;
-          FDQuery.SQL.Text := 'SELECT count(*) as quantity, S.Set_Num, S.HaveSpareParts, (SELECT i.ID FROM INVENTORIES i' +
+          FDQuery.SQL.Text := 'SELECT count(*) as quantity, S.Set_Num, S.HaveSpareParts, S.Notes, (SELECT i.ID FROM INVENTORIES i' +
                               ' WHERE i.Set_Num = S.Set_Num AND i.version=1) AS InventoryID FROM BSSets S WHERE BSSetListID = :BSSetListID'+
                               ' GROUP BY set_num, inventoryID, havespareparts';
           //todo: warning, using explicit version 1 here because the user can't select an inventory version yet
@@ -139,19 +145,28 @@ begin
           Params.ParamByName('BSSetListID').AsInteger := FExportID.ToInteger;
           FDQuery.Open;
 
-          if CbxExportOptions.ItemIndex = ekREBRICKABLECSV then begin
+          if CbxExportOptions.ItemIndex in [ekREBRICKABLECSV, ekBRICKSETCSV] then begin
             var SL := TStringList.Create;
             try
               // Header
-              SL.Add('Set Number,Quantity,Includes Spares,Inventory ID');
+              if CbxExportOptions.ItemIndex = ekREBRICKABLECSV then begin
+                SL.Add('Set Number,Quantity,Includes Spares,Inventory ID');
+              end else begin //ekBRICKSETCSV
+                // No header
+              end;
 
               while not FDQuery.Eof do begin
                 var SetNum := FDQuery.FieldByName('Set_Num').AsString;
                 var Quantity := FDQuery.FieldByName('Quantity').AsString;
-                var HaveSpareParts := FDQuery.FieldByName('HaveSpareParts').AsString;
-                var InventoryID := FDQuery.FieldByName('InventoryID').AsString;
 
-                SL.Add(Format('%s,%s,%s,%s', [SetNum, Quantity, HaveSpareParts, InventoryID]));
+                if CbxExportOptions.ItemIndex = ekREBRICKABLECSV then begin
+                  var InventoryID := FDQuery.FieldByName('InventoryID').AsString;
+                  var HaveSpareParts := FDQuery.FieldByName('HaveSpareParts').AsString;
+                  SL.Add(Format('%s,%s,%s,%s', [SetNum, Quantity, HaveSpareParts, InventoryID]))
+                end else begin //ekBRICKSETCSV
+                  var Notes := StringReplace(FDQuery.FieldByName('Notes').AsString, ',', '.', [rfReplaceAll]);
+                  SL.Add(Format('%s,%s,%s', [SetNum, Quantity, Notes]));
+                end;
 
                 FDQuery.Next; // Move to the next row
               end;
@@ -170,12 +185,22 @@ begin
               var Item := xmldoc.Add;
               Item.ITEMTYPE := 'S'; // TODO: Just supporting sets for now, parts/ figures need to be added later
               Item.ITEMID := SetNum;
-              Item.MINQTY := Quantity;
+              Item.MINQTY := IntToStr(Quantity);
 
               FDQuery.Next; // Move to the next row
             end;
 
-            xmldoc.OwnerDocument.SaveToFile(SaveDialog.FileName);
+            // Do not output the xml definition tag - bricklink does not want it.
+            var xmlString := xmldoc.OwnerDocument.XML.Text;
+            var SL := TStringList.Create;
+            try
+              SL.Text := xmlString;
+              if Pos('<?xml', SL[0]) = 1 then
+                SL.Delete(0);
+              SL.SaveToFile(SaveDialog.FileName);
+            finally
+              SL.Free;
+            end;
           end;
         finally
           FDQuery.Free;

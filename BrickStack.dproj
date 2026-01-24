@@ -215,7 +215,7 @@
         <DCCReference Include="Src\UImageCache.pas"/>
         <DCCReference Include="Src\UPostMessage.pas"/>
         <DCCReference Include="Src\URebrickableJson.pas"/>
-        <DCCReference Include="Src\UBrickLinkXMLIntf.pas"/>
+        <DCCReference Include="Src\Data\UBrickLinkXMLIntf.pas"/>
         <DCCReference Include="Src\USqLiteConnection.pas"/>
         <DCCReference Include="Src\USqlThread.pas"/>
         <DCCReference Include="Src\UGetImageThread.pas"/>

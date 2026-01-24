@@ -28,7 +28,7 @@ uses
   UImageCache in 'Src\UImageCache.pas',
   UPostMessage in 'Src\UPostMessage.pas',
   URebrickableJson in 'Src\URebrickableJson.pas',
-  UBrickLinkXMLIntf in 'Src\UBrickLinkXMLIntf.pas',
+  UBrickLinkXMLIntf in 'Src\Data\UBrickLinkXMLIntf.pas',
   USqLiteConnection in 'Src\USqLiteConnection.pas',
   USqlThread in 'Src\USqlThread.pas',
   UGetImageThread in 'Src\UGetImageThread.pas',

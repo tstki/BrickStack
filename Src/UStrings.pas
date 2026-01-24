@@ -116,6 +116,7 @@ const
   StrNameRebrickableAPI = 'Rebrickable API';
   StrNameRebrickableCSV = 'Rebrickable CSV (4 columns)';
   StrNameBrickLinkXML = 'BrickLink XML';
+  StrNameBrickSetCSV = 'Brickset CSV';
   StrImportOptionMerge = 'Merge with local by ID';
   StrImportOptionAppend = 'Keep local and append new';
   StrImportOptionOverwrite = 'Clear local and add new';
