@@ -89,8 +89,8 @@ const
   // Import types
   cIMPORTREBRICKABLECSV = 0;
   cIMPORTREBRICKABLEAPI = 1;
-  //cIMPORTFROMBRICKLINKXML = 2; // Unsure on the format for now
-  //cIMPORTBRICKSETBSSETS = 3;   //
+  cIMPORTFROMBRICKLINKXML = 2;
+  //cIMPORTBRICKSETBSSETS = 3;   // Unsure on the format for now
   //cIMPORTBRICKOWLORDER = 4;    //
   //cIMPORTBRICKLINKORDER = 5;   //
 
@@ -108,6 +108,7 @@ begin
     CbxImportOptions.Items.Clear;
     CbxImportOptions.Items.Add(StrNameRebrickableCSV);
     CbxImportOptions.Items.Add(StrNameRebrickableAPI);
+    CbxImportOptions.Items.Add(StrNameBrickLinkXML);
     CbxImportOptions.ItemIndex := 0;
   finally
     CbxImportOptions.Items.EndUpdate;
@@ -190,9 +191,9 @@ begin
   if CbxLocalCollection.ItemIndex > 0 then
     CollectionID := Integer(CbxLocalCollection.Items.Objects[CbxLocalCollection.ItemIndex]);
 
-  LblImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
-  EditImportFilepath.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
-  BtnSelectFile.Enabled := CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV;
+  LblImportFilepath.Enabled := CbxImportOptions.ItemIndex in [cIMPORTREBRICKABLECSV, cIMPORTFROMBRICKLINKXML];
+  EditImportFilepath.Enabled := CbxImportOptions.ItemIndex in [cIMPORTREBRICKABLECSV, cIMPORTFROMBRICKLINKXML];
+  BtnSelectFile.Enabled := CbxImportOptions.ItemIndex in [cIMPORTREBRICKABLECSV, cIMPORTFROMBRICKLINKXML];
 
   if CbxImportOptions.ItemIndex = cIMPORTREBRICKABLECSV then begin
     BtnOK.Enabled := ((CollectionID > 0) or (Length(EditImportFilepath.Text) > 0)) and
@@ -294,10 +295,9 @@ begin
       end;
     end else begin
       var MergeMode := CbxImportLocalOptions.ItemIndex;
-
       if MergeMode = cIMPORTOVERWRITE then begin
         //  cIMPORTOVERWRITE = 2;
-          // Delete existing by CollectionID , then insert new stuff
+          //todo: Delete existing by CollectionID, then insert new stuff
       end; //else if MergeMode = cIMPORTAPPEND
         // Just insert new stuff into CollectionID
     end;
@@ -493,8 +493,15 @@ procedure TDlgImport.BtnOKClick(Sender: TObject);
 var
   TotalImported: Integer;
 begin
+//todo
+  // Create set/part/figure list
+  // import to our own object
+  // save our object to database
+
   if CbxImportOptions.ItemIndex = cIMPORTREBRICKABLEAPI then
     TotalImported := FDoImportByRebrickableAPI
+  else if CbxImportOptions.ItemIndex = cIMPORTFROMBRICKLINKXML then
+    //TotalImported := FDoImportByBrickLinkXML
   else
     TotalImported := FDoImportByRebrickableCSV;
 

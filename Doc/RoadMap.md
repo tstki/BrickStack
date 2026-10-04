@@ -9,6 +9,7 @@
 -- exe can replace itself through rename.
 - Check database version on startup and ask user to update
 - Generic imagelists (16/32) to reduce double images and ensure consistent item indexes across the application.
+- Console commands. -? -collectionadd -setadd -partadd, remove, update
 
 ### Welcome:
 - Reference to tutorial/about and mandatory database creation steps and updating.
@@ -66,6 +67,7 @@
 - Expand helpfile (F1) / tutorial / common shortcuts
 - Split view. left = grid, right = details of selection with larger image.
 -- Remove the whole setlist dialog by merging it into the collection dialog as split view.
+- Print QR codes with labels (zint / foxit?)
 
 ### Settings:
 - Add ability to drag n drop column headers for collection / setlist.
@@ -115,6 +117,7 @@
 - Add to collection
 - Show minifigures as part of the set parts
 - Export (missing) set parts - CSV / XML
+- up/downarrow for add/remove parts
 
 ### Collections:
 Export collection:
@@ -125,6 +128,7 @@ Import collection:
 - Choose format
 - Choose overwrite / keep
 - Import as bulk input (line separated set numbers, part numbers or minifigure IDs)
+Add "everything" collection.
 
 ## Search:
 - Option to show search as image panels or table with text, and image on hover
