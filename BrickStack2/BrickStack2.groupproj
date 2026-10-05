@@ -1,0 +1,60 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{ECEF1C84-E945-4344-B195-640916E578DB}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Src\Backend\BrickStack2Backend.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Src\Tests\BrickStack2Tests.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Src\UI\BrickStack2UI.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="BrickStack2Backend">
+        <MSBuild Projects="Src\Backend\BrickStack2Backend.dproj"/>
+    </Target>
+    <Target Name="BrickStack2Backend:Clean">
+        <MSBuild Projects="Src\Backend\BrickStack2Backend.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BrickStack2Backend:Make">
+        <MSBuild Projects="Src\Backend\BrickStack2Backend.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="BrickStack2Tests">
+        <MSBuild Projects="Src\Tests\BrickStack2Tests.dproj"/>
+    </Target>
+    <Target Name="BrickStack2Tests:Clean">
+        <MSBuild Projects="Src\Tests\BrickStack2Tests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BrickStack2Tests:Make">
+        <MSBuild Projects="Src\Tests\BrickStack2Tests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="BrickStack2UI">
+        <MSBuild Projects="Src\UI\BrickStack2UI.dproj"/>
+    </Target>
+    <Target Name="BrickStack2UI:Clean">
+        <MSBuild Projects="Src\UI\BrickStack2UI.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BrickStack2UI:Make">
+        <MSBuild Projects="Src\UI\BrickStack2UI.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="BrickStack2Backend;BrickStack2Tests;BrickStack2UI"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="BrickStack2Backend:Clean;BrickStack2Tests:Clean;BrickStack2UI:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="BrickStack2Backend:Make;BrickStack2Tests:Make;BrickStack2UI:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

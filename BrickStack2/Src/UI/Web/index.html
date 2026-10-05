@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>BrickStack 2</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Main navigation">
+      <a class="brand" href="/" aria-label="BrickStack home">
+        <span class="brand-mark" aria-hidden="true">B</span>
+        <span class="brand-name">BrickStack</span>
+      </a>
+      <nav class="nav-links">
+        <a class="nav-link active" href="#overview"><span class="nav-icon">O</span><span>Overview</span></a>
+        <a class="nav-link" href="#sets"><span class="nav-icon">S</span><span>Sets</span></a>
+        <a class="nav-link" href="#parts"><span class="nav-icon">P</span><span>Parts</span></a>
+        <a class="nav-link" href="#search"><span class="nav-icon">/</span><span>Search</span></a>
+      </nav>
+      <div class="rail-footer"><span class="avatar">BS</span><span class="user-label">Local demo</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">YOUR COLLECTION</p>
+          <h1>Overview</h1>
+        </div>
+        <div class="connection"><span class="connection-dot"></span><span>Local server</span></div>
+      </header>
+
+      <section class="welcome">
+        <div>
+          <p class="eyebrow light">BRICKSTACK 2 · PHASE 1</p>
+          <h2>Your collection,<br>all in one place.</h2>
+          <p class="welcome-copy">A fresh home for your sets, parts, and building plans.</p>
+        </div>
+        <div class="brick-art" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      </section>
+
+      <section class="section-heading">
+        <div>
+          <p class="eyebrow">COLLECTION SNAPSHOT</p>
+          <h2 id="collection-name">Loading your demo collection...</h2>
+        </div>
+        <span id="data-source" class="source-badge"><span class="source-dot"></span>Connecting</span>
+      </section>
+
+      <section class="stats-grid" aria-label="Collection totals">
+        <article class="stat-card">
+          <span class="stat-icon blue">S</span>
+          <span class="stat-label">Sets</span>
+          <strong id="sets-count">--</strong>
+          <span class="stat-note">in your collection</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon yellow">P</span>
+          <span class="stat-label">Pieces</span>
+          <strong id="pieces-count">--</strong>
+          <span class="stat-note">across all your sets</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon green">B</span>
+          <span class="stat-label">Built</span>
+          <strong id="built-count">--</strong>
+          <span class="stat-note">sets checked off</span>
+        </article>
+      </section>
+
+      <section class="lists-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">STAY ORGANISED</p>
+            <h2>Your set lists</h2>
+          </div>
+          <span class="demo-label">DEMO DATA</span>
+        </div>
+        <div id="set-lists" class="list-grid">
+          <p class="loading-message">Waiting for the backend service...</p>
+        </div>
+      </section>
+      <p id="error-message" class="error-message" role="status" hidden></p>
+      <footer>BrickStack 2 <span>·</span> UI server connected to a separate Delphi backend</footer>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
