@@ -35,3 +35,14 @@ For future projects, treat missing IDE-generated metadata as a possible cause
 when a `.dproj` builds but crashes while RAD Studio saves it. Do not remove or
 blindly reuse extension metadata: adapt the source, outputs, platforms, and
 deployment entries for the specific project.
+
+## Build verification
+
+This Delphi 13 installation does not support command-line compiling. When a
+BrickStack2 source change needs compile verification, ask the user to build the
+affected project or group project in the RAD Studio IDE. After the user confirms
+the build succeeds, run the relevant tests from the generated output. Do not
+report a source change as compiled until that manual build has succeeded.
+
+Python is not available in this environment. Prefer PowerShell or repository
+tools for one-off tasks; do not install Python just to perform routine checks.

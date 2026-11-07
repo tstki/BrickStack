@@ -50,5 +50,5 @@ if (-not (Test-Service $uiHealth)) {
 
 Write-Host 'BrickStack2 is running at http://127.0.0.1:8080'
 Write-Host 'The UI and backend run in separate console windows.'
-Write-Host 'Press Ctrl+C in either service window to stop only that service.'
+Write-Host 'Press Ctrl+Break in either service window to stop only that service.'
 Start-Process 'http://127.0.0.1:8080'

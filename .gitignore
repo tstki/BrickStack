@@ -23,6 +23,9 @@ Thumbs.db
 *.exe
 *.war
 
+# BrickStack2 generated binaries and runtime databases
+/BrickStack2/Bin/
+
 # configuration
 *.ini
 

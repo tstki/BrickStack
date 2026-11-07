@@ -53,6 +53,15 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="..\Backend\UBSDemoData.pas"/>
+        <DCCReference Include="..\Backend\UBSDatabaseBootstrap.pas"/>
+        <DCCReference Include="..\Backend\UBSAdminBootstrap.pas"/>
+        <DCCReference Include="..\Backend\UBSCollectionRepository.pas"/>
+        <DCCReference Include="..\Backend\UBSTotp.pas"/>
+        <DCCReference Include="..\Backend\UBSRebrickableCatalogRepository.pas"/>
+        <DCCReference Include="UBSDatabaseBootstrapTests.pas"/>
+        <DCCReference Include="UBSAdminBootstrapTests.pas"/>
+        <DCCReference Include="UBSCollectionRepositoryTests.pas"/>
+        <DCCReference Include="UBSRebrickableCatalogRepositoryTests.pas"/>
         <DCCReference Include="UBSDemoDataTests.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
@@ -67,6 +76,10 @@
         </BuildConfiguration>
     </ItemGroup>
     <ItemGroup/>
+    <Target Name="CopySQLiteRuntime" AfterTargets="Build">
+        <Error Condition="!Exists('$(BDS)\bin64\sqlite3.dll')" Text="Delphi's Win64 sqlite3.dll is required to run the test suite."/>
+        <Copy SourceFiles="$(BDS)\bin64\sqlite3.dll" DestinationFolder="$(MSBuildProjectDirectory)\$(DCC_ExeOutput)" SkipUnchangedFiles="true"/>
+    </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
     <ProjectExtensions>
         <Borland.Personality>Delphi.Personality.12</Borland.Personality>

@@ -15,75 +15,234 @@
         <span class="brand-name">BrickStack</span>
       </a>
       <nav class="nav-links">
-        <a class="nav-link active" href="#overview"><span class="nav-icon">O</span><span>Overview</span></a>
-        <a class="nav-link" href="#sets"><span class="nav-icon">S</span><span>Sets</span></a>
-        <a class="nav-link" href="#parts"><span class="nav-icon">P</span><span>Parts</span></a>
-        <a class="nav-link" href="#search"><span class="nav-icon">/</span><span>Search</span></a>
+        <a class="nav-link active" href="#overview" data-page="overview" aria-current="page"><span class="nav-icon">O</span><span>Overview</span></a>
+        <a class="nav-link" href="#sets" data-page="sets"><span class="nav-icon">S</span><span>Sets</span></a>
+        <a class="nav-link" href="#parts" data-page="parts"><span class="nav-icon">P</span><span>Parts</span></a>
       </nav>
-      <div class="rail-footer"><span class="avatar">BS</span><span class="user-label">Local demo</span></div>
+      <div class="rail-footer"><span class="avatar">BS</span><span class="user-label">Catalog</span></div>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <div>
-          <p class="eyebrow">YOUR COLLECTION</p>
-          <h1>Overview</h1>
+          <p class="eyebrow">BRICKSTACK 2</p>
+          <h1 id="page-heading">Overview</h1>
         </div>
-        <div class="connection"><span class="connection-dot"></span><span>Local server</span></div>
+        <div class="profile-control">
+          <span class="connection"><span class="connection-dot"></span><span>Local server</span></span>
+          <button id="profile-button" class="profile-button" type="button"
+            aria-haspopup="dialog">
+            <span id="profile-avatar" class="profile-avatar">?</span>
+            <span id="profile-name">Sign in</span>
+          </button>
+        </div>
       </header>
 
+      <section id="overview-page" class="app-page" data-page="overview">
       <section class="welcome">
         <div>
-          <p class="eyebrow light">BRICKSTACK 2 · PHASE 1</p>
-          <h2>Your collection,<br>all in one place.</h2>
-          <p class="welcome-copy">A fresh home for your sets, parts, and building plans.</p>
+          <p class="eyebrow light">BRICKSTACK 2 · CATALOG</p>
+          <h2>Explore the LEGO catalog.</h2>
+          <p class="welcome-copy">Browse Rebrickable sets and parts from your local catalog.</p>
         </div>
         <div class="brick-art" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       </section>
 
-      <section class="section-heading">
-        <div>
-          <p class="eyebrow">COLLECTION SNAPSHOT</p>
-          <h2 id="collection-name">Loading your demo collection...</h2>
-        </div>
-        <span id="data-source" class="source-badge"><span class="source-dot"></span>Connecting</span>
+      <section id="admin-bootstrap" class="bootstrap-panel" hidden
+        aria-labelledby="bootstrap-heading">
+        <p class="eyebrow">FIRST-RUN SECURITY</p>
+        <h2 id="bootstrap-heading">Replace the initial Admin password</h2>
+        <p class="bootstrap-copy">
+          The initial <strong>Admin</strong> account is restricted to this
+          computer until its temporary password is replaced. The initial
+          temporary credentials are <strong>Admin / Admin</strong>.
+        </p>
+        <form id="bootstrap-form" class="bootstrap-form">
+          <label for="bootstrap-current-password">Current password</label>
+          <input id="bootstrap-current-password" type="password"
+            autocomplete="current-password" required>
+          <label for="bootstrap-new-password">New password (12–128 characters)</label>
+          <input id="bootstrap-new-password" type="password"
+            autocomplete="new-password" minlength="12" maxlength="128" required>
+          <label for="bootstrap-confirm-password">Confirm new password</label>
+          <input id="bootstrap-confirm-password" type="password"
+            autocomplete="new-password" minlength="12" maxlength="128" required>
+          <button type="submit">Replace password</button>
+        </form>
+        <p id="bootstrap-status" class="bootstrap-status" role="status"></p>
       </section>
 
-      <section class="stats-grid" aria-label="Collection totals">
+      <section class="section-heading">
+        <div>
+          <p class="eyebrow">CATALOG AT A GLANCE</p>
+          <h2>Catalog totals</h2>
+        </div>
+        <span id="data-source" class="source-badge"><span class="source-dot"></span><span id="data-source-label">Loading catalog</span></span>
+      </section>
+
+      <section class="stats-grid" aria-label="Catalog totals">
         <article class="stat-card">
           <span class="stat-icon blue">S</span>
           <span class="stat-label">Sets</span>
-          <strong id="sets-count">--</strong>
-          <span class="stat-note">in your collection</span>
+          <strong id="catalog-set-count">--</strong>
+          <span class="stat-note">in the catalog</span>
         </article>
         <article class="stat-card">
           <span class="stat-icon yellow">P</span>
-          <span class="stat-label">Pieces</span>
-          <strong id="pieces-count">--</strong>
-          <span class="stat-note">across all your sets</span>
+          <span class="stat-label">Parts</span>
+          <strong id="catalog-part-count">--</strong>
+          <span class="stat-note">catalog entries</span>
         </article>
         <article class="stat-card">
-          <span class="stat-icon green">B</span>
-          <span class="stat-label">Built</span>
-          <strong id="built-count">--</strong>
-          <span class="stat-note">sets checked off</span>
+          <span class="stat-icon green">T</span>
+          <span class="stat-label">Themes</span>
+          <strong id="catalog-theme-count">--</strong>
+          <span class="stat-note">catalog groups</span>
         </article>
       </section>
+      </section>
 
-      <section class="lists-panel">
+      <section id="catalog-page" class="catalog-panel app-page" data-page="sets" aria-labelledby="catalog-heading" hidden>
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">STAY ORGANISED</p>
-            <h2>Your set lists</h2>
+            <p class="eyebrow">SEARCH THE CATALOG</p>
+            <h2 id="catalog-heading">Browse sets</h2>
           </div>
-          <span class="demo-label">DEMO DATA</span>
+          <span class="catalog-label">READ ONLY</span>
         </div>
-        <div id="set-lists" class="list-grid">
-          <p class="loading-message">Waiting for the backend service...</p>
-        </div>
+        <form id="sets-search-form" class="catalog-search">
+          <label class="visually-hidden" for="sets-query">Search sets</label>
+          <input id="sets-query" name="q" type="search" maxlength="100"
+            placeholder="Search set names or numbers" autocomplete="off">
+          <label class="visually-hidden" for="set-theme">Set theme</label>
+          <select id="set-theme" name="themeId">
+            <option value="">All themes</option>
+          </select>
+          <label class="visually-hidden" for="set-year">Set year</label>
+          <input id="set-year" name="year" type="number" min="0" step="1"
+            placeholder="Any year" aria-label="Set year">
+          <button type="submit">Search sets</button>
+        </form>
+        <form id="parts-search-form" class="catalog-search" hidden>
+          <label class="visually-hidden" for="parts-query">Search parts</label>
+          <input id="parts-query" name="q" type="search" maxlength="100"
+            placeholder="Search part names or numbers" autocomplete="off">
+          <label class="visually-hidden" for="part-category">Part category</label>
+          <select id="part-category" name="categoryId">
+            <option value="">All categories</option>
+          </select>
+          <label class="visually-hidden" for="part-color">Part color</label>
+          <select id="part-color" name="colorId">
+            <option value="">All colors</option>
+          </select>
+          <button type="submit">Search parts</button>
+        </form>
+        <p id="catalog-status" class="loading-message" role="status">Loading catalog...</p>
+        <div id="catalog-results" class="catalog-results"></div>
+        <button id="catalog-load-more" class="load-more" type="button" hidden>
+          Load more
+        </button>
       </section>
-      <p id="error-message" class="error-message" role="status" hidden></p>
-      <footer>BrickStack 2 <span>·</span> UI server connected to a separate Delphi backend</footer>
+
+      <dialog id="catalog-detail" class="catalog-detail">
+        <form method="dialog" class="detail-close-form">
+          <button class="detail-close" type="submit" aria-label="Close details">×</button>
+        </form>
+        <div id="catalog-detail-content"></div>
+      </dialog>
+      <dialog id="profile-dialog" class="profile-dialog" aria-labelledby="profile-heading">
+        <form method="dialog" class="detail-close-form">
+          <button class="detail-close" type="submit" aria-label="Close profile">×</button>
+        </form>
+        <p class="eyebrow">BRICKSTACK ACCOUNT</p>
+        <h2 id="profile-heading">Sign in</h2>
+        <p id="profile-current-user" class="profile-current-user" hidden></p>
+        <form id="login-form" class="bootstrap-form">
+          <label for="login-username">Username</label>
+          <input id="login-username" name="username" autocomplete="username"
+            maxlength="64" required>
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password"
+            autocomplete="current-password" maxlength="128" required>
+          <div id="login-totp-fields" hidden>
+            <label for="login-totp-code">Authenticator or recovery code</label>
+            <input id="login-totp-code" name="totpCode" autocomplete="one-time-code"
+              inputmode="text" maxlength="32">
+          </div>
+          <button type="submit">Sign in</button>
+        </form>
+        <button id="invite-password-toggle" class="text-button" type="button">
+          Have an invitation? Set your password
+        </button>
+        <form id="invite-password-form" class="bootstrap-form" hidden>
+          <label for="invite-username">Invitation username</label>
+          <input id="invite-username" autocomplete="username" maxlength="64"
+            required>
+          <label for="invite-temporary-password">Temporary password</label>
+          <input id="invite-temporary-password" type="password"
+            autocomplete="current-password" maxlength="128" required>
+          <label for="invite-new-password">New password (12–128 characters)</label>
+          <input id="invite-new-password" type="password"
+            autocomplete="new-password" minlength="12" maxlength="128" required>
+          <label for="invite-confirm-password">Confirm new password</label>
+          <input id="invite-confirm-password" type="password"
+            autocomplete="new-password" minlength="12" maxlength="128" required>
+          <button type="submit">Set password</button>
+        </form>
+        <p id="login-status" class="bootstrap-status" role="status"></p>
+        <button id="logout-button" class="logout-button" type="button" hidden>
+          Sign out / switch account
+        </button>
+        <section id="totp-enrollment" class="account-admin" hidden
+          aria-labelledby="totp-enrollment-heading">
+          <p class="eyebrow">TWO-FACTOR AUTHENTICATION</p>
+          <h3 id="totp-enrollment-heading">Authenticator app</h3>
+          <p id="totp-enrollment-copy" class="account-admin-note"></p>
+          <button id="totp-enrollment-start" type="button">Set up authenticator</button>
+          <div id="totp-enrollment-setup" hidden>
+            <label for="totp-secret">Setup key</label>
+            <input id="totp-secret" readonly autocomplete="off">
+            <p>Enter this key in an authenticator app using 6 digits and a
+              30-second period, then verify its current code.</p>
+            <form id="totp-enrollment-form" class="bootstrap-form">
+              <label for="totp-enrollment-code">Authenticator code</label>
+              <input id="totp-enrollment-code" inputmode="numeric"
+                autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+              <button type="submit">Verify and enable</button>
+            </form>
+          </div>
+          <div id="totp-recovery-codes" class="temporary-password recovery-codes"
+            hidden></div>
+          <button id="totp-recovery-acknowledge" class="text-button"
+            type="button" hidden>I've saved these recovery codes</button>
+          <p id="totp-enrollment-status" class="bootstrap-status" role="status"></p>
+        </section>
+        <section id="account-admin" class="account-admin" hidden
+          aria-labelledby="account-admin-heading">
+          <p class="eyebrow">ACCOUNT ADMINISTRATION</p>
+          <h3 id="account-admin-heading">Manage users</h3>
+          <p class="account-admin-note">
+            New accounts receive ordinary User access and must replace their
+            temporary password before signing in. The generated password is
+            shown only once.
+          </p>
+          <form id="create-user-form" class="bootstrap-form">
+            <label for="new-username">Username</label>
+            <input id="new-username" autocomplete="off" minlength="3"
+              maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._\-]{2,63}" required>
+            <label for="new-display-name">Display name</label>
+            <input id="new-display-name" autocomplete="off" maxlength="80"
+              required>
+            <button type="submit">Create user</button>
+          </form>
+          <p id="account-admin-status" class="bootstrap-status" role="status"></p>
+          <div id="account-temporary-password" class="temporary-password"
+            hidden></div>
+          <div id="managed-account-list" class="managed-account-list"
+            aria-live="polite"></div>
+        </section>
+      </dialog>
+      <footer>BrickStack 2 <span>·</span> Read-only Rebrickable catalog</footer>
     </main>
   </div>
   <script src="/app.js" defer></script>

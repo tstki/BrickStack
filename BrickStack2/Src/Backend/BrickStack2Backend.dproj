@@ -53,7 +53,13 @@
         </DelphiCompile>
         <DCCReference Include="..\UBrickStack2Server.pas"/>
         <DCCReference Include="UBSDemoData.pas"/>
+        <DCCReference Include="UBSDatabaseBootstrap.pas"/>
+        <DCCReference Include="UBSAdminBootstrap.pas"/>
+        <DCCReference Include="UBSCollectionRepository.pas"/>
+        <DCCReference Include="UBSTotp.pas"/>
+        <DCCReference Include="UBSRebrickableCatalogRepository.pas"/>
         <DCCReference Include="UBSBackendWebModule.pas"/>
+        <DCCReference Include="..\UBrickStack2Server.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -67,6 +73,10 @@
         </BuildConfiguration>
     </ItemGroup>
     <ItemGroup/>
+    <Target Name="CopySQLiteRuntime" AfterTargets="Build">
+        <Error Condition="!Exists('$(BDS)\bin64\sqlite3.dll')" Text="Delphi's Win64 sqlite3.dll is required to run the backend."/>
+        <Copy SourceFiles="$(BDS)\bin64\sqlite3.dll" DestinationFolder="$(MSBuildProjectDirectory)\$(DCC_ExeOutput)" SkipUnchangedFiles="true"/>
+    </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
     <ProjectExtensions>
         <Borland.Personality>Delphi.Personality.12</Borland.Personality>
