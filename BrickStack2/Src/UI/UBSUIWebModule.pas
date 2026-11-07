@@ -56,11 +56,19 @@ begin
     IsNumericIDRoute(APath, '/api/collection-sets/', '');
 end;
 
+function IsCollectionPartRoute(const APath: string): Boolean;
+begin
+  Result := IsNumericIDRoute(APath, '/api/collections/', '/part-lists') or
+    IsNumericIDRoute(APath, '/api/part-lists/', '/parts') or
+    IsNumericIDRoute(APath, '/api/part-lists/', '') or
+    IsNumericIDRoute(APath, '/api/loose-parts/', '');
+end;
+
 function IsCollectionUserDataRoute(const APath: string): Boolean;
 begin
   Result := SameText(APath, '/api/collections') or
     IsNumericIDRoute(APath, '/api/collections/', '') or
-    IsCollectionItemsRoute(APath);
+    IsCollectionItemsRoute(APath) or IsCollectionPartRoute(APath);
 end;
 
 function IsAllowedBackendRoute(const APath: string): Boolean;
@@ -88,7 +96,7 @@ begin
     SameText(APath, '/api/catalog/part-categories');
   if Result then
     Exit;
-  if IsCollectionItemsRoute(APath) then begin
+  if IsCollectionItemsRoute(APath) or IsCollectionPartRoute(APath) then begin
     Result := True;
     Exit;
   end;
@@ -304,7 +312,9 @@ begin
           404: Response.Content := '{"error":"not_found"}';
           405: Response.Content := '{"error":"method_not_allowed"}';
           409:
-            if IsCollectionRoute then
+            if IsCollectionPartRoute(Request.PathInfo) then
+              Response.Content := '{"error":"part_list_name_unavailable"}'
+            else if IsCollectionRoute then
               Response.Content := '{"error":"collection_name_unavailable"}'
             else
               Response.Content := '{"error":"username_unavailable"}';
@@ -338,14 +348,20 @@ begin
 
   var IsAllowedCollectionPost := SameText(Request.Method, 'POST') and
     (IsNumericIDRoute(Request.PathInfo, '/api/collections/', '/set-lists') or
-     IsNumericIDRoute(Request.PathInfo, '/api/set-lists/', '/sets'));
+     IsNumericIDRoute(Request.PathInfo, '/api/set-lists/', '/sets') or
+     IsNumericIDRoute(Request.PathInfo, '/api/collections/', '/part-lists') or
+     IsNumericIDRoute(Request.PathInfo, '/api/part-lists/', '/parts'));
   var IsAllowedCollectionPut := SameText(Request.Method, 'PUT') and
     (IsNumericIDRoute(Request.PathInfo, '/api/collections/', '') or
      IsNumericIDRoute(Request.PathInfo, '/api/set-lists/', '') or
-     IsNumericIDRoute(Request.PathInfo, '/api/collection-sets/', ''));
+     IsNumericIDRoute(Request.PathInfo, '/api/collection-sets/', '') or
+     IsNumericIDRoute(Request.PathInfo, '/api/part-lists/', '') or
+     IsNumericIDRoute(Request.PathInfo, '/api/loose-parts/', ''));
   var IsAllowedCollectionDelete := SameText(Request.Method, 'DELETE') and
     (IsNumericIDRoute(Request.PathInfo, '/api/set-lists/', '') or
-     IsNumericIDRoute(Request.PathInfo, '/api/collection-sets/', ''));
+     IsNumericIDRoute(Request.PathInfo, '/api/collection-sets/', '') or
+     IsNumericIDRoute(Request.PathInfo, '/api/part-lists/', '') or
+     IsNumericIDRoute(Request.PathInfo, '/api/loose-parts/', ''));
   if not SameText(Request.Method, 'GET') and
     not (SameText(Request.Method, 'POST') and
       (SameText(Request.PathInfo, '/api/auth/bootstrap/password') or

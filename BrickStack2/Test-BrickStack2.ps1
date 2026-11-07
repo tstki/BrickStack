@@ -191,6 +191,40 @@ Assert-DeleteHttpStatus 'http://127.0.0.1:8080/api/collection-sets/1' 403 `
     'Set removal accepted DELETE without the same-origin request header'
 Assert-DeleteHttpStatus 'http://127.0.0.1:8081/api/collection-sets/1' 401 `
     'Backend set removal was accessible without authentication'
+foreach ($baseUrl in @('http://127.0.0.1:8080', 'http://127.0.0.1:8081')) {
+    foreach ($route in @(
+            '/api/collections/1/part-lists',
+            '/api/part-lists/1',
+            '/api/part-lists/1/parts',
+            '/api/loose-parts/1')) {
+        Assert-HttpStatus "$baseUrl$route" 401 `
+            "Unauthenticated request read $route through $baseUrl"
+    }
+}
+Assert-PostHttpStatus 'http://127.0.0.1:8080/api/collections/1/part-lists' '{}' 403 `
+    'Part-list creation accepted a POST without the same-origin request header'
+Assert-PostHttpStatus 'http://127.0.0.1:8081/api/collections/1/part-lists' '{}' 401 `
+    'Backend part-list creation was accessible without authentication'
+Assert-PostHttpStatus 'http://127.0.0.1:8080/api/part-lists/1/parts' '{}' 403 `
+    'Loose-part addition accepted a POST without the same-origin request header'
+Assert-PostHttpStatus 'http://127.0.0.1:8081/api/part-lists/1/parts' '{}' 401 `
+    'Backend loose-part addition was accessible without authentication'
+Assert-PutHttpStatus 'http://127.0.0.1:8080/api/part-lists/1' '{}' 403 `
+    'Part-list update accepted a PUT without the same-origin request header'
+Assert-PutHttpStatus 'http://127.0.0.1:8081/api/part-lists/1' '{}' 401 `
+    'Backend part-list update was accessible without authentication'
+Assert-PutHttpStatus 'http://127.0.0.1:8080/api/loose-parts/1' '{}' 403 `
+    'Loose-part update accepted a PUT without the same-origin request header'
+Assert-PutHttpStatus 'http://127.0.0.1:8081/api/loose-parts/1' '{}' 401 `
+    'Backend loose-part update was accessible without authentication'
+Assert-DeleteHttpStatus 'http://127.0.0.1:8080/api/part-lists/1' 403 `
+    'Part-list removal accepted DELETE without the same-origin request header'
+Assert-DeleteHttpStatus 'http://127.0.0.1:8081/api/part-lists/1' 401 `
+    'Backend part-list removal was accessible without authentication'
+Assert-DeleteHttpStatus 'http://127.0.0.1:8080/api/loose-parts/1' 403 `
+    'Loose-part removal accepted DELETE without the same-origin request header'
+Assert-DeleteHttpStatus 'http://127.0.0.1:8081/api/loose-parts/1' 401 `
+    'Backend loose-part removal was accessible without authentication'
 Assert-PostHttpStatus 'http://127.0.0.1:8080/api/collections' '{}' 403 `
     'Collection creation accepted a POST without the same-origin request header'
 Assert-PostHttpStatus 'http://127.0.0.1:8081/api/collections' '{}' 401 `

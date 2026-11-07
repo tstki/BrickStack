@@ -18,6 +18,8 @@ type
     procedure CreatesAndUpdatesOnlyOwnerSetLists;
     procedure AddsUpdatesAndRemovesOnlyOwnerSets;
     procedure RemovingASetListRemovesItsSets;
+    procedure AddsAndUpdatesOnlyOwnerLooseParts;
+    procedure RemovingAPartListRemovesItsLooseParts;
   end;
 
 implementation
@@ -423,6 +425,116 @@ begin
       var FoundSet: TCollectionSet;
       Check(not Repository.TryGetSetForUser(OwnerID, CollectionSet.ID, FoundSet),
         'Removing a set list must remove its set items');
+    finally
+      Repository.Free;
+    end;
+  finally
+    TDirectory.Delete(TestDirectory, True);
+  end;
+end;
+
+procedure TUserCollectionRepositoryTests.AddsAndUpdatesOnlyOwnerLooseParts;
+begin
+  var TestDirectory := NewTestDirectory;
+  var DatabaseFile := TPath.Combine(TestDirectory, 'BrickStack.db');
+  try
+    InitializeBrickStackDatabase(DatabaseFile);
+    var OwnerID: Integer;
+    var OtherID: Integer;
+    CreateTestUsers(DatabaseFile, OwnerID, OtherID);
+    var Repository := TUserCollectionRepository.Create(DatabaseFile);
+    try
+      var OwnerCollection := Repository.CreateForUser(OwnerID,
+        'Loose part collection');
+      var OwnerPartList := Repository.CreatePartListForUser(OwnerID,
+        OwnerCollection.ID, 'Owner parts');
+      var OtherCollection := Repository.CreateForUser(OtherID,
+        'Other loose part collection');
+      var OtherPartList := Repository.CreatePartListForUser(OtherID,
+        OtherCollection.ID, 'Other parts');
+      var LoosePart := Repository.AddLoosePartForUser(OwnerID,
+        OwnerPartList.ID, '3001', 4, 2);
+      CheckEquals(2, LoosePart.Quantity);
+      LoosePart := Repository.AddLoosePartForUser(OwnerID, OwnerPartList.ID,
+        '3001', 4, 3);
+      CheckEquals(1, Length(Repository.ListLoosePartsForUser(OwnerID,
+        OwnerPartList.ID)));
+      CheckEquals(5, LoosePart.Quantity,
+        'Adding an existing part and color should increase its quantity');
+      CheckEquals(0, Length(Repository.ListLoosePartsForUser(OtherID,
+        OwnerPartList.ID)));
+
+      var FoundPart: TLoosePart;
+      Check(not Repository.TryGetLoosePartForUser(OtherID, LoosePart.ID,
+        FoundPart),
+        'A different user must not read a loose part by manipulating its ID');
+      Check(not Repository.SetLoosePartQuantityForUser(OtherID, LoosePart.ID,
+        9), 'A different user must not change a loose-part quantity');
+      Check(not Repository.DeleteLoosePartForUser(OtherID, LoosePart.ID),
+        'A different user must not remove another user''s loose part');
+      Check(Repository.SetLoosePartQuantityForUser(OwnerID, LoosePart.ID, 7));
+      Check(Repository.TryGetLoosePartForUser(OwnerID, LoosePart.ID,
+        FoundPart));
+      CheckEquals(7, FoundPart.Quantity);
+      CheckEquals(OwnerPartList.ID, FoundPart.PartListID);
+      CheckEquals('3001', FoundPart.PartNumber);
+      CheckEquals(4, FoundPart.ColorID);
+
+      var InvalidQuantityRejected := False;
+      try
+        Repository.AddLoosePartForUser(OwnerID, OwnerPartList.ID, '3001', 4, 0);
+      except
+        on E: EArgumentException do
+          InvalidQuantityRejected := True;
+      end;
+      Check(InvalidQuantityRejected, 'Zero quantity must be rejected');
+      var FoundPartList: TUserPartList;
+      Check(not Repository.TryGetPartListForUser(OtherID, OwnerPartList.ID,
+        FoundPartList),
+        'A different user must not read another user''s part list');
+
+      var PartLists := Repository.ListPartListsForUser(OwnerID,
+        OwnerCollection.ID);
+      CheckEquals(1, Length(PartLists));
+      Check(Repository.UpdatePartListForUser(OwnerID, OwnerPartList.ID,
+        'Renamed parts'));
+      Check(not Repository.UpdatePartListForUser(OtherID, OwnerPartList.ID,
+        'Stolen parts'));
+      Check(Repository.DeleteLoosePartForUser(OwnerID, LoosePart.ID));
+      Check(not Repository.TryGetLoosePartForUser(OwnerID, LoosePart.ID,
+        FoundPart));
+      Check(not Repository.DeletePartListForUser(OwnerID, OtherPartList.ID),
+        'A user must not remove another user''s part list');
+    finally
+      Repository.Free;
+    end;
+  finally
+    TDirectory.Delete(TestDirectory, True);
+  end;
+end;
+
+procedure TUserCollectionRepositoryTests.RemovingAPartListRemovesItsLooseParts;
+begin
+  var TestDirectory := NewTestDirectory;
+  var DatabaseFile := TPath.Combine(TestDirectory, 'BrickStack.db');
+  try
+    InitializeBrickStackDatabase(DatabaseFile);
+    var OwnerID: Integer;
+    var OtherID: Integer;
+    CreateTestUsers(DatabaseFile, OwnerID, OtherID);
+    var Repository := TUserCollectionRepository.Create(DatabaseFile);
+    try
+      var Collection := Repository.CreateForUser(OwnerID,
+        'Loose-part cascade collection');
+      var PartList := Repository.CreatePartListForUser(OwnerID,
+        Collection.ID, 'Cascade parts');
+      var Part := Repository.AddLoosePartForUser(OwnerID, PartList.ID,
+        '3001', 4, 2);
+      Check(Repository.DeletePartListForUser(OwnerID, PartList.ID));
+      var FoundPart: TLoosePart;
+      Check(not Repository.TryGetLoosePartForUser(OwnerID, Part.ID,
+        FoundPart),
+        'Removing a part list must remove its loose-part entries');
     finally
       Repository.Free;
     end;

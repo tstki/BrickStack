@@ -35,6 +35,8 @@ const
 type
   TCollectionItemsRoute = (cirNone, cirCollectionSetLists, cirSetList,
     cirSetListSets, cirCollectionSet);
+  TCollectionPartRoute = (cprNone, cprCollectionPartLists, cprPartList,
+    cprPartListParts, cprLoosePart);
 
 function JsonString(const AValue: string): TJSONValue;
 begin
@@ -200,6 +202,21 @@ begin
   Result := cirNone;
 end;
 
+function ParseCollectionPartRoute(const APath: string;
+  out AID: Integer): TCollectionPartRoute;
+begin
+  AID := 0;
+  if TryParsePathID(APath, '/api/collections/', '/part-lists', AID) then
+    Exit(cprCollectionPartLists);
+  if TryParsePathID(APath, '/api/part-lists/', '/parts', AID) then
+    Exit(cprPartListParts);
+  if TryParsePathID(APath, '/api/part-lists/', '', AID) then
+    Exit(cprPartList);
+  if TryParsePathID(APath, '/api/loose-parts/', '', AID) then
+    Exit(cprLoosePart);
+  Result := cprNone;
+end;
+
 procedure AddSetListJson(AObject: TJSONObject; const ASetList: TUserSetList);
 begin
   AObject.AddPair('id', TJSONNumber.Create(ASetList.ID));
@@ -218,6 +235,23 @@ begin
   AObject.AddPair('built', TJSONBool.Create(ASet.Built));
   AObject.AddPair('haveSpareParts', TJSONBool.Create(ASet.HaveSpareParts));
   AObject.AddPair('notes', JsonString(ASet.Notes));
+end;
+
+procedure AddPartListJson(AObject: TJSONObject; const APartList: TUserPartList);
+begin
+  AObject.AddPair('id', TJSONNumber.Create(APartList.ID));
+  AObject.AddPair('collectionId', TJSONNumber.Create(APartList.CollectionID));
+  AObject.AddPair('name', JsonString(APartList.Name));
+  AObject.AddPair('sortIndex', TJSONNumber.Create(APartList.SortIndex));
+end;
+
+procedure AddLoosePartJson(AObject: TJSONObject; const APart: TLoosePart);
+begin
+  AObject.AddPair('id', TJSONNumber.Create(APart.ID));
+  AObject.AddPair('partListId', TJSONNumber.Create(APart.PartListID));
+  AObject.AddPair('partNumber', JsonString(APart.PartNumber));
+  AObject.AddPair('colorId', TJSONNumber.Create(APart.ColorID));
+  AObject.AddPair('quantity', TJSONNumber.Create(APart.Quantity));
 end;
 
 function SetInventoryRouteIdentifier(const APath: string; out ASetNumber: string): Boolean;
@@ -1021,6 +1055,340 @@ begin
   end;
 end;
 
+function HandleLoosePartsRequest(Request: TWebRequest;
+  Response: TWebResponse): Boolean;
+const
+  cMaximumBodyLength = 4096;
+  cMaximumLoosePartQuantity = 1000000;
+  cMaximumPartNumberLength = 64;
+  cCookieName = 'BSSESSION';
+begin
+  var RecordID: Integer;
+  var Route := ParseCollectionPartRoute(Request.PathInfo, RecordID);
+  Result := Route <> cprNone;
+  if not Result then
+    Exit;
+
+  if not IsLoopbackRequest(Request) then begin
+    SendJsonError(Response, 403, 'loopback_only');
+    Exit;
+  end;
+  var MethodAllowed :=
+    ((Route = cprCollectionPartLists) and
+      (SameText(Request.Method, 'GET') or SameText(Request.Method, 'POST'))) or
+    ((Route = cprPartList) and
+      (SameText(Request.Method, 'GET') or SameText(Request.Method, 'PUT') or
+       SameText(Request.Method, 'DELETE'))) or
+    ((Route = cprPartListParts) and
+      (SameText(Request.Method, 'GET') or SameText(Request.Method, 'POST'))) or
+    ((Route = cprLoosePart) and
+      (SameText(Request.Method, 'GET') or SameText(Request.Method, 'PUT') or
+       SameText(Request.Method, 'DELETE')));
+  if not MethodAllowed then begin
+    SendJsonError(Response, 405, 'method_not_allowed');
+    Exit;
+  end;
+
+  var SessionToken := Request.CookieFields.Values[cCookieName];
+  var User: TAuthenticatedUser;
+  if not TryGetSessionUser(BrickStackDatabaseFileName, SessionToken, User) then begin
+    SendJsonError(Response, 401, 'authentication_required');
+    Exit;
+  end;
+  if not (User.Role in [cRoleGlobalAdmin, cRoleUser]) then begin
+    SendJsonError(Response, 403, 'forbidden');
+    Exit;
+  end;
+  if Request.Query <> '' then begin
+    SendJsonError(Response, 400, 'invalid_request');
+    Exit;
+  end;
+  var IsMutation := SameText(Request.Method, 'POST') or
+    SameText(Request.Method, 'PUT') or SameText(Request.Method, 'DELETE');
+  if IsMutation and
+    (Request.GetFieldByName('X-BrickStack-Request') <> '1') then begin
+    SendJsonError(Response, 403, 'csrf_check_failed');
+    Exit;
+  end;
+  Response.SetCustomHeader('Cache-Control', 'no-store');
+
+  var Repository := TUserCollectionRepository.Create(
+    BrickStackDatabaseFileName);
+  try
+    if SameText(Request.Method, 'GET') then begin
+      if Route = cprCollectionPartLists then begin
+        var Collection: TUserCollection;
+        if not Repository.TryGetForUser(User.ID, RecordID, Collection) or
+          (Collection.ID <> RecordID) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var PartLists := Repository.ListPartListsForUser(User.ID, RecordID);
+        var Root := TJSONObject.Create;
+        try
+          var Items := TJSONArray.Create;
+          for var PartList in PartLists do begin
+            var Item := TJSONObject.Create;
+            AddPartListJson(Item, PartList);
+            Items.AddElement(Item);
+          end;
+          Root.AddPair('partLists', Items);
+          SendCatalogJson(Response, Root.ToJSON);
+        finally
+          Root.Free;
+        end;
+        Exit;
+      end;
+      if Route = cprPartList then begin
+        var PartList: TUserPartList;
+        if not Repository.TryGetPartListForUser(User.ID, RecordID, PartList) or
+          (PartList.ID <> RecordID) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var Item := TJSONObject.Create;
+        try
+          AddPartListJson(Item, PartList);
+          SendCatalogJson(Response, Item.ToJSON);
+        finally
+          Item.Free;
+        end;
+        Exit;
+      end;
+      if Route = cprPartListParts then begin
+        var PartList: TUserPartList;
+        if not Repository.TryGetPartListForUser(User.ID, RecordID, PartList) or
+          (PartList.ID <> RecordID) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var Parts := Repository.ListLoosePartsForUser(User.ID, RecordID);
+        var Root := TJSONObject.Create;
+        try
+          var Items := TJSONArray.Create;
+          for var Part in Parts do begin
+            var Item := TJSONObject.Create;
+            AddLoosePartJson(Item, Part);
+            Items.AddElement(Item);
+          end;
+          Root.AddPair('parts', Items);
+          SendCatalogJson(Response, Root.ToJSON);
+        finally
+          Root.Free;
+        end;
+        Exit;
+      end;
+      var LoosePart: TLoosePart;
+      if not Repository.TryGetLoosePartForUser(User.ID, RecordID, LoosePart) or
+        (LoosePart.ID <> RecordID) then begin
+        SendJsonError(Response, 404, 'not_found');
+        Exit;
+      end;
+      var Item := TJSONObject.Create;
+      try
+        AddLoosePartJson(Item, LoosePart);
+        SendCatalogJson(Response, Item.ToJSON);
+      finally
+        Item.Free;
+      end;
+      Exit;
+    end;
+
+    if SameText(Request.Method, 'DELETE') then begin
+      var Deleted := False;
+      if Route = cprPartList then
+        Deleted := Repository.DeletePartListForUser(User.ID, RecordID)
+      else if Route = cprLoosePart then
+        Deleted := Repository.DeleteLoosePartForUser(User.ID, RecordID);
+      if not Deleted then begin
+        SendJsonError(Response, 404, 'not_found');
+        Exit;
+      end;
+      SendCatalogJson(Response, '{"deleted":true}');
+      Exit;
+    end;
+
+    if (TEncoding.UTF8.GetByteCount(Request.Content) > cMaximumBodyLength) or
+      not StartsText('application/json', Request.ContentType) then begin
+      SendJsonError(Response, 400, 'invalid_request');
+      Exit;
+    end;
+    var Parsed: TJSONValue;
+    try
+      Parsed := TJSONObject.ParseJSONValue(Request.Content);
+    except
+      on Exception do begin
+        SendJsonError(Response, 400, 'invalid_request');
+        Exit;
+      end;
+    end;
+    try
+      if not (Parsed is TJSONObject) then begin
+        SendJsonError(Response, 400, 'invalid_request');
+        Exit;
+      end;
+      var Body := TJSONObject(Parsed);
+      if Route in [cprCollectionPartLists, cprPartList] then begin
+        if (Body.Count <> 1) or
+          not (Body.GetValue('name') is TJSONString) then begin
+          SendJsonError(Response, 400, 'invalid_request');
+          Exit;
+        end;
+        var Name := Body.GetValue('name').Value;
+        try
+          var PartList: TUserPartList;
+          if Route = cprCollectionPartLists then
+            PartList := Repository.CreatePartListForUser(User.ID, RecordID, Name)
+          else begin
+            if not Repository.UpdatePartListForUser(User.ID, RecordID, Name) then begin
+              SendJsonError(Response, 404, 'not_found');
+              Exit;
+            end;
+            if not Repository.TryGetPartListForUser(User.ID, RecordID,
+              PartList) then begin
+              SendJsonError(Response, 404, 'not_found');
+              Exit;
+            end;
+          end;
+          var PartListObject := TJSONObject.Create;
+          try
+            AddPartListJson(PartListObject, PartList);
+            SendCatalogJson(Response, PartListObject.ToJSON);
+            if Route = cprCollectionPartLists then
+              Response.StatusCode := 201;
+          finally
+            PartListObject.Free;
+          end;
+        except
+          on E: ECollectionItemNotFound do begin
+            SendJsonError(Response, 404, 'not_found');
+            Exit;
+          end;
+          on E: ECollectionConflict do begin
+            SendJsonError(Response, 409, 'part_list_name_unavailable');
+            Exit;
+          end;
+          on E: EArgumentException do begin
+            SendJsonError(Response, 400, 'invalid_request');
+            Exit;
+          end;
+        end;
+        Exit;
+      end;
+
+      if Route = cprPartListParts then begin
+        if (Body.Count <> 3) or
+          not (Body.GetValue('partNumber') is TJSONString) or
+          not (Body.GetValue('colorId') is TJSONNumber) or
+          not (Body.GetValue('quantity') is TJSONNumber) then begin
+          SendJsonError(Response, 400, 'invalid_request');
+          Exit;
+        end;
+        var PartNumber := Body.GetValue('partNumber').Value;
+        if (PartNumber.Trim = '') or
+          (Length(PartNumber) > cMaximumPartNumberLength) then begin
+          SendJsonError(Response, 400, 'invalid_request');
+          Exit;
+        end;
+        var ColorID: Integer;
+        var Quantity: Integer;
+        if not TryStrToInt(Body.GetValue('colorId').Value, ColorID) or
+          not TryStrToInt(Body.GetValue('quantity').Value, Quantity) then begin
+          SendJsonError(Response, 400, 'invalid_request');
+          Exit;
+        end;
+        if (ColorID < 0) or (Quantity < 1) or
+          (Quantity > cMaximumLoosePartQuantity) then begin
+          SendJsonError(Response, 400, 'invalid_request');
+          Exit;
+        end;
+        var PartList: TUserPartList;
+        if not Repository.TryGetPartListForUser(User.ID, RecordID, PartList) or
+          (PartList.ID <> RecordID) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var CatalogRepository := TRebrickableCatalogRepository.Create(
+          CatalogDatabaseFileName);
+        try
+          var CatalogPart: TCatalogPart;
+          if not CatalogRepository.TryGetPart(PartNumber, CatalogPart) then begin
+            SendJsonError(Response, 404, 'catalog_part_not_found');
+            Exit;
+          end;
+          var CatalogColor: TCatalogColor;
+          if not CatalogRepository.TryGetColor(ColorID, CatalogColor) then begin
+            SendJsonError(Response, 404, 'catalog_color_not_found');
+            Exit;
+          end;
+          try
+            var LoosePart := Repository.AddLoosePartForUser(User.ID, RecordID,
+              CatalogPart.PartNumber, CatalogColor.ID, Quantity);
+            var PartObject := TJSONObject.Create;
+            try
+              AddLoosePartJson(PartObject, LoosePart);
+              SendCatalogJson(Response, PartObject.ToJSON);
+              Response.StatusCode := 201;
+            finally
+              PartObject.Free;
+            end;
+          except
+            on E: ECollectionItemNotFound do begin
+              SendJsonError(Response, 404, 'not_found');
+              Exit;
+            end;
+            on E: EArgumentException do begin
+              SendJsonError(Response, 400, 'invalid_request');
+              Exit;
+            end;
+          end;
+        finally
+          CatalogRepository.Free;
+        end;
+        Exit;
+      end;
+
+      if (Body.Count <> 1) or
+        not (Body.GetValue('quantity') is TJSONNumber) then begin
+        SendJsonError(Response, 400, 'invalid_request');
+        Exit;
+      end;
+      var Quantity: Integer;
+      if not TryStrToInt(Body.GetValue('quantity').Value, Quantity) then begin
+        SendJsonError(Response, 400, 'invalid_request');
+        Exit;
+      end;
+      try
+        if not Repository.SetLoosePartQuantityForUser(User.ID, RecordID,
+          Quantity) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var LoosePart: TLoosePart;
+        if not Repository.TryGetLoosePartForUser(User.ID, RecordID,
+          LoosePart) then begin
+          SendJsonError(Response, 404, 'not_found');
+          Exit;
+        end;
+        var PartObject := TJSONObject.Create;
+        try
+          AddLoosePartJson(PartObject, LoosePart);
+          SendCatalogJson(Response, PartObject.ToJSON);
+        finally
+          PartObject.Free;
+        end;
+      except
+        on E: EArgumentException do
+          SendJsonError(Response, 400, 'invalid_request');
+      end;
+    finally
+      Parsed.Free;
+    end;
+  finally
+    Repository.Free;
+  end;
+end;
+
 function HandleCollectionRequest(Request: TWebRequest; Response: TWebResponse): Boolean;
 const
   cCollectionsPath = '/api/collections';
@@ -1379,6 +1747,10 @@ begin
   var CollectionItemsRoute := ParseCollectionItemsRoute(Request.PathInfo,
     CollectionItemsID);
   var HasValidCollectionItemsID := CollectionItemsID > 0;
+  var CollectionPartID: Integer;
+  var CollectionPartRoute := ParseCollectionPartRoute(Request.PathInfo,
+    CollectionPartID);
+  var HasValidCollectionPartID := CollectionPartID > 0;
   var IsAllowedPost := SameText(Request.Method, 'POST') and
     (SameText(Request.PathInfo, '/api/auth/bootstrap/password') or
      SameText(Request.PathInfo, '/api/auth/login') or
@@ -1389,16 +1761,24 @@ begin
      SameText(Request.PathInfo, '/api/collections') or
      SameText(Request.PathInfo, '/api/admin/users') or
      (CollectionItemsRoute in [cirCollectionSetLists, cirSetListSets]) and
-     HasValidCollectionItemsID);
+     HasValidCollectionItemsID or
+     (CollectionPartRoute in [cprCollectionPartLists, cprPartListParts]) and
+     HasValidCollectionPartID);
   var IsAllowedPut := SameText(Request.Method, 'PUT') and
     (StartsText('/api/collections/', Request.PathInfo) or
      (CollectionItemsRoute = cirSetList) or
      (CollectionItemsRoute = cirCollectionSet)) and
     (not (CollectionItemsRoute in [cirSetList, cirCollectionSet]) or
-      HasValidCollectionItemsID);
+      HasValidCollectionItemsID) or
+    (SameText(Request.Method, 'PUT') and
+      (CollectionPartRoute in [cprPartList, cprLoosePart]) and
+      HasValidCollectionPartID);
   var IsAllowedDelete := SameText(Request.Method, 'DELETE') and
     (CollectionItemsRoute in [cirSetList, cirCollectionSet]) and
-    HasValidCollectionItemsID;
+    HasValidCollectionItemsID or
+    (SameText(Request.Method, 'DELETE') and
+      (CollectionPartRoute in [cprPartList, cprLoosePart]) and
+      HasValidCollectionPartID);
   if not SameText(Request.Method, 'GET') and not IsAllowedPost and
     not IsAllowedPut and not IsAllowedDelete then begin
     LogServerMessage('BrickStack2 backend',
@@ -1431,6 +1811,12 @@ begin
       Exit;
     end;
     if HandleAccountManagementRequest(Request, Response) then begin
+      LogServerMessage('BrickStack2 backend',
+        Request.Method + ' ' + Request.PathInfo + ' -> ' +
+        IntToStr(Response.StatusCode));
+      Exit;
+    end;
+    if HandleLoosePartsRequest(Request, Response) then begin
       LogServerMessage('BrickStack2 backend',
         Request.Method + ' ' + Request.PathInfo + ' -> ' +
         IntToStr(Response.StatusCode));

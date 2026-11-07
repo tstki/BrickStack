@@ -256,7 +256,11 @@ public static class BrickStack2CollectionTestSqlite
                 '/api/collections/1/set-lists',
                 '/api/set-lists/1',
                 '/api/set-lists/1/sets',
-                '/api/collection-sets/1')) {
+                '/api/collection-sets/1',
+                '/api/collections/1/part-lists',
+                '/api/part-lists/1',
+                '/api/part-lists/1/parts',
+                '/api/loose-parts/1')) {
             Assert-Equal (Get-HttpStatus 'GET' "$baseUrl$route" `
                 $unauthenticatedSession) 401 `
                 "Unauthenticated request read $route through $baseUrl"
@@ -424,6 +428,140 @@ public static class BrickStack2CollectionTestSqlite
     Assert-Equal (Get-HttpStatus 'DELETE' `
         "$uiBaseUrl/api/set-lists/$($setListA.id)" $sessionA) 200 `
         'Owner A could not remove their set list'
+
+    $partPage = Invoke-RestMethod `
+        -Uri "$uiBaseUrl/api/catalog/parts?pageSize=1" -TimeoutSec 10
+    $colors = Invoke-RestMethod `
+        -Uri "$uiBaseUrl/api/catalog/colors" -TimeoutSec 10
+    Assert-True ($partPage.items.Count -gt 0) `
+        'The catalog did not return a part for loose-part testing'
+    Assert-True ($colors.Count -gt 0) `
+        'The catalog did not return a color for loose-part testing'
+    $catalogPartNumber = $partPage.items[0].partNumber
+    $catalogColorId = $colors[0].id
+    $partListA = Invoke-JsonApi 'POST' `
+        "$uiBaseUrl/api/collections/$($collectionA.id)/part-lists" $sessionA @{
+            name = 'Private Part List A'
+        }
+    $partListB = Invoke-JsonApi 'POST' `
+        "$uiBaseUrl/api/collections/$($collectionB.id)/part-lists" $sessionB @{
+            name = 'Private Part List B'
+        }
+    Assert-Equal (Get-HttpStatus 'POST' `
+        "$uiBaseUrl/api/collections/$($collectionB.id)/part-lists" $sessionA @{
+            name = 'Attempted cross-owner part list'
+        }) 404 'Owner A created a part list in Owner B''s collection'
+    foreach ($baseUrl in @($uiBaseUrl, $backendBaseUrl)) {
+        Assert-Equal (Get-HttpStatus 'POST' `
+            "$baseUrl/api/part-lists/$($partListB.id)/parts" $sessionA @{
+                partNumber = $catalogPartNumber
+                colorId = $catalogColorId
+                quantity = 1
+            }) 404 "Owner A added a part to Owner B's list through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'GET' `
+            "$baseUrl/api/collections/$($collectionB.id)/part-lists" $sessionA) 404 `
+            "Owner A listed Owner B's part lists through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'GET' `
+            "$baseUrl/api/part-lists/$($partListB.id)" $sessionA) 404 `
+            "Owner A read Owner B's part list through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'PUT' `
+            "$baseUrl/api/part-lists/$($partListB.id)" $sessionA @{
+                name = 'Attempted cross-owner update'
+            }) 404 "Owner A updated Owner B's part list through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'DELETE' `
+            "$baseUrl/api/part-lists/$($partListB.id)" $sessionA) 404 `
+            "Owner A removed Owner B's part list through $baseUrl"
+    }
+
+    $partListA = Invoke-JsonApi 'PUT' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)" $sessionA @{
+            name = 'Updated Part List A'
+        }
+    Assert-Equal $partListA.name 'Updated Part List A' `
+        'Owner A could not rename their part list'
+    $partListsA = Invoke-JsonApi 'GET' `
+        "$uiBaseUrl/api/collections/$($collectionA.id)/part-lists" $sessionA
+    Assert-Equal $partListsA.partLists.Count 1 `
+        'Owner A saw an unexpected part-list count'
+    Assert-Equal $partListsA.partLists[0].id $partListA.id `
+        'Owner A saw another owner''s part list'
+    $loosePart = Invoke-JsonApi 'POST' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+            partNumber = $catalogPartNumber
+            colorId = $catalogColorId
+            quantity = 3
+        }
+    foreach ($baseUrl in @($uiBaseUrl, $backendBaseUrl)) {
+        Assert-Equal (Get-HttpStatus 'POST' `
+            "$baseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+                partNumber = $catalogPartNumber
+                colorId = $catalogColorId
+                quantity = 1
+            } $false) 403 "Loose-part addition skipped CSRF validation at $baseUrl"
+        Assert-Equal (Get-HttpStatus 'GET' `
+            "$baseUrl/api/part-lists/$($partListA.id)/parts" $sessionB) 404 `
+            "Owner B listed Owner A's loose parts through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'GET' `
+            "$baseUrl/api/loose-parts/$($loosePart.id)" $sessionB) 404 `
+            "Owner B read Owner A's loose part through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'PUT' `
+            "$baseUrl/api/loose-parts/$($loosePart.id)" $sessionB @{
+                quantity = 8
+            }) 404 "Owner B updated Owner A's loose part through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'DELETE' `
+            "$baseUrl/api/loose-parts/$($loosePart.id)" $sessionB) 404 `
+            "Owner B removed Owner A's loose part through $baseUrl"
+        Assert-Equal (Get-HttpStatus 'PUT' `
+            "$baseUrl/api/loose-parts/$($loosePart.id)" $sessionA @{
+                quantity = 8
+            } $false) 403 "Loose-part update skipped CSRF validation at $baseUrl"
+        Assert-Equal (Get-HttpStatus 'DELETE' `
+            "$baseUrl/api/loose-parts/$($loosePart.id)" $sessionA $null $false) 403 `
+            "Loose-part removal skipped CSRF validation at $baseUrl"
+    }
+    Assert-Equal (Get-HttpStatus 'POST' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+            partNumber = 'not-a-catalog-part'
+            colorId = $catalogColorId
+            quantity = 1
+        }) 404 'A loose part absent from the Rebrickable catalog was accepted'
+    Assert-Equal (Get-HttpStatus 'POST' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+            partNumber = $catalogPartNumber
+            colorId = -1
+            quantity = 1
+        }) 400 'A negative loose-part color ID was accepted'
+    Assert-Equal (Get-HttpStatus 'POST' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+            partNumber = $catalogPartNumber
+            colorId = $catalogColorId
+            quantity = 1000001
+        }) 400 'An excessive loose-part quantity was accepted'
+    $loosePart = Invoke-JsonApi 'POST' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA @{
+            partNumber = $catalogPartNumber
+            colorId = $catalogColorId
+            quantity = 2
+        }
+    Assert-Equal $loosePart.quantity 5 `
+        'Adding an existing part/color pair did not increment its quantity'
+    $loosePart = Invoke-JsonApi 'PUT' `
+        "$uiBaseUrl/api/loose-parts/$($loosePart.id)" $sessionA @{
+            quantity = 7
+        }
+    Assert-Equal $loosePart.quantity 7 `
+        'Updating a loose part did not set its exact quantity'
+    $partsA = Invoke-JsonApi 'GET' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)/parts" $sessionA
+    Assert-Equal $partsA.parts.Count 1 'Owner A saw an unexpected loose-part count'
+    Assert-Equal $partsA.parts[0].quantity 7 `
+        'Owner A loose-part list did not return the updated quantity'
+    Assert-Equal (Get-HttpStatus 'DELETE' `
+        "$uiBaseUrl/api/loose-parts/$($loosePart.id)" $sessionA) 200 `
+        'Owner A could not remove their loose part'
+    Assert-Equal (Get-HttpStatus 'DELETE' `
+        "$uiBaseUrl/api/part-lists/$($partListA.id)" $sessionA) 200 `
+        'Owner A could not remove their part list'
 
     Write-Host 'Authenticated collection ownership HTTP checks passed.'
 }

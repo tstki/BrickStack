@@ -34,7 +34,7 @@ const
     'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.gz';
   cCatalogChecksumUrl =
     'https://github.com/ojuuji/rb.db/releases/download/latest/rb.db.sha256';
-  cBrickStackSchemaVersion = 4;
+  cBrickStackSchemaVersion = 5;
 
 var
   GSQLiteDriverLink: TFDPhysSQLiteDriverLink;
@@ -244,7 +244,7 @@ procedure ValidateBrickStackSchema(const AConnection: TFDConnection); forward;
 
 procedure CreateBrickStackSchema(const AConnection: TFDConnection);
 const
-  cSchemaSQL: array[0..17] of string = (
+  cSchemaSQL: array[0..18] of string = (
     'CREATE TABLE IF NOT EXISTS BSUsers (' +
       'ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
       'UserName TEXT NOT NULL UNIQUE,' +
@@ -321,6 +321,8 @@ const
       'AppliedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)',
     'CREATE INDEX IF NOT EXISTS BSSetLists_CollectionID_IDX ON BSSetLists (CollectionID)',
     'CREATE INDEX IF NOT EXISTS BSSets_SetListID_IDX ON BSSets (BSSetListID)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS BSLooseParts_ListPartColor_UQ_IDX ' +
+      'ON BSLooseParts (BSPartListID, Part_num, color_id)',
     'CREATE UNIQUE INDEX IF NOT EXISTS BSUsers_UserName_CI_IDX ON BSUsers (UserName COLLATE NOCASE)',
     'CREATE TABLE IF NOT EXISTS BSSessions (' +
       'SessionHash TEXT NOT NULL PRIMARY KEY,' +
@@ -488,6 +490,47 @@ begin
   end;
 end;
 
+procedure MigrateBrickStackVersionFour(const AConnection: TFDConnection);
+begin
+  LogDatabaseMessage('Applying BrickStack database migration from version 4.');
+  var Query := TFDQuery.Create(nil);
+  try
+    Query.Connection := AConnection;
+    AConnection.StartTransaction;
+    try
+      Query.SQL.Text :=
+        'UPDATE BSLooseParts SET quantity = (' +
+        'SELECT SUM(duplicate.quantity) FROM BSLooseParts duplicate ' +
+        'WHERE duplicate.BSPartListID = BSLooseParts.BSPartListID ' +
+        'AND duplicate.Part_num = BSLooseParts.Part_num ' +
+        'AND duplicate.color_id = BSLooseParts.color_id) ' +
+        'WHERE ID IN (SELECT MIN(ID) FROM BSLooseParts ' +
+        'GROUP BY BSPartListID, Part_num, color_id)';
+      Query.ExecSQL;
+      Query.SQL.Text :=
+        'DELETE FROM BSLooseParts WHERE ID NOT IN ' +
+        '(SELECT MIN(ID) FROM BSLooseParts ' +
+        'GROUP BY BSPartListID, Part_num, color_id)';
+      Query.ExecSQL;
+      Query.SQL.Text :=
+        'CREATE UNIQUE INDEX BSLooseParts_ListPartColor_UQ_IDX ' +
+        'ON BSLooseParts (BSPartListID, Part_num, color_id)';
+      Query.ExecSQL;
+      Query.SQL.Text :=
+        'INSERT INTO BSSchemaVersions (Version) VALUES (:Version)';
+      Query.ParamByName('Version').AsInteger := 5;
+      Query.ExecSQL;
+      ValidateBrickStackSchema(AConnection);
+      AConnection.Commit;
+    except
+      AConnection.Rollback;
+      raise;
+    end;
+  finally
+    Query.Free;
+  end;
+end;
+
 procedure ValidateBrickStackSchema(const AConnection: TFDConnection);
 const
   cRequiredColumns: array[0..13] of string = (
@@ -601,6 +644,11 @@ begin
           Query.Close;
           MigrateBrickStackVersionThree(Connection);
           SchemaVersion := 4;
+        end;
+        if SchemaVersion = 4 then begin
+          Query.Close;
+          MigrateBrickStackVersionFour(Connection);
+          SchemaVersion := 5;
         end else if SchemaVersion < cBrickStackSchemaVersion then
           raise Exception.CreateFmt(
             'No migration is available from BrickStack database schema version %d.',

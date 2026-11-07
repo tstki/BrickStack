@@ -87,6 +87,7 @@ type
     function TryGetSet(const ASetNumber: string; out ASet: TCatalogSet): Boolean;
     function SearchParts(const ASearchText: string; ACategoryID, AColorID, APageSize: Integer; const AAfter: string): TCatalogPartPage;
     function TryGetPart(const APartNumber: string; out APart: TCatalogPart): Boolean;
+    function TryGetColor(AColorID: Integer; out AColor: TCatalogColor): Boolean;
     function GetThemes: TArray<TCatalogTheme>;
     function GetColors: TArray<TCatalogColor>;
     function GetPartCategories: TArray<TCatalogPartCategory>;
@@ -595,6 +596,35 @@ begin
         Inc(ItemCount);
         Query.Next;
       end;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TRebrickableCatalogRepository.TryGetColor(AColorID: Integer;
+  out AColor: TCatalogColor): Boolean;
+begin
+  ValidateOptionalID(AColorID, 'Color ID');
+  var Connection := NewReadOnlyConnection(FDatabaseFileName);
+  try
+    var Query := NewQuery(Connection);
+    try
+      Query.SQL.Text :=
+        'SELECT id, name, rgb, is_trans FROM colors WHERE id = :ColorID';
+      Query.ParamByName('ColorID').AsInteger := AColorID;
+      Query.Open;
+      Result := not Query.Eof;
+      if Result then begin
+        AColor.ID := Query.FieldByName('id').AsInteger;
+        AColor.Name := Query.FieldByName('name').AsString;
+        AColor.RGB := Query.FieldByName('rgb').AsString;
+        AColor.IsTransparent :=
+          Query.FieldByName('is_trans').AsInteger <> 0;
+      end else
+        AColor := Default(TCatalogColor);
     finally
       Query.Free;
     end;

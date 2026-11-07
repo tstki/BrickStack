@@ -100,9 +100,10 @@ Source organization:
   ordinary Users may enroll optionally. TOTP secrets are protected with Windows
   DPAPI, accepted codes cannot be replayed, and recovery codes are stored only
   as hashes and consumed on use. Enrollment returns ten recovery codes once.
-  The BrickStack user database schema is version four; existing version-three
+  The BrickStack user database schema is version five; existing version-three
   databases are migrated transactionally to add factor and recovery-code
-  storage.
+  storage, and version-four databases merge duplicate loose-part rows while
+  preserving their total quantities.
   `GET /api/auth/session` returns the current profile, and
   `POST /api/auth/logout` revokes the session and clears the cookie. Five
   failed password or factor attempts in a 15-minute window lock that account
@@ -129,8 +130,18 @@ Source organization:
   sets must exist in the local Rebrickable catalog. A set entry represents one
   copy; add another entry for another copy. Updating a set entry changes its
   built/spare-parts flags and notes, not its catalog set number. Removing a set
-  list cascades to its sets and saved inventory rows. Collection deletion,
-  public sharing, and loose-part list operations remain unimplemented.
+  list cascades to its sets and saved inventory rows. Owners can list and
+  create part lists at `/api/collections/{collectionId}/part-lists`, read,
+  rename, and delete them at `/api/part-lists/{partListId}`, and list or add
+  entries at `/api/part-lists/{partListId}/parts`. Individual loose parts can
+  be read, have their quantity set, or be deleted at
+  `/api/loose-parts/{loosePartId}`. Added part/color pairs must exist in the
+  local Rebrickable catalog; adding an existing pair increments its quantity,
+  while updating sets the exact quantity. Quantities are limited to
+  1–1,000,000. Ownership is derived through the authenticated session for
+  every operation and foreign IDs return not-found. Deleting a part list
+  cascades to its loose-part entries. Collection deletion and public sharing
+  remain unimplemented.
 - A signed-in Global Admin can provision ordinary User accounts from the
   profile dialog. The server generates a 256-bit temporary password, returns it
   only in the creation response, stores only its salted password hash, and
@@ -165,7 +176,8 @@ exercise authenticated collection isolation through both HTTP services. It
 starts a temporary backend database under the Debug output directory with a
 hard-linked catalog database, seeds two ordinary test accounts, logs in through
 the authentication API to create separate sessions, and verifies
-collection, set-list, and set-item list/detail/create/update/remove ownership.
+collection, set-list, set-item, and loose-part list/detail/create/update/remove
+ownership, catalog validation, quantity increment/set behavior, and CSRF.
 It requires ports 8080 and 8081 to be free and stops only the service processes
 it starts; its temporary database directory is removed afterward.
 

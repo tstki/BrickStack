@@ -33,6 +33,23 @@ type
   end;
   TCollectionSets = TArray<TCollectionSet>;
 
+  TUserPartList = record
+    ID: Integer;
+    CollectionID: Integer;
+    Name: string;
+    SortIndex: Integer;
+  end;
+  TUserPartLists = TArray<TUserPartList>;
+
+  TLoosePart = record
+    ID: Integer;
+    PartListID: Integer;
+    PartNumber: string;
+    ColorID: Integer;
+    Quantity: Integer;
+  end;
+  TLooseParts = TArray<TLoosePart>;
+
   ECollectionConflict = class(Exception);
   ECollectionItemNotFound = class(Exception);
 
@@ -65,6 +82,22 @@ type
     function UpdateSetForUser(AUserID, ASetID: Integer;
       ABuilt, AHaveSpareParts: Boolean; const ANotes: string): Boolean;
     function DeleteSetForUser(AUserID, ASetID: Integer): Boolean;
+    function ListPartListsForUser(AUserID, ACollectionID: Integer): TUserPartLists;
+    function TryGetPartListForUser(AUserID, APartListID: Integer;
+      out APartList: TUserPartList): Boolean;
+    function CreatePartListForUser(AUserID, ACollectionID: Integer;
+      const AName: string): TUserPartList;
+    function UpdatePartListForUser(AUserID, APartListID: Integer;
+      const AName: string): Boolean;
+    function DeletePartListForUser(AUserID, APartListID: Integer): Boolean;
+    function ListLoosePartsForUser(AUserID, APartListID: Integer): TLooseParts;
+    function TryGetLoosePartForUser(AUserID, ALoosePartID: Integer;
+      out ALoosePart: TLoosePart): Boolean;
+    function AddLoosePartForUser(AUserID, APartListID: Integer;
+      const APartNumber: string; AColorID, AQuantity: Integer): TLoosePart;
+    function SetLoosePartQuantityForUser(AUserID, ALoosePartID,
+      AQuantity: Integer): Boolean;
+    function DeleteLoosePartForUser(AUserID, ALoosePartID: Integer): Boolean;
   end;
 
 implementation
@@ -127,6 +160,27 @@ begin
     raise EArgumentException.Create('Set notes are too long.');
 end;
 
+procedure ValidatePartListName(const AName: string);
+begin
+  if (AName.Trim = '') or (Length(AName.Trim) > 100) then
+    raise EArgumentException.Create(
+      'Part list name must contain between 1 and 100 characters.');
+end;
+
+procedure ValidateLoosePartFields(const APartNumber: string; AColorID,
+  AQuantity: Integer);
+const
+  cMaximumLoosePartQuantity = 1000000;
+begin
+  if (APartNumber.Trim = '') or (Length(APartNumber.Trim) > 100) then
+    raise EArgumentException.Create('A valid part number is required.');
+  if AColorID < 0 then
+    raise EArgumentOutOfRangeException.Create('A valid part color is required.');
+  if (AQuantity < 1) or (AQuantity > cMaximumLoosePartQuantity) then
+    raise EArgumentOutOfRangeException.CreateFmt(
+      'Part quantity must be between 1 and %d.', [cMaximumLoosePartQuantity]);
+end;
+
 function SetListFromQuery(AQuery: TFDQuery): TUserSetList;
 begin
   Result.ID := AQuery.FieldByName('ID').AsInteger;
@@ -145,6 +199,23 @@ begin
   Result.Built := AQuery.FieldByName('Built').AsInteger <> 0;
   Result.HaveSpareParts := AQuery.FieldByName('HaveSpareParts').AsInteger <> 0;
   Result.Notes := AQuery.FieldByName('Notes').AsString;
+end;
+
+function PartListFromQuery(AQuery: TFDQuery): TUserPartList;
+begin
+  Result.ID := AQuery.FieldByName('ID').AsInteger;
+  Result.CollectionID := AQuery.FieldByName('CollectionID').AsInteger;
+  Result.Name := AQuery.FieldByName('Name').AsString;
+  Result.SortIndex := AQuery.FieldByName('SortIndex').AsInteger;
+end;
+
+function LoosePartFromQuery(AQuery: TFDQuery): TLoosePart;
+begin
+  Result.ID := AQuery.FieldByName('ID').AsInteger;
+  Result.PartListID := AQuery.FieldByName('BSPartListID').AsInteger;
+  Result.PartNumber := AQuery.FieldByName('Part_num').AsString;
+  Result.ColorID := AQuery.FieldByName('color_id').AsInteger;
+  Result.Quantity := AQuery.FieldByName('quantity').AsInteger;
 end;
 
 function TUserCollectionRepository.ListForUser(AUserID: Integer): TUserCollections;
@@ -637,6 +708,413 @@ begin
         'INNER JOIN BSCollections c ON c.ID = sl.CollectionID ' +
         'WHERE sl.ID = BSSets.BSSetListID AND c.UserID = :UserID)';
       Query.ParamByName('SetID').AsInteger := ASetID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.ExecSQL;
+      Result := Query.RowsAffected = 1;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.ListPartListsForUser(AUserID,
+  ACollectionID: Integer): TUserPartLists;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(ACollectionID, 'collection ID');
+  var PartLists := TList<TUserPartList>.Create;
+  try
+    var Connection := NewConnection(FDatabaseFileName);
+    try
+      var Query := TFDQuery.Create(nil);
+      try
+        Query.Connection := Connection;
+        Query.SQL.Text :=
+          'SELECT pl.ID, pl.CollectionID, pl.Name, pl.SortIndex ' +
+          'FROM BSPartLists pl INNER JOIN BSCollections c ' +
+          'ON c.ID = pl.CollectionID ' +
+          'WHERE pl.CollectionID = :CollectionID AND c.UserID = :UserID ' +
+          'ORDER BY pl.SortIndex, pl.ID';
+        Query.ParamByName('CollectionID').AsInteger := ACollectionID;
+        Query.ParamByName('UserID').AsInteger := AUserID;
+        Query.Open;
+        while not Query.Eof do begin
+          PartLists.Add(PartListFromQuery(Query));
+          Query.Next;
+        end;
+        Result := PartLists.ToArray;
+      finally
+        Query.Free;
+      end;
+    finally
+      Connection.Free;
+    end;
+  finally
+    PartLists.Free;
+  end;
+end;
+
+function TUserCollectionRepository.TryGetPartListForUser(AUserID,
+  APartListID: Integer; out APartList: TUserPartList): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(APartListID, 'part list ID');
+  APartList := Default(TUserPartList);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'SELECT pl.ID, pl.CollectionID, pl.Name, pl.SortIndex ' +
+        'FROM BSPartLists pl INNER JOIN BSCollections c ' +
+        'ON c.ID = pl.CollectionID ' +
+        'WHERE pl.ID = :PartListID AND c.UserID = :UserID';
+      Query.ParamByName('PartListID').AsInteger := APartListID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.Open;
+      Result := not Query.Eof;
+      if Result then
+        APartList := PartListFromQuery(Query);
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.CreatePartListForUser(AUserID,
+  ACollectionID: Integer; const AName: string): TUserPartList;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(ACollectionID, 'collection ID');
+  ValidatePartListName(AName);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'INSERT INTO BSPartLists (CollectionID, Name, SortIndex) ' +
+        'SELECT :InsertCollectionID, :Name, ' +
+        'COALESCE((SELECT MAX(SortIndex) + 1 FROM BSPartLists ' +
+        'WHERE CollectionID = :SortCollectionID), 0) ' +
+        'WHERE EXISTS (SELECT 1 FROM BSCollections ' +
+        'WHERE ID = :OwnerCollectionID AND UserID = :UserID) ' +
+        'AND NOT EXISTS (SELECT 1 FROM BSPartLists ' +
+        'WHERE CollectionID = :DuplicateCollectionID AND Name = :DuplicateName)';
+      Query.ParamByName('InsertCollectionID').AsInteger := ACollectionID;
+      Query.ParamByName('Name').AsString := AName.Trim;
+      Query.ParamByName('SortCollectionID').AsInteger := ACollectionID;
+      Query.ParamByName('OwnerCollectionID').AsInteger := ACollectionID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.ParamByName('DuplicateCollectionID').AsInteger := ACollectionID;
+      Query.ParamByName('DuplicateName').AsString := AName.Trim;
+      Query.ExecSQL;
+      if Query.RowsAffected <> 1 then begin
+        Query.SQL.Text :=
+          'SELECT COUNT(*) FROM BSCollections WHERE ID = :CollectionID ' +
+          'AND UserID = :UserID';
+        Query.ParamByName('CollectionID').AsInteger := ACollectionID;
+        Query.ParamByName('UserID').AsInteger := AUserID;
+        Query.Open;
+        if Query.Fields[0].AsInteger = 0 then
+          raise ECollectionItemNotFound.Create(
+            'The requested collection was not found.');
+        raise ECollectionConflict.Create(
+          'A part list with this name already exists.');
+      end;
+      Query.SQL.Text :=
+        'SELECT ID, CollectionID, Name, SortIndex FROM BSPartLists ' +
+        'WHERE ID = last_insert_rowid()';
+      Query.Open;
+      if Query.Eof then
+        raise Exception.Create('The created part list could not be read.');
+      Result := PartListFromQuery(Query);
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.UpdatePartListForUser(AUserID,
+  APartListID: Integer; const AName: string): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(APartListID, 'part list ID');
+  ValidatePartListName(AName);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'UPDATE OR IGNORE BSPartLists SET Name = :Name ' +
+        'WHERE ID = :PartListID AND EXISTS (' +
+        'SELECT 1 FROM BSCollections c ' +
+        'WHERE c.ID = BSPartLists.CollectionID AND c.UserID = :UserID)';
+      Query.ParamByName('Name').AsString := AName.Trim;
+      Query.ParamByName('PartListID').AsInteger := APartListID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.ExecSQL;
+      var Updated := Query.RowsAffected = 1;
+      if not Updated then begin
+        Query.SQL.Text :=
+          'SELECT COUNT(*) FROM BSPartLists pl ' +
+          'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+          'WHERE pl.ID = :PartListID AND c.UserID = :UserID';
+        Query.ParamByName('PartListID').AsInteger := APartListID;
+        Query.ParamByName('UserID').AsInteger := AUserID;
+        Query.Open;
+        if Query.Fields[0].AsInteger <> 0 then
+          raise ECollectionConflict.Create(
+            'A part list with this name already exists.');
+      end;
+      Result := Updated;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.DeletePartListForUser(AUserID,
+  APartListID: Integer): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(APartListID, 'part list ID');
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'DELETE FROM BSPartLists WHERE ID = :PartListID AND EXISTS (' +
+        'SELECT 1 FROM BSCollections c ' +
+        'WHERE c.ID = BSPartLists.CollectionID AND c.UserID = :UserID)';
+      Query.ParamByName('PartListID').AsInteger := APartListID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.ExecSQL;
+      Result := Query.RowsAffected = 1;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.ListLoosePartsForUser(AUserID,
+  APartListID: Integer): TLooseParts;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(APartListID, 'part list ID');
+  var Parts := TList<TLoosePart>.Create;
+  try
+    var Connection := NewConnection(FDatabaseFileName);
+    try
+      var Query := TFDQuery.Create(nil);
+      try
+        Query.Connection := Connection;
+        Query.SQL.Text :=
+          'SELECT lp.ID, lp.BSPartListID, lp.Part_num, lp.color_id, ' +
+          'lp.quantity FROM BSLooseParts lp ' +
+          'INNER JOIN BSPartLists pl ON pl.ID = lp.BSPartListID ' +
+          'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+          'WHERE lp.BSPartListID = :PartListID AND c.UserID = :UserID ' +
+          'ORDER BY lp.Part_num, lp.color_id, lp.ID';
+        Query.ParamByName('PartListID').AsInteger := APartListID;
+        Query.ParamByName('UserID').AsInteger := AUserID;
+        Query.Open;
+        while not Query.Eof do begin
+          Parts.Add(LoosePartFromQuery(Query));
+          Query.Next;
+        end;
+        Result := Parts.ToArray;
+      finally
+        Query.Free;
+      end;
+    finally
+      Connection.Free;
+    end;
+  finally
+    Parts.Free;
+  end;
+end;
+
+function TUserCollectionRepository.TryGetLoosePartForUser(AUserID,
+  ALoosePartID: Integer; out ALoosePart: TLoosePart): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(ALoosePartID, 'loose part ID');
+  ALoosePart := Default(TLoosePart);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'SELECT lp.ID, lp.BSPartListID, lp.Part_num, lp.color_id, ' +
+        'lp.quantity FROM BSLooseParts lp ' +
+        'INNER JOIN BSPartLists pl ON pl.ID = lp.BSPartListID ' +
+        'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+        'WHERE lp.ID = :LoosePartID AND c.UserID = :UserID';
+      Query.ParamByName('LoosePartID').AsInteger := ALoosePartID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.Open;
+      Result := not Query.Eof;
+      if Result then
+        ALoosePart := LoosePartFromQuery(Query);
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.AddLoosePartForUser(AUserID,
+  APartListID: Integer; const APartNumber: string; AColorID,
+  AQuantity: Integer): TLoosePart;
+const
+  cMaximumLoosePartQuantity = 1000000;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(APartListID, 'part list ID');
+  ValidateLoosePartFields(APartNumber, AColorID, AQuantity);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Connection.StartTransaction;
+      try
+        Query.SQL.Text :=
+          'SELECT lp.ID, lp.BSPartListID, lp.Part_num, lp.color_id, ' +
+          'lp.quantity FROM BSLooseParts lp ' +
+          'INNER JOIN BSPartLists pl ON pl.ID = lp.BSPartListID ' +
+          'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+          'WHERE lp.BSPartListID = :PartListID AND lp.Part_num = :PartNumber ' +
+          'AND lp.color_id = :ColorID AND c.UserID = :UserID ' +
+          'ORDER BY lp.ID';
+        Query.ParamByName('PartListID').AsInteger := APartListID;
+        Query.ParamByName('PartNumber').AsString := APartNumber.Trim;
+        Query.ParamByName('ColorID').AsInteger := AColorID;
+        Query.ParamByName('UserID').AsInteger := AUserID;
+        Query.Open;
+        if not Query.Eof then begin
+          var ExistingPart := LoosePartFromQuery(Query);
+          if ExistingPart.Quantity > cMaximumLoosePartQuantity - AQuantity then
+            raise EArgumentOutOfRangeException.CreateFmt(
+              'Part quantity cannot exceed %d.', [cMaximumLoosePartQuantity]);
+          Query.Close;
+          Query.SQL.Text :=
+            'UPDATE BSLooseParts SET quantity = quantity + :AddedQuantity ' +
+            'WHERE ID = :LoosePartID AND EXISTS (' +
+            'SELECT 1 FROM BSPartLists pl ' +
+            'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+            'WHERE pl.ID = BSLooseParts.BSPartListID AND c.UserID = :UserID)';
+          Query.ParamByName('AddedQuantity').AsInteger := AQuantity;
+          Query.ParamByName('LoosePartID').AsInteger := ExistingPart.ID;
+          Query.ParamByName('UserID').AsInteger := AUserID;
+          Query.ExecSQL;
+          Query.SQL.Text :=
+            'SELECT ID, BSPartListID, Part_num, color_id, quantity ' +
+            'FROM BSLooseParts WHERE ID = :LoosePartID';
+          Query.ParamByName('LoosePartID').AsInteger := ExistingPart.ID;
+          Query.Open;
+        end else begin
+          Query.Close;
+          Query.SQL.Text :=
+            'INSERT INTO BSLooseParts ' +
+            '(BSPartListID, Part_num, color_id, quantity) ' +
+            'SELECT :InsertPartListID, :PartNumber, :ColorID, :Quantity ' +
+            'WHERE EXISTS (SELECT 1 FROM BSPartLists pl ' +
+            'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+            'WHERE pl.ID = :OwnerPartListID AND c.UserID = :UserID)';
+          Query.ParamByName('InsertPartListID').AsInteger := APartListID;
+          Query.ParamByName('PartNumber').AsString := APartNumber.Trim;
+          Query.ParamByName('ColorID').AsInteger := AColorID;
+          Query.ParamByName('Quantity').AsInteger := AQuantity;
+          Query.ParamByName('OwnerPartListID').AsInteger := APartListID;
+          Query.ParamByName('UserID').AsInteger := AUserID;
+          Query.ExecSQL;
+          if Query.RowsAffected <> 1 then
+            raise ECollectionItemNotFound.Create(
+              'The requested part list was not found.');
+          Query.SQL.Text :=
+            'SELECT ID, BSPartListID, Part_num, color_id, quantity ' +
+            'FROM BSLooseParts WHERE ID = last_insert_rowid()';
+          Query.Open;
+        end;
+        if Query.Eof then
+          raise Exception.Create('The saved loose part could not be read.');
+        Result := LoosePartFromQuery(Query);
+        Connection.Commit;
+      except
+        Connection.Rollback;
+        raise;
+      end;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.SetLoosePartQuantityForUser(AUserID,
+  ALoosePartID, AQuantity: Integer): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(ALoosePartID, 'loose part ID');
+  ValidateLoosePartFields('part', 0, AQuantity);
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'UPDATE BSLooseParts SET quantity = :Quantity ' +
+        'WHERE ID = :LoosePartID AND EXISTS (' +
+        'SELECT 1 FROM BSPartLists pl ' +
+        'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+        'WHERE pl.ID = BSLooseParts.BSPartListID AND c.UserID = :UserID)';
+      Query.ParamByName('Quantity').AsInteger := AQuantity;
+      Query.ParamByName('LoosePartID').AsInteger := ALoosePartID;
+      Query.ParamByName('UserID').AsInteger := AUserID;
+      Query.ExecSQL;
+      Result := Query.RowsAffected = 1;
+    finally
+      Query.Free;
+    end;
+  finally
+    Connection.Free;
+  end;
+end;
+
+function TUserCollectionRepository.DeleteLoosePartForUser(AUserID,
+  ALoosePartID: Integer): Boolean;
+begin
+  ValidateUserID(AUserID);
+  ValidateRecordID(ALoosePartID, 'loose part ID');
+  var Connection := NewConnection(FDatabaseFileName);
+  try
+    var Query := TFDQuery.Create(nil);
+    try
+      Query.Connection := Connection;
+      Query.SQL.Text :=
+        'DELETE FROM BSLooseParts WHERE ID = :LoosePartID AND EXISTS (' +
+        'SELECT 1 FROM BSPartLists pl ' +
+        'INNER JOIN BSCollections c ON c.ID = pl.CollectionID ' +
+        'WHERE pl.ID = BSLooseParts.BSPartListID AND c.UserID = :UserID)';
+      Query.ParamByName('LoosePartID').AsInteger := ALoosePartID;
       Query.ParamByName('UserID').AsInteger := AUserID;
       Query.ExecSQL;
       Result := Query.RowsAffected = 1;
